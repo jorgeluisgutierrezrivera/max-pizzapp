@@ -31,6 +31,27 @@ Un flujo acotado y **desplegable**, priorizando profundidad sobre cantidad de m�
 - **Frontend:** Flutter (web)
 - **Infraestructura:** Docker Compose · Caddy (HTTPS)
 
+### Versiones fijadas
+
+Versiones tomadas del entorno de desarrollo real. Las imágenes se fijan por versión
+(nunca `latest`) para que el entorno sea reproducible en desarrollo y en el servidor.
+
+| Componente | Versión | Cómo se fija |
+|---|---|---|
+| Node.js | 24.15.0 (LTS) | imagen `node:24-alpine` |
+| npm | 11.12.1 | incluido en la imagen de Node |
+| Flutter | 3.44.8 (stable) | SDK local; se declara en `frontend/pubspec.yaml` |
+| Dart | 3.12.2 | incluido en el SDK de Flutter |
+| PostgreSQL | 17 | imagen `postgres:17-alpine` |
+| Keycloak | 26.7 | imagen `quay.io/keycloak/keycloak:26.7` |
+| Caddy | 2 | imagen `caddy:2-alpine` |
+| Docker Engine | 29.7.2 | entorno de desarrollo |
+| Docker Compose | v5.3.1 | entorno de desarrollo |
+
+Las versiones de las librerías (Express, Socket.IO, `pg`, `jwks-rsa`, paquetes de Flutter)
+quedan fijadas en `backend/package.json` y `frontend/pubspec.yaml` al crearse cada
+componente.
+
 ## Metodología
 
 Desarrollo con **Kanban**: flujo continuo de trabajo (tablero, límite de trabajo en
