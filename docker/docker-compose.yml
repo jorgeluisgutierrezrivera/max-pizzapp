@@ -1,0 +1,42 @@
+# ==========================================================
+# Max Pizzapp - orquestacion de contenedores (base)
+#
+# Este archivo define la base comun del entorno: el nombre del
+# proyecto, la red interna por la que se hablan los contenedores,
+# el volumen de datos persistentes y los ajustes que comparten
+# todos los servicios.
+#
+# Los servicios (base de datos, identidad y API) se incorporan
+# sobre esta base en los siguientes incrementos.
+#
+# Uso (desde la raiz del repositorio, con el .env ya creado a
+# partir de .env.example):
+#   docker compose --env-file .env -f docker/docker-compose.yml config
+#   docker compose --env-file .env -f docker/docker-compose.yml up -d
+#   docker compose --env-file .env -f docker/docker-compose.yml down
+# ==========================================================
+
+name: maxpizzapp
+
+# Ajustes comunes que heredaran los servicios con << : *servicio-comun.
+# Las credenciales llegan siempre desde .env (nunca escritas aqui).
+x-servicio-comun: &servicio-comun
+  restart: unless-stopped
+  env_file:
+    - ../.env
+  networks:
+    - interna
+
+services: {}
+
+networks:
+  # Red privada del proyecto: los contenedores se ven entre si por
+  # su nombre de servicio y solo se publican al host los puertos
+  # que se declaren de forma explicita.
+  interna:
+    driver: bridge
+
+volumes:
+  # Datos de PostgreSQL: sobreviven a "down" y a la recreacion de
+  # los contenedores (la base de datos es la fuente de verdad).
+  postgres_datos:
