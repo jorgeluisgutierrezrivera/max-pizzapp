@@ -1,0 +1,60 @@
+# ============================================================
+# Max Pizzapp — .gitignore
+# Nada de secretos, dependencias ni artefactos de build en el repo.
+# ============================================================
+
+# --- Secretos y entorno (requisito #7: fuera del repo) ---
+.env
+.env.*
+!.env.example
+
+# --- Node / Backend ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# --- Flutter / Frontend ---
+frontend/.dart_tool/
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
+frontend/build/
+frontend/.pub-cache/
+frontend/.pub/
+frontend/pubspec.lock
+**/doc/api/
+
+# --- Build de Flutter web que se despliega (se genera, no se versiona) ---
+web/
+
+# --- Docker / datos persistentes ---
+docker/postgres/data/
+*.pgdata
+
+# --- Caddy (certificados y estado, se generan) ---
+docker/caddy/data/
+docker/caddy/config/
+
+# --- Sistema operativo ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Editores / IDE ---
+.idea/
+.vscode/
+*.iml
+*.swp
+
+# --- Andamiaje de asistentes/agentes de IA (no es parte del proyecto) ---
+# Archivos y carpetas de trabajo de agentes de código y del editor.
+# Se ignoran para mantener el repositorio enfocado solo en el proyecto.
+.claude/
+CLAUDE.local.md
+.cursor/
+.aider*
+.windsurf/
+.continue/
+.codeium/
+.github/copilot/

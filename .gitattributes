@@ -1,0 +1,34 @@
+# ============================================================
+# Max Pizzapp — .gitattributes
+# Normaliza los saltos de línea. Se desarrolla en Windows pero
+# se despliega en Linux (Oracle Cloud + Caddy): los archivos que
+# el servidor ejecuta o interpreta DEBEN llegar con LF, no CRLF.
+# ============================================================
+
+# Por defecto: Git normaliza a LF en el repo y adapta al checkout.
+* text=auto
+
+# --- Archivos que deben ser LF sí o sí (los usa el servidor Linux) ---
+*.sh        text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.json      text eol=lf
+*.sql       text eol=lf
+*.js        text eol=lf
+*.dart      text eol=lf
+*.md        text eol=lf
+Dockerfile  text eol=lf
+Caddyfile   text eol=lf
+.env.example text eol=lf
+.gitignore  text eol=lf
+.gitattributes text eol=lf
+
+# --- Binarios: Git no debe tocarlos ---
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.pdf       binary
+*.woff      binary
+*.woff2     binary
