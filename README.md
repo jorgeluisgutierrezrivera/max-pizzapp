@@ -19,9 +19,11 @@ Un flujo acotado y **desplegable**, priorizando profundidad sobre cantidad de m�
 
 | Rol | Qué hace |
 |---|---|
-| **Recepción** | Crea pedidos, ve estados en vivo, entrega |
-| **Cocina** | Ve pedidos entrantes en vivo, marca "listo" |
-| **Administrador** | Gestiona la carta y los usuarios |
+| **Recepción** | Crea pedidos, ve estados en vivo, cancela antes de "listo", entrega, marca productos agotados |
+| **Cocina** | Ve pedidos entrantes en vivo, avanza el estado, marca "listo", marca productos agotados |
+
+El sistema tiene **dos roles**. La administración de la carta y el historial quedan fuera
+de alcance y se recogen como trabajo futuro.
 
 ## Stack
 
@@ -64,7 +66,7 @@ codigo/
 ├── backend/      API Node/Express + Socket.IO
 ├── frontend/     App Flutter
 ├── docker/       Compose, Postgres (init SQL), Keycloak (realm), Caddy
-└── docs/         Documentación técnica (BRIEF de desarrollo)
+└── docs/         Documentación técnica: BRIEF de desarrollo y planes de trabajo
 ```
 
 ## Puesta en marcha (local)

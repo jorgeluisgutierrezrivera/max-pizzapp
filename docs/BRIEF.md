@@ -16,7 +16,7 @@
 
 **Max Pizzapp** es un sistema **web** de gestión de pedidos con **sincronización en
 tiempo real** entre **recepción** y **cocina** de la pizzería **Max Pizzas**. Digitaliza
-el tramo del proceso que hoy se coordina de forma manual (papel y de viva voz):
+el tramo del proceso que hoy se coordina de forma manual (se anota en papel y se pasa de palabra):
 
 ```
 Recepción crea el pedido → Cocina lo ve en vivo → Cocina lo prepara y marca "listo" → Recepción entrega
@@ -44,12 +44,14 @@ Regla del módulo: **máximo 2 roles diferenciados**. Decisión:
 
 | Rol | MoSCoW | Funciones | Dispositivo |
 |---|---|---|---|
-| **Recepción** | **Must** | Crea pedidos desde la carta, ve el estado en vivo, marca entregado | Tablet / PC |
-| **Cocina** | **Must** | Ve los pedidos entrantes en vivo (orden de llegada), avanza estado, marca "listo" | Tablet / monitor |
-| **Administrador** | **Should** | Gestiona la carta y consulta el historial del día | Web (PC) |
+| **Recepción** | **Must** | Crea pedidos desde la carta, ve el estado en vivo, cancela antes de "listo", marca entregado, marca un producto agotado | Tablet / PC |
+| **Cocina** | **Must** | Ve los pedidos entrantes en vivo (orden de llegada), avanza estado, marca "listo", marca un producto agotado | Tablet / monitor |
 
-Los **dos roles que se demuestran** son Recepción y Cocina (cumple la regla). El
-administrador es Should have; se construye si el calendario lo permite.
+El sistema tiene **exactamente dos roles**: Recepción y Cocina. El rol de administrador
+—gestión de la carta e historial del día— queda **declarado fuera de alcance** y pasa a
+trabajo futuro: sería un tercer rol diferenciado, por encima del máximo que admite el
+módulo. Lo único que de verdad hacía falta de ese rol, que un producto agotado deje de
+ofrecerse, lo resuelven los dos roles existentes (RF-13).
 
 **Autorización siempre en el servidor**, no solo en la interfaz. La identidad y las
 credenciales las gestiona **Keycloak** (nunca hay tabla propia de usuarios).
@@ -92,10 +94,10 @@ pendiente → en preparación → listo → entregado
 |---|---|---|
 | Frontend web | **Flutter (Dart)** | Interfaz; consume la API por HTTP REST y escucha eventos en tiempo real |
 | Tiempo real | **Socket.IO (WebSockets)** | Propaga cambios de estado a recepción/cocina en vivo (< 2 s) |
-| Identidad y roles | **Keycloak** | Autenticación OIDC/OAuth 2.0; roles recepción/cocina/admin |
+| Identidad y roles | **Keycloak** | Autenticación OIDC/OAuth 2.0; roles recepción y cocina |
 | Backend / API | **Node.js + Express** | API REST, valida tokens de Keycloak (`jwks-rsa`), lógica de negocio, CRUD, servidor Socket.IO |
 | Base de datos | **PostgreSQL** (`pg`) | Persistencia relacional; **única fuente de verdad** |
-| Contenedores | **Docker / Docker Compose** | Entorno reproducible dev = prod |
+| Contenedores | **Docker / Docker Compose** | Mismas imágenes y versiones en dev y en prod, para reducir las diferencias entre entornos |
 | Reverse proxy (prod) | **Caddy** | HTTPS (Let's Encrypt), sirve el Flutter web y expone la API en el mismo origen |
 | Control de versiones | **Git** | Historial progresivo (lo maneja el estudiante a mano) |
 
@@ -167,30 +169,49 @@ Resumen operativo (los Must son exactamente el flujo que se demuestra en la defe
 | RF-05 | Must | Marcar entregado |
 | RF-06 | Must | Ver pedidos entrantes en vivo (cocina) |
 | RF-07 | Must | Actualizar estado del pedido (cocina) |
-| RF-08 | Should | Gestionar la carta (admin) |
+| RF-08 | Should | Cerrar sesión y cambiar de usuario en el mismo dispositivo |
 | RF-09 | Should | Cancelar pedido |
-| RF-10 | Should | Consultar historial del día (admin) |
+| RF-10 | Could | Ver el tiempo de espera de cada pedido en la cola de cocina |
 | RF-11 | Could | Agregar observación al pedido |
 | RF-12 | Could | Ver comprobante del pedido |
+| RF-13 | Should | Marcar un producto como agotado (recepción o cocina) |
 
-Must have = 7/12 (58 %, ≤ 60 %). Los Must son exactamente el flujo que se demuestra en
+Must have = 7/13 (54 %, ≤ 60 %). Los Must son exactamente el flujo que se demuestra en
 la defensa.
+
+**Fuera de alcance (rol administrador).** Gestionar la carta y consultar el historial del
+día exigirían un tercer rol diferenciado, por encima del máximo admitido; se declaran como
+capacidades fuera de alcance y quedan como trabajo futuro. La necesidad concreta que
+justificaba la gestión de la carta —que un producto agotado deje de ofrecerse— se resuelve
+con **RF-13**, que ejecutan los dos roles existentes desde su propia pantalla.
 
 ---
 
 ## 10. API REST (endpoints iniciales)
 
+**La autenticación no es un endpoint de esta API.** Se resuelve por redirección a Keycloak
+con OpenID Connect, flujo *Authorization Code* + PKCE: el usuario escribe sus credenciales en
+Keycloak, la app canja el código por el token y la API solo valida la firma. **El backend
+nunca recibe contraseñas.**
+
+El contrato se publica **versionado**: la versión va en la ruta para que un cambio
+incompatible pueda convivir con la versión anterior mientras el cliente migra.
+
 ```
-POST   /api/auth/login              Autentica vía Keycloak, devuelve token
-GET    /api/productos               Carta disponible
-GET    /api/pedidos                 Pedidos activos (filtro por estado)
-POST   /api/pedidos                 Crea pedido en estado "pendiente"
-PATCH  /api/pedidos/:id/estado      Avanza estado según rol autorizado
-GET    /api/historial               Historial del día (admin)
+GET    /api/v1/productos                      Carta disponible
+POST   /api/v1/pedidos                        Crea pedido en estado "pendiente"
+GET    /api/v1/pedidos                        Pedidos activos (filtro por estado)
+GET    /api/v1/pedidos/:id                    Pedido con sus líneas
+PATCH  /api/v1/pedidos/:id/estado             Avanza estado según rol autorizado
+POST   /api/v1/pedidos/:id/cancelacion        Cancela con motivo (antes de "listo")
+PATCH  /api/v1/productos/:id/disponibilidad   Marca un producto agotado o disponible
+GET    /api/v1/salud                          Estado del servicio
 ```
-Además, canal en tiempo real por **Socket.IO** (p. ej. eventos `pedido:nuevo`,
-`pedido:estado`). Todas las rutas (salvo login) exigen token válido de Keycloak; se
-valida rol y transición en el servidor.
+Además, canal en tiempo real por **Socket.IO** sobre el mismo origen: eventos
+`pedido:nuevo`, `pedido:estado` y `producto:disponibilidad`. Todas las rutas (salvo salud)
+exigen token válido de Keycloak: el servidor valida la firma del token y **los permisos que
+exige cada ruta**, que no son los mismos en todas. Cuando la operación **cambia el estado de
+un pedido**, comprueba además que la transición solicitada sea válida.
 
 ---
 
@@ -230,11 +251,15 @@ Keycloak debe ser la **URL pública** o la API rechaza todos los tokens.
 
 | Inc | Foco | Entrega |
 |---|---|---|
-| **Inc 0** | Repo init + perfil de proyecto (Cap 1, 2.2, 2.3, matriz, ≥5 commits) | **E1 — 19-sep** |
+| **Inc 0** | Repo init + perfil de proyecto (Cap 1, 2.2–2.5, matriz, ≥5 commits) | **E1 — 20-sep** |
 | **Inc 1** | Cimientos: Docker + Keycloak + login por rol | **E2 — 26-sep** |
-| **Inc 2** | CRUD de pedidos + frontend navegable + **primer despliegue público** | **E3 — 3-oct** |
-| **Inc 3** | **Tiempo real (Socket.IO)** + pantalla admin | — |
-| **Inc 4** | Seguridad + pruebas + documento completo | **E4 — 10-oct** |
+| **Inc 2** | CRUD de pedidos + frontend navegable + **primer despliegue público** | **E2 — 26-sep** |
+| **Inc 3** | **Tiempo real (Socket.IO)** + producto agotado (RF-13) + cancelación | **E3 — 3-oct** |
+| **Inc 4** | Seguridad + pruebas con evidencia + documento completo | **E3 — 3-oct / E4 — 10-oct** |
+
+> El módulo exige el **primer despliegue público en la Semana 2**, para E2, aunque el
+> sistema esté incompleto. E3 es el checkpoint técnico: seguridad, pruebas con evidencia y
+> borrador de los capítulos 1 y 2.
 
 **Definición de "hecho" por tarjeta:** funcionalidad demostrable + pruebas e2e en verde
 + validación cliente/servidor + sin secretos en el repo + commit del estudiante.
