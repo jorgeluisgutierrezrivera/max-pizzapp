@@ -33,7 +33,7 @@ siguiente hasta cerrar la actual.
 
 | # | Tarjeta | Entrega | Estado |
 |---|---|---|---|
-| 01 | Esquema de datos y PostgreSQL en contenedor | Persistencia lista y verificada | Propuesto |
+| 01 | Esquema de datos y PostgreSQL en contenedor | Persistencia lista y verificada | **Aprobado** |
 | 02 | Identidad y roles con Keycloak | Realm, cliente y roles recepción y cocina | Por hacer |
 | 03 | API base y validación de token | Express con endpoint de salud y middleware de token | Por hacer |
 | 04 | App Flutter y acceso por rol | Login end-to-end y navegación según rol | Por hacer |
