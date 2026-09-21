@@ -251,7 +251,7 @@ Keycloak debe ser la **URL pública** o la API rechaza todos los tokens.
 
 | Inc | Foco | Entrega |
 |---|---|---|
-| **Inc 0** | Repo init + perfil de proyecto (Cap 1, 2.2–2.5, matriz, ≥5 commits) | **E1 — 20-sep** |
+| **Inc 0** | Repo init + perfil de proyecto (Cap 1, 2.2–2.5, matriz, ≥5 commits) | **E1 — 19-sep** |
 | **Inc 1** | Cimientos: Docker + Keycloak + login por rol | **E2 — 26-sep** |
 | **Inc 2** | CRUD de pedidos + frontend navegable + **primer despliegue público** | **E2 — 26-sep** |
 | **Inc 3** | **Tiempo real (Socket.IO)** + producto agotado (RF-13) + cancelación | **E3 — 3-oct** |
