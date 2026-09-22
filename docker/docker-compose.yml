@@ -18,6 +18,20 @@
 
 name: maxpizzapp
 
+# NOMBRES DE CONTENEDOR: por rol y con el prefijo del proyecto
+#   maxpizzapp-bd | maxpizzapp-auth | maxpizzapp-backend | maxpizzapp-proxy
+# Los nombres de contenedor son unicos en TODO el demonio de Docker, no por
+# proyecto. En la maquina de desarrollo convive el sistema anterior, que ya
+# ocupa maxpizzapp-postgres, maxpizzapp-keycloak y maxpizzapp-api: repetir
+# cualquiera de esos nombres hace fallar el arranque con "name is already in
+# use", y en una captura de pantalla no se distinguiria un sistema del otro.
+#
+# PUERTOS DEL HOST en desarrollo: el sistema anterior ocupa 5432, 3000 y 8081.
+# Cuando un servicio de aqui necesite publicarse, usar 5433 (base), 3001 (API)
+# y 8082 (identidad). El 8080 NO se usa: en Windows cae en un rango reservado
+# por winnat y no se puede publicar (error E-001 de la base de conocimiento).
+# En produccion no se publica ninguno: entra todo por el proxy en 80/443.
+
 # Ajustes comunes que heredaran los servicios con << : *servicio-comun.
 # Las credenciales llegan siempre desde .env (nunca escritas aqui).
 x-servicio-comun: &servicio-comun
@@ -27,7 +41,47 @@ x-servicio-comun: &servicio-comun
   networks:
     - interna
 
-services: {}
+services:
+
+  # --------------------------------------------------------
+  # Base de datos: la unica fuente de verdad del sistema.
+  #
+  # El esquema se aplica solo al CREAR el volumen, leyendo los
+  # scripts de ./postgres/init en orden alfabetico. Volver a
+  # levantar no los reejecuta: para reaplicarlos en desarrollo
+  # hay que recrear la base con "down -v".
+  # --------------------------------------------------------
+  postgres:
+    <<: *servicio-comun
+    image: postgres:17-alpine
+    container_name: maxpizzapp-bd
+
+    volumes:
+      # Datos persistentes: sobreviven a "down" (sin -v).
+      - postgres_datos:/var/lib/postgresql/data
+      # Scripts de inicializacion, montados en SOLO LECTURA:
+      # el contenedor los lee, nunca los modifica.
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+
+    # El puerto NO se publica al host: los contenedores se
+    # alcanzan entre si por la red interna. Descomentar solo
+    # para inspeccionar la base con una herramienta externa
+    # (POSTGRES_PORT se define en .env).
+    # ports:
+    #   - "${POSTGRES_PORT}:5432"
+
+    # Comprobacion de salud: lo que dependa de la base esperara
+    # a que este realmente lista para aceptar conexiones, no
+    # solo a que el contenedor exista.
+    # El doble signo ($$) evita que Compose interpole la
+    # variable: la resuelve el shell dentro del contenedor, asi
+    # el usuario no queda escrito en "docker compose config".
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
 networks:
   # Red privada del proyecto: los contenedores se ven entre si por
