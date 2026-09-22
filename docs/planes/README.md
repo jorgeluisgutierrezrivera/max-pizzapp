@@ -33,17 +33,23 @@ siguiente hasta cerrar la actual.
 
 | # | Tarjeta | Entrega | Estado |
 |---|---|---|---|
-| 01 | Esquema de datos y PostgreSQL en contenedor | Persistencia lista y verificada | **Aprobado** |
-| 02 | Identidad y roles con Keycloak | Realm, cliente y roles recepción y cocina | Por hacer |
+| 01 | Esquema de datos y PostgreSQL en contenedor | Persistencia lista y verificada | **Hecho** — 22-sep |
+| 02 | URL pública con HTTPS, proxy e identidad | Dirección pública con certificado válido y Keycloak con sus dos roles | **Propuesto** |
 | 03 | API base y validación de token | Express con endpoint de salud y middleware de token | Por hacer |
 | 04 | App Flutter y acceso por rol | Login end-to-end y navegación según rol | Por hacer |
 | 05 | Carta y pantalla de recepción | Productos y toma de pedido en pantalla | Por hacer |
 | 06 | Pedidos y cola de cocina | Alta de pedidos, cola y cambios de estado por rol | Por hacer |
 | 07 | Sincronización en tiempo real | Eventos de pedido propagados en vivo a las pantallas | Por hacer |
 | 08 | Disponibilidad de productos y cancelación de pedidos | Marcar un producto agotado (RF-13) y cancelar antes de "listo" (RF-09) | Por hacer |
-| 09 | Despliegue público con HTTPS | Sistema accesible por URL pública | Por hacer |
-| 10 | Endurecimiento de seguridad | Cabeceras, límite de intentos y repaso de validaciones | Por hacer |
-| 11 | Pruebas end-to-end y documentación técnica | Suite en verde y plan de pruebas documentado | Por hacer |
+| 09 | Endurecimiento de seguridad | Cabeceras, límite de intentos y repaso de validaciones | Por hacer |
+| 10 | Pruebas end-to-end y documentación técnica | Suite en verde y plan de pruebas documentado | Por hacer |
 
-Las tarjetas 02 en adelante se detallan al jalarlas: el índice fija el orden, no el
+> **Orden modificado el 22-sep.** La tarjeta 02 era *Identidad y roles con Keycloak* y el
+> despliegue público estaba al final, en la 09. Se fundieron y se adelantaron: la dirección
+> pública y la identidad se levantan **antes** que el backend y las pantallas. El motivo es
+> que la entrega de la semana 2 exige el sistema accesible en una dirección pública, y que
+> los problemas de puertos, certificados y proxy no aparecen en local: aparecen la primera
+> vez que se despliega. Las tarjetas siguientes conservan su contenido y corren un número.
+
+Las tarjetas 03 en adelante se detallan al jalarlas: el índice fija el orden, no el
 contenido definitivo de cada plan.
