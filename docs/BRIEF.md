@@ -172,12 +172,16 @@ Resumen operativo (los Must son exactamente el flujo que se demuestra en la defe
 | RF-08 | Should | Cerrar sesión y cambiar de usuario en el mismo dispositivo |
 | RF-09 | Should | Cancelar pedido |
 | RF-10 | Could | Ver el tiempo de espera de cada pedido en la cola de cocina |
-| RF-11 | Could | Agregar observación al pedido |
+| RF-11 | Should | Agregar observación al pedido |
 | RF-12 | Could | Ver comprobante del pedido |
 | RF-13 | Should | Marcar un producto como agotado (recepción o cocina) |
 
-Must have = 7/13 (54 %, ≤ 60 %). Los Must son exactamente el flujo que se demuestra en
-la defensa.
+Must have = 7/13 (54 %, ≤ 60 %); el reparto completo es 7 Must · 4 Should · 2 Could. Los
+Must son exactamente el flujo que se demuestra en la defensa.
+
+> **RF-11 pasó de *Could* a *Should* el 22-sep**, tras la tutoría T2: la observación del
+> pedido ya estaba en el modelo (`pedido.observacion`), en el caso de uso de registro y en
+> el cuerpo de `POST /api/v1/pedidos`, así que *Could* contradecía al resto del diseño.
 
 **Fuera de alcance (rol administrador).** Gestionar la carta y consultar el historial del
 día exigirían un tercer rol diferenciado, por encima del máximo admitido; se declaran como
@@ -230,10 +234,15 @@ un pedido**, comprueba además que la transición solicitada sea válida.
 
 ## 12. Despliegue
 
-Una VM gratis (**Oracle Cloud Always Free**) corriendo el `docker-compose` (Postgres +
-Keycloak + backend) + **Caddy** (HTTPS) sirviendo el Flutter web en el mismo origen (evita
-CORS; API bajo `/api`, Keycloak en subdominio `auth.`). **Gotcha clave:** el *issuer* de
-Keycloak debe ser la **URL pública** o la API rechaza todos los tokens.
+Un **VPS con Docker** corriendo el `docker-compose` (Postgres + Keycloak + backend) +
+**Caddy** (HTTPS) sirviendo el Flutter web en el mismo origen (evita CORS; API bajo `/api`,
+Keycloak en subdominio `auth.`). **Gotcha clave:** el *issuer* de Keycloak debe ser la **URL
+pública** o la API rechaza todos los tokens.
+
+> El plan inicial era una VM gratuita de Oracle Cloud Always Free. Se cambió el **22-sep**
+> porque el alta depende de una verificación lenta y de cupo ARM, y el primer despliegue
+> público vence el 26-sep. El motivo queda registrado fuera del repositorio, en la bitácora
+> de decisiones del proyecto.
 
 ---
 
