@@ -83,6 +83,74 @@ services:
       retries: 5
       start_period: 30s
 
+  # --------------------------------------------------------
+  # Identidad: el unico lugar donde viven credenciales y roles.
+  #
+  # La aplicacion NO guarda usuarios ni contrasenas: redirige
+  # aqui, y a cambio recibe un token firmado que el servidor
+  # valida contra las claves publicas de este servicio.
+  #
+  # En DESARROLLO corre con "start-dev": sin exigencia de HTTPS
+  # ni de hostname, que es lo que permite construir y probar el
+  # realm en local. En produccion se arranca con "start" y el
+  # hostname publico (ver docker-compose.prod.yml): el emisor de
+  # los tokens debe ser la URL publica o la API los rechaza
+  # todos.
+  #
+  # "--import-realm" lee ./keycloak al arrancar. El realm se
+  # versiona como archivo para que el servidor sea una
+  # importacion y no una configuracion a mano, repetida de
+  # memoria y distinta cada vez.
+  # --------------------------------------------------------
+  keycloak:
+    <<: *servicio-comun
+    image: quay.io/keycloak/keycloak:26.7
+    container_name: maxpizzapp-auth
+    command: ["start-dev", "--import-realm"]
+
+    environment:
+      # Persistencia: base propia dentro del mismo PostgreSQL
+      # (creada por docker/postgres/init/00_bases.sql).
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      # Administrador inicial: solo para configurar. No es un
+      # usuario del sistema ni se usa para iniciar sesion en la
+      # aplicacion.
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      # Habilita /health en el puerto de gestion (9000), que es
+      # lo que consulta la comprobacion de salud de aqui abajo.
+      KC_HEALTH_ENABLED: "true"
+
+    # Sin base de datos lista, Keycloak arranca y muere. Espera a
+    # que PostgreSQL responda de verdad, no solo a que exista.
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    ports:
+      # Consola de administracion en http://localhost:8082 (ver
+      # .env). El 8080 esta reservado por winnat en Windows y el
+      # 8081 lo ocupa el sistema anterior en la maquina de
+      # desarrollo. En produccion no se publica: entra por Caddy.
+      - "${KEYCLOAK_PORT}:8080"
+
+    volumes:
+      # El realm versionado, en solo lectura: el contenedor lo
+      # importa, nunca lo modifica.
+      - ./keycloak:/opt/keycloak/data/import:ro
+
+    # La imagen no trae curl ni wget: se consulta el endpoint de
+    # salud abriendo el socket desde el propio shell.
+    healthcheck:
+      test: ["CMD-SHELL", 'exec 3<>/dev/tcp/127.0.0.1/9000 && echo -e "GET /health/ready HTTP/1.1\r\nhost: localhost\r\nConnection: close\r\n\r\n" >&3 && cat <&3 | grep -q "UP"']
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
+
 networks:
   # Red privada del proyecto: los contenedores se ven entre si por
   # su nombre de servicio y solo se publican al host los puertos
