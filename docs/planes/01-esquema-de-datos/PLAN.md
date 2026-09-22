@@ -5,7 +5,8 @@
 
 - **Tarjeta:** 01 — Esquema de datos y PostgreSQL en contenedor
 - **Incremento:** cimientos (persistencia)
-- **Estado:** 🟢 Aprobado — aprobado el 2026-09-20, sin cambios sobre lo propuesto
+- **Estado:** 🔵 Verificado — pruebas en verde el 2026-09-22; cierra al subir los
+  commits 6P, 6 y 7
 - **Entrada al tablero:** 2026-09-17
 - **Cierre:** —
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
@@ -132,6 +133,8 @@ cocina que mostrar, ni estados que propagar en tiempo real. La base de datos es 
 
 - `docker/postgres/init/01_schema.sql` *(nuevo)*
 - `docker/docker-compose.yml` *(se agrega el servicio `postgres`)*
+- `.env.example` *(puertos de desarrollo 5433 y 3001, para no chocar con el sistema
+  anterior que corre en la misma máquina)*
 
 ---
 
@@ -177,9 +180,13 @@ verificación y el ejercicio del flujo se ejecutan dentro del contenedor.
 
 | Fase | Estado | Fecha | Evidencia de la prueba |
 |---|---|---|---|
-| A — Esquema de datos | ⏳ pendiente | — | — |
-| B — PostgreSQL en el compose | ⏳ pendiente | — | — |
-| C — Pruebas sobre base limpia | ⏳ pendiente | — | — |
+| A — Esquema de datos | ✅ Verificada | 2026-09-22 | Inventario leído del catálogo de la base ya creada: **2** tipos enumerados (`categoria_producto`, `estado_pedido`), **5** tablas (producto 6 columnas, cliente 3, pedido 8, detalle_pedido 6, historial_estado 6), **9** restricciones CHECK, **4** claves foráneas y **11** índices (5 propios + 6 de clave primaria/unicidad) |
+| B — PostgreSQL en el compose | ✅ Verificada | 2026-09-22 | `docker compose up -d` crea la red `maxpizzapp_interna`, el volumen `maxpizzapp_postgres_datos` y el contenedor `maxpizzapp-bd` (`postgres:17-alpine`), que pasa a *healthy*. El registro de inicialización no tiene un solo ERROR |
+| C — Flujo completo de un pedido | ✅ Verificada | 2026-09-22 | Con datos ficticios (`Ana Prueba / 70000001`): alta de 2 productos, 1 cliente y 1 pedido con observación y 2 líneas; recorrido *pendiente → en_preparacion → listo → entregado* con sus **4** filas de historial; la suma de las líneas (160.00) cuadra con el total de la cabecera |
+| D — Lo que la base debe impedir | ✅ Verificada | 2026-09-22 | Rechaza un estado inventado (`en_camino`, tipo enumerado), una línea con cantidad 0 (`detalle_pedido_cantidad_valida`), borrar un producto que figura en un pedido y borrar un cliente con pedidos (ambos `ON DELETE RESTRICT`) |
+| E — Borrado en cascada | ✅ Verificada | 2026-09-22 | Al borrar el pedido, sus 2 líneas y sus 4 filas de historial se van con él (2/4 → 0/0). La verificación corre dentro de una transacción con `ROLLBACK`: la base queda con 0 filas en las cinco tablas |
+| F — Persistencia | ✅ Verificada | 2026-09-22 | Fila insertada, `docker compose down` + `up -d`, y la fila sigue ahí: el volumen sobrevive a la recreación del contenedor. Después se borró |
+| G — Secretos fuera del repositorio | ✅ Verificada | 2026-09-22 | Ni el esquema ni el compose contienen credenciales: llegan del `.env`, que `git check-ignore` confirma ignorado |
 
 ---
 
@@ -189,10 +196,40 @@ verificación y el ejercicio del flujo se ejecutan dentro del contenedor.
 |---|---|---|
 | 2026-09-17 | Versión inicial propuesta | — |
 | 2026-09-20 | **Aprobado sin cambios** | Revisado por el autor; las ocho decisiones de diseño se aceptan tal como están propuestas |
+| 2026-09-20 | Al escribir el esquema se resolvieron cinco diferencias entre este plan y el diccionario de datos del apartado 2.4 | Ver la sección 12; el esquema es la fuente de verdad y el diccionario debe alinearse con él |
+| 2026-09-22 | El contenedor pasa a llamarse **`maxpizzapp-bd`** (era `maxpizzapp-postgres`) y los puertos de desarrollo a 5433 y 3001 | En la máquina de desarrollo sigue corriendo el sistema anterior, que ya ocupa los nombres `maxpizzapp-postgres`, `maxpizzapp-keycloak` y `maxpizzapp-api` y los puertos 5432, 8081 y 3000. Los nombres de contenedor son únicos en todo el demonio de Docker: repetirlos impide arrancar. Ver **D-22** |
 
 ---
 
 ## 11. Cierre
 
-- **Commits que cierran la tarjeta:** —
-- **Fecha de cierre:** —
+- **Commits que cierran la tarjeta:** **6P** (este plan), **6** (`01_schema.sql`) y **7**
+  (servicio `postgres` en el compose y puertos de desarrollo en `.env.example`). Los pasos
+  están escritos en el manual de Git del proyecto; los ejecuta el autor.
+- **Pruebas:** en verde el **2026-09-22** (sección 9). El guión de verificación completo
+  —inventario del esquema, flujo del pedido, restricciones, cascada y limpieza— está
+  descrito en la sección 6 y se ejecuta con `psql` dentro del contenedor.
+- **Fecha de cierre:** 2026-09-22, a la espera de los commits.
+
+---
+
+## 12. Diferencias resueltas contra el diccionario de datos del 2.4
+
+Al escribir el esquema aparecieron cinco puntos donde **este plan y el diccionario de datos
+del apartado 2.4** (Tablas 11 a 11.e del perfil ya entregado) no decían exactamente lo
+mismo. Se resolvieron así, y **el diccionario debe alinearse con esta columna** antes del
+documento final. Ninguna contradice lo entregado: son precisiones o añadidos.
+
+| # | Punto | Plan | Diccionario 2.4 | Resuelto en el esquema | Por qué |
+|---|---|---|---|---|---|
+| 1 | `producto.precio` | "restricción de positivo" | `CHECK (precio >= 0)` | **`>= 0`** | Manda el documento entregado. Un precio cero no rompe nada y evita una discrepancia que habría que explicar |
+| 2 | `detalle_pedido.cantidad` | "entre 1 y 999" | `CHECK (cantidad > 0)` | **`> 0 AND <= 999`** | El tope evita que un error de tecleo registre 9999 pizzas. Cumple lo que dice el diccionario y añade un límite superior |
+| 3 | `producto.creado_en` | "fecha de alta" | no figura | **Se crea** | Estaba en el plan aprobado y permite auditar cuándo entró cada producto a la carta |
+| 4 | Nombres obligatorios | — | "Obligatorio: Sí" | `NOT NULL` **+ `CHECK (btrim(...) <> '')`** | `NOT NULL` no impide la cadena vacía. Sin esto se puede registrar un pedido a nombre de "" |
+| 5 | `pedido.total` | — | obligatorio, sin valor por defecto | `NOT NULL` **`DEFAULT 0`** | La cabecera se inserta antes que sus líneas; sin valor por defecto habría que conocer el total antes de tenerlo |
+
+**Qué hay que tocar en `documento/2.4-diseno-borrador.md`** cuando se actualice para el
+documento final: añadir la fila `creado_en` a la Tabla 11.c, corregir la restricción de
+`cantidad` en la Tabla 11.b, anotar el valor por defecto de `total` en la Tabla 11, y
+mencionar los `CHECK` de no vacío donde corresponda. **La Figura 4 no cambia**: no se añaden
+ni se quitan entidades ni relaciones.
