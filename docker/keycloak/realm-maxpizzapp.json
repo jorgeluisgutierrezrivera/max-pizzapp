@@ -1,0 +1,129 @@
+{
+  "realm": "maxpizzapp",
+  "displayName": "Max Pizzapp",
+  "enabled": true,
+  "sslRequired": "external",
+
+  "registrationAllowed": false,
+  "resetPasswordAllowed": false,
+  "rememberMe": false,
+  "verifyEmail": false,
+  "loginWithEmailAllowed": false,
+  "duplicateEmailsAllowed": false,
+  "editUsernameAllowed": false,
+
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "quickLoginCheckMilliSeconds": 1000,
+  "minimumQuickLoginWaitSeconds": 60,
+
+  "accessTokenLifespan": 3600,
+  "ssoSessionIdleTimeout": 3600,
+  "ssoSessionMaxLifespan": 36000,
+
+  "requiredActions": [
+    {
+      "alias": "VERIFY_PROFILE",
+      "name": "Verify Profile",
+      "providerId": "VERIFY_PROFILE",
+      "enabled": false,
+      "defaultAction": false,
+      "priority": 90,
+      "config": {}
+    }
+  ],
+
+  "roles": {
+    "realm": [
+      {
+        "name": "recepcion",
+        "description": "Atiende el mostrador: registra pedidos, consulta su estado en vivo, cancela antes de listo y marca entregados."
+      },
+      {
+        "name": "cocina",
+        "description": "Prepara los pedidos: ve la cola en vivo y avanza el estado a en preparacion y a listo."
+      }
+    ]
+  },
+
+  "clients": [
+    {
+      "clientId": "frontend-web",
+      "name": "Max Pizzapp (aplicacion web)",
+      "description": "Aplicacion que usan recepcion y cocina. Cliente publico: vive en el navegador y no puede guardar un secreto, asi que usa Authorization Code con PKCE.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false,
+      "frontchannelLogout": true,
+      "redirectUris": [
+        "http://localhost:*",
+        "http://127.0.0.1:*",
+        "https://REEMPLAZAR-POR-EL-DOMINIO/*"
+      ],
+      "webOrigins": [
+        "+"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:*##http://127.0.0.1:*##https://REEMPLAZAR-POR-EL-DOMINIO/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "audiencia-backend-api",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "backend-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    },
+    {
+      "clientId": "backend-api",
+      "name": "Max Pizzapp (API)",
+      "description": "La API no inicia sesiones ni redirige a nadie: solo valida la firma, el emisor, la expiracion y la audiencia de los tokens que le llegan. Por eso no tiene flujos habilitados.",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": false
+    }
+  ],
+
+  "users": [
+    {
+      "username": "recepcion.demo",
+      "firstName": "Recepcion",
+      "lastName": "Demostracion",
+      "enabled": true,
+      "emailVerified": false,
+      "credentials": [],
+      "realmRoles": [
+        "recepcion"
+      ]
+    },
+    {
+      "username": "cocina.demo",
+      "firstName": "Cocina",
+      "lastName": "Demostracion",
+      "enabled": true,
+      "emailVerified": false,
+      "credentials": [],
+      "realmRoles": [
+        "cocina"
+      ]
+    }
+  ]
+}
