@@ -5,7 +5,7 @@
 
 - **Tarjeta:** 02 — URL pública con HTTPS, proxy e identidad
 - **Incremento:** cimientos (infraestructura e identidad)
-- **Estado:** 🟠 Propuesto — esperando aprobación
+- **Estado:** 🟢 Aprobado — aprobado el 2026-09-22, sin cambios sobre lo propuesto
 - **Entrada al tablero:** 2026-09-22
 - **Cierre:** —
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
@@ -121,15 +121,21 @@ funcionalidad encima cada día no tiene ese riesgo.
 - [ ] Cabeceras del proxy hacia Keycloak para que sepa que está detrás de HTTPS.
 - [ ] Certificado emitido y candado válido en el navegador.
 
-### Fase D — Identidad
-- [ ] En local: *realm* del proyecto, cliente de la aplicación (público, PKCE), cliente de
+### Fase D — Identidad *(local: hecha el 22-sep)*
+- [x] En local: *realm* del proyecto, cliente de la aplicación (público, PKCE), cliente de
       la API, **roles recepción y cocina**, y un usuario de prueba por rol con datos
       ficticios.
-- [ ] Exportar el *realm* a `docker/keycloak/realm-maxpizzapp.json` y versionarlo.
+- [x] *Realm* versionado en `docker/keycloak/realm-maxpizzapp.json`. Se escribió a mano en
+      lugar de exportarlo de la consola: un *export* en bruto arrastra cientos de líneas de
+      configuración por defecto que nadie puede revisar ni defender.
 - [ ] En el servidor: Keycloak en modo producción con el *hostname* público, importando ese
       archivo al arrancar.
-- [ ] Comprobar el emisor y las claves públicas en el documento de descubrimiento del
+- [x] Comprobar el emisor y las claves públicas en el documento de descubrimiento del
       *realm*, que es lo que la API usará para validar tokens.
+- [x] Prueba de acceso de punta a punta con PKCE, versionada en
+      `pruebas/identidad/probar_acceso_pkce.py`.
+- [ ] Reemplazar `REEMPLAZAR-POR-EL-DOMINIO` en el *realm* por el dominio real, **antes** de
+      importarlo en el servidor.
 
 ### Fase E — Reproducibilidad
 - [ ] `docker/docker-compose.prod.yml` versionado, con Caddy, Keycloak y Postgres.
@@ -141,7 +147,11 @@ funcionalidad encima cada día no tiene ese riesgo.
 
 - `docker/caddy/Caddyfile` *(nuevo)*
 - `docker/caddy/sitio/index.html` *(nuevo — la página de cortesía)*
-- `docker/keycloak/realm-maxpizzapp.json` *(nuevo — el realm exportado)*
+- `docker/keycloak/realm-maxpizzapp.json` *(nuevo — la configuración de identidad)*
+- `docker/keycloak/README.md` *(nuevo — qué define el realm y cómo se establecen las
+  contraseñas, que no están en el repositorio)*
+- `docker/postgres/init/00_bases.sql` *(nuevo — la base de datos propia de Keycloak)*
+- `pruebas/identidad/probar_acceso_pkce.py` *(nuevo — la prueba del flujo de acceso)*
 - `docker/docker-compose.prod.yml` *(nuevo)*
 - `docker/docker-compose.yml` *(se agrega el servicio de Keycloak para desarrollo)*
 - `.env.example` *(variables de dominio y de identidad, sin valores)*
@@ -198,7 +208,9 @@ el sistema es público—, con el navegador y con la terminal:
 | A — El servidor | ⏳ Pendiente | — | Bloqueada: falta confirmar el VPS |
 | B — Los nombres de dominio | ⏳ Pendiente | — | — |
 | C — Proxy y HTTPS | ⏳ Pendiente | — | — |
-| D — Identidad | ⏳ Pendiente | — | La fase local (construir y exportar el *realm*) **no depende del VPS** y puede adelantarse |
+| D — Identidad (local) | ✅ Verificada | 2026-09-22 | Keycloak **26.7.4** levanta contra su propia base en PostgreSQL e **importa el realm** al arrancar. El documento de descubrimiento publica el emisor y **2 claves** (firma RS256 y cifrado); el realm queda con los **2 roles**, los **2 clientes** —`frontend-web` público con PKCE, `backend-api` sin flujos— y las **2 cuentas** de demostración |
+| D — Prueba de acceso | ✅ Verificada | 2026-09-22 | `pruebas/identidad/probar_acceso_pkce.py` recorre el flujo real —pantalla de acceso, credenciales, canje del código con el verificador PKCE— para las dos cuentas. Cada token llega **con su rol y solo el suyo**, con `backend-api` en la audiencia y **60 minutos** de vigencia, que es lo que declara el RNF-02 |
+| D — Identidad (servidor) | ⏳ Pendiente | — | Bloqueada: falta el VPS. Es una importación del mismo archivo, con el *hostname* público |
 | E — Reproducibilidad | ⏳ Pendiente | — | — |
 
 ---
@@ -208,6 +220,10 @@ el sistema es público—, con el navegador y con la terminal:
 | Fecha | Cambio | Motivo |
 |---|---|---|
 | 2026-09-22 | Versión inicial propuesta | Reordenación de D-21: el despliegue público se adelanta y pasa a ser la tarjeta siguiente al esquema de datos, en lugar de ir al final del incremento |
+| 2026-09-22 | **Aprobado sin cambios** | Revisado por el autor. Se empieza por la **fase D en local** —construir y exportar el *realm*—, que es la única que no depende de que el VPS esté disponible |
+| 2026-09-22 | Se añade `docker/postgres/init/00_bases.sql` a los archivos de la tarjeta | Keycloak necesita su propia base de datos. Se le da una base aparte dentro del mismo PostgreSQL, en vez de un segundo motor: es una pieza menos que mantener y una menos que consume memoria en el servidor, que es el recurso escaso (lo advirtió la tutoría T2) |
+| 2026-09-22 | El realm desactiva la acción requerida *Verify Profile* | Sin ella, la primera vez que entra una cuenta Keycloak le exige completar el perfil con un correo. Son cuentas **operativas del local**, no personales: no hay correo que verificar, y en una tableta de cocina ese formulario es fricción sin contrapartida |
+| 2026-09-22 | El realm se escribe a mano en vez de exportarlo de la consola | Un *export* en bruto trae cientos de líneas de configuración por defecto. El archivo escrito a mano se lee, se revisa y se puede defender línea por línea |
 
 ---
 
