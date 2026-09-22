@@ -24,6 +24,14 @@ Caddyfile   text eol=lf
 .gitattributes text eol=lf
 
 # --- Binarios: Git no debe tocarlos ---
+# Los documentos de Office son ZIP por dentro: si Git los toma por texto y les
+# normaliza los saltos de linea, el archivo queda corrupto al descargarlo. Es
+# el perfil que el tribunal baja desde /docs, asi que no puede quedar al azar
+# de la deteccion automatica de "* text=auto".
+*.docx      binary
+*.xlsx      binary
+*.pptx      binary
+*.zip       binary
 *.png       binary
 *.jpg       binary
 *.jpeg      binary
