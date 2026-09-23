@@ -271,7 +271,34 @@ Si aparece 5432 u 8080, algún servicio publicó un puerto que no debía.
 El inicio de sesión de punta a punta se prueba ejecutando en el servidor
 `KEYCLOAK_URL=https://auth.maxpizzapp.tech python3 pruebas/identidad/probar_acceso_pkce.py`.
 
-### 6. Actualizar
+### 6. Publicar la app
+
+La app Flutter **no se compila en el servidor**, que tiene 1 vCPU y la compilación pide más
+que todo el sistema en marcha. Se compila en la máquina de desarrollo y se publica con un
+comando, desde la raíz del repositorio (Git Bash en Windows):
+
+```bash
+bash scripts/publicar-web.sh root@IP-DEL-SERVIDOR
+```
+
+El script compila en modo *release*, copia el build a una carpeta nueva del servidor,
+`/opt/maxpizzapp-web/versiones/<fecha-hora>`, y recién cuando la copia terminó mueve el
+enlace `actual` hacia ella. Caddy sirve siempre lo que apunta `actual`, así que el cambio es
+instantáneo y nadie ve una versión a medias. Se conservan las tres últimas versiones.
+
+Para **volver a la versión anterior**, en el servidor:
+
+```bash
+cd /opt/maxpizzapp-web && ls versiones
+ln -sfn versiones/<version-anterior> actual.nuevo && mv -T actual.nuevo actual
+```
+
+El build **no se versiona**: se genera desde el código. Mientras no haya ninguna versión
+publicada, Caddy sirve la página de cortesía del repositorio. Los archivos de la app se
+envían con `Cache-Control: no-cache`, así que después de publicar el navegador revalida y
+recibe la versión nueva sin que haga falta borrar la caché.
+
+### 7. Actualizar
 
 ```bash
 cd /opt/maxpizzapp

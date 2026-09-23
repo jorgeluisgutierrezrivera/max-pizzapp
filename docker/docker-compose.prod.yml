@@ -194,7 +194,14 @@ services:
 
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Pagina de cortesia: se sirve solo mientras no haya una
+      # version de la app publicada.
       - ./caddy/sitio:/srv/sitio:ro
+      # La app Flutter compilada, FUERA del repositorio: el build se
+      # genera, no se versiona. scripts/publicar-web.sh deja aqui una
+      # carpeta por version y el enlace "actual". Si la carpeta no
+      # existe, Docker la crea vacia y Caddy sigue con la cortesia.
+      - ${WEB_DIR:-/opt/maxpizzapp-web}:/srv/web:ro
       # CRITICO: aqui viven los certificados y las claves de la
       # cuenta de Let's Encrypt. Si este volumen se pierde, Caddy
       # vuelve a pedir certificados desde cero en cada despliegue y

@@ -1,7 +1,7 @@
 # ============================================================
 # Max Pizzapp — .gitattributes
 # Normaliza los saltos de línea. Se desarrolla en Windows pero
-# se despliega en Linux (Oracle Cloud + Caddy): los archivos que
+# se despliega en Linux (VPS con Docker + Caddy): los archivos que
 # el servidor ejecuta o interpreta DEBEN llegar con LF, no CRLF.
 # ============================================================
 

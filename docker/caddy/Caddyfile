@@ -73,15 +73,39 @@
 		reverse_proxy backend:3000
 	}
 
-	# Todo lo demas: la aplicacion. Por ahora la pagina de cortesia;
-	# en la tarjeta 04 el mismo directorio recibe el Flutter
-	# compilado. "try_files" deja la puerta lista para una
-	# aplicacion de una sola pagina, que resuelve sus rutas en el
-	# cliente.
+	# Todo lo demas: la aplicacion Flutter.
+	#
+	# /srv/web tiene una carpeta por version publicada y un enlace
+	# "actual" que apunta a la vigente (scripts/publicar-web.sh). Se
+	# publica cambiando el enlace, que es instantaneo: nadie ve una
+	# version a medias, y volver a la anterior es mover el enlace.
+	#
+	# Si todavia no se publico nada, se sirve la pagina de cortesia
+	# del repositorio: el sitio nunca queda en blanco.
 	handle {
-		root * /srv/sitio
-		try_files {path} /index.html
-		file_server
+		@hayApp file {
+			root /srv/web/actual
+			try_files /index.html
+		}
+
+		handle @hayApp {
+			root * /srv/web/actual
+			# Revalidar siempre: Flutter no pone la version en el nombre
+			# de sus archivos (main.dart.js es siempre main.dart.js), asi
+			# que sin esto el navegador podria seguir con la version
+			# anterior despues de publicar. "no-cache" no es "no-store":
+			# si el archivo no cambio, Caddy responde 304 sin reenviarlo.
+			header Cache-Control "no-cache"
+			# Una sola pagina: las rutas se resuelven en el cliente.
+			try_files {path} /index.html
+			file_server
+		}
+
+		handle {
+			root * /srv/sitio
+			try_files {path} /index.html
+			file_server
+		}
 	}
 }
 

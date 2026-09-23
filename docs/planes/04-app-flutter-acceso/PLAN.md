@@ -184,11 +184,11 @@ salir. Las pantallas reales llegan con las tarjetas 05 y 06.
       y el de un origen ajeno sigue en 403.
 
 ### Fase E — La publicación
-- [ ] `scripts/publicar-web.sh`: compila en modo *release*, copia a una carpeta nueva del
-      servidor y la intercambia con la anterior.
-- [ ] Caddy sirve `/opt/maxpizzapp-web`, con la página de cortesía como respaldo.
-- [ ] Encabezados sin caché para los archivos de arranque.
-- [ ] Procedimiento en el README.
+- [x] `scripts/publicar-web.sh`: compila en modo *release*, copia a una carpeta nueva del
+      servidor y mueve el enlace `actual` hacia ella (ver revisión del 23-sep).
+- [x] Caddy sirve `/opt/maxpizzapp-web/actual`, con la página de cortesía como respaldo.
+- [x] Encabezados de revalidación para los archivos de la app (ver revisión del 23-sep).
+- [x] Procedimiento en el README, con la vuelta a la versión anterior.
 
 ### Fase F — Pruebas
 - [ ] `flutter test`: el vector de prueba del RFC 7636, la deducción de la dirección de
@@ -282,6 +282,8 @@ comprobar lo que no se ve a simple vista.
 |---|---|---|
 | 2026-09-23 | Versión inicial propuesta | Primera pieza visible del sistema y la que más riesgo tiene al desplegar. Va antes que el CRUD, como fija la plenaria P3 |
 | 2026-09-23 | **Aprobado** | Revisado por el autor, con la decisión 8 ya en su versión local |
+| 2026-09-23 | Decisión 9, **cómo se intercambia la versión:** ya no se renombra una carpeta, sino que se mueve un **enlace `actual`** dentro de una carpeta fija (`/opt/maxpizzapp-web/versiones/<fecha-hora>` y `actual` → la vigente) | Docker monta la carpeta que existía al arrancar el contenedor: si el script la reemplazara por otra, Caddy seguiría sirviendo la vieja sin avisar. Con el enlace, el montaje no cambia y el intercambio sigue siendo instantáneo. De paso, **volver a la versión anterior es mover el enlace** |
+| 2026-09-23 | Decisión 10, **qué archivos se revalidan:** todos los de la app, no solo los de arranque | Revisado el build: `main.dart.js` se llama siempre igual, sin versión en el nombre, así que el navegador no puede saber que cambió. `no-cache` obliga a preguntar; si no cambió, Caddy responde 304 sin reenviarlo. El *service worker* que genera Flutter se da de baja solo y no guarda nada |
 | 2026-09-23 | Se agrega al alcance: **la pantalla de acceso de Keycloak en español** (`internationalizationEnabled`, `supportedLocales: ["es"]`, `defaultLocale: "es"`), en el archivo del realm y con `kcadm` en los dos Keycloak. Comprobado en producción: *"Acceder a tu cuenta"*, *"Usuario"*, *"Contraseña"*, `lang="es"` | Pedido del autor al ver la pantalla en inglés. Son tres líneas del realm. **El tema visual con la estética del local queda fuera** de esta tarjeta: va como tarjeta 11, después del E2, para no quitarle horas al CRUD |
 | 2026-09-23 | Decisión 8: se desarrolla contra el entorno **local**, no contra producción | Docker Desktop volvió a funcionar. El entorno local completo pasó sus pruebas (acceso PKCE correcto y 12/12 en la API con tokens reales), así que ningún dato de desarrollo toca producción. El cambio del realm sigue haciendo falta: el Keycloak local también rechaza `localhost:8090` |
 
