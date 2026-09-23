@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
+import 'api/cliente_api.dart';
+import 'api/usuario.dart';
 import 'autenticacion/navegador_web.dart';
 import 'autenticacion/servicio_sesion.dart';
 import 'configuracion.dart';
 import 'pantallas/pantalla_acceso.dart';
 import 'pantallas/pantalla_cargando.dart';
-import 'pantallas/pantalla_sesion_iniciada.dart';
+import 'pantallas/segun_rol.dart';
 import 'tema.dart';
 
 /// En desarrollo: flutter run --dart-define=KEYCLOAK_URL=http://localhost:8082
@@ -26,7 +28,12 @@ void main() {
   }
 
   final sesion = ServicioSesion(configuracion: configuracion, navegador: navegador);
-  runApp(_App(inicio: _SegunSesion(sesion: sesion)));
+  final api = ClienteApi(
+    base: configuracion.origen.replace(path: Configuracion.rutaApi),
+    token: () => sesion.tokenAcceso,
+    renovar: sesion.renovar,
+  );
+  runApp(_App(inicio: _SegunSesion(sesion: sesion, api: api)));
   sesion.arrancar();
 }
 
@@ -49,9 +56,10 @@ class _App extends StatelessWidget {
 
 /// Muestra la pantalla que corresponde al estado de la sesion.
 class _SegunSesion extends StatelessWidget {
-  const _SegunSesion({required this.sesion});
+  const _SegunSesion({required this.sesion, required this.api});
 
   final ServicioSesion sesion;
+  final ClienteApi api;
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +69,10 @@ class _SegunSesion extends StatelessWidget {
         EstadoSesion.iniciando => const PantallaCargando(),
         EstadoSesion.sinSesion =>
           PantallaAcceso(alIniciarSesion: sesion.iniciarSesion, mensaje: sesion.mensaje),
-        EstadoSesion.conSesion => PantallaSesionIniciada(alCerrarSesion: sesion.cerrarSesion),
+        EstadoSesion.conSesion => PantallaSegunRol(
+            cargarUsuario: () async => Usuario.desdeJson(await api.obtener('/sesion')),
+            alCerrarSesion: sesion.cerrarSesion,
+          ),
       },
     );
   }

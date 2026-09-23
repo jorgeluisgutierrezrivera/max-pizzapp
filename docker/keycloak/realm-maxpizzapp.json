@@ -1,6 +1,9 @@
 {
   "realm": "maxpizzapp",
   "displayName": "Max Pizzapp",
+  "internationalizationEnabled": true,
+  "supportedLocales": ["es"],
+  "defaultLocale": "es",
   "enabled": true,
   "sslRequired": "external",
 

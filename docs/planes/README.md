@@ -43,6 +43,7 @@ siguiente hasta cerrar la actual.
 | 08 | Disponibilidad de productos y cancelación de pedidos | Marcar un producto agotado (RF-13) y cancelar antes de "listo" (RF-09) | Por hacer |
 | 09 | Endurecimiento de seguridad | Cabeceras, límite de intentos y repaso de validaciones | Por hacer |
 | 10 | Pruebas end-to-end y documentación técnica | Suite en verde y plan de pruebas documentado | Por hacer |
+| 11 | Identidad visual del acceso | Tema de Keycloak con la estética de la app y del local (colores, tipografía, marca), solo con estilos | Por hacer — después del E2 |
 
 > **Orden modificado el 22-sep.** La tarjeta 02 era *Identidad y roles con Keycloak* y el
 > despliegue público estaba al final, en la 09. Se fundieron y se adelantaron: la dirección
