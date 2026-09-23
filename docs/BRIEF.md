@@ -83,6 +83,8 @@ pendiente → en preparación → listo → entregado
 - **Fuera de alcance (Won't have, trabajo futuro):**
   - Módulo de **despacho** como rol independiente.
   - **Control de caja y ventas** (cobros, arqueo, reportes de venta).
+  - **Promociones y combos con condiciones** (descuentos por día u horario, 2×1,
+    porcentajes). Un combo de precio fijo puede cargarse después como un producto más.
   - **Operación multi-sede** (sucursales Villa Avaroa y Tabladita).
   - Logística propia de delivery; integración con WhatsApp/redes; pago por QR dinámico.
 
