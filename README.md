@@ -54,9 +54,28 @@ Versiones tomadas del entorno de desarrollo real. Las imágenes se fijan por ver
 Las versiones exactas de PostgreSQL, Keycloak y Caddy se leyeron de los contenedores en
 ejecución en el servidor.
 
-Las versiones de las librerías (Express, Socket.IO, `pg`, `jwks-rsa`, paquetes de Flutter)
-quedan fijadas en `backend/package.json` y `frontend/pubspec.yaml` al crearse cada
-componente.
+Librerías del backend, fijadas sin rangos en `backend/package.json` y con
+`package-lock.json`, que es lo que `npm ci` instala en el servidor:
+
+| Librería | Versión | Para qué |
+|---|---|---|
+| Express | 5.2.1 | Servidor HTTP y rutas |
+| pg | 8.23.0 | Acceso a PostgreSQL con consultas parametrizadas |
+| jsonwebtoken | 9.0.3 | Verificación de la firma y de los datos del token |
+| jwks-rsa | 4.1.0 | Lectura y caché de las claves públicas de Keycloak |
+
+Socket.IO y los paquetes de Flutter se fijan del mismo modo cuando entren sus tarjetas.
+
+## Pruebas
+
+```bash
+cd backend && npm test            # 16 pruebas del acceso, sin base ni Keycloak reales
+python pruebas/identidad/probar_acceso_pkce.py   # inicio de sesión real con PKCE
+python pruebas/api/probar_salud_y_token.py       # la API con tokens reales del realm
+```
+
+Las dos pruebas de `pruebas/` aceptan `KEYCLOAK_URL` y `API_URL` para ejecutarse contra el
+despliegue público.
 
 ## Metodología
 

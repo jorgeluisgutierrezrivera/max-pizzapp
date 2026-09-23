@@ -5,7 +5,8 @@
 
 - **Tarjeta:** 03 — API base: estado del servicio y validación de token
 - **Incremento:** cimientos (servidor de aplicación)
-- **Estado:** 🟢 Aprobado — aprobado el 2026-09-23, con los dos ajustes de la sección 10
+- **Estado:** 🔵 Verificado — pruebas en verde el 2026-09-23 y desplegada en
+  `https://maxpizzapp.tech/api/v1`; cierra con el alta del monitor del RNF-05 y el commit 12b
 - **Entrada al tablero:** 2026-09-22
 - **Cierre:** —
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
@@ -105,37 +106,37 @@ servidor puede impedirlo**, y esta tarjeta es donde eso se construye.
 ## 4. Fases y checklist
 
 ### Fase A — El esqueleto
-- [ ] `package.json` con dependencias y **versiones exactas**, nunca `latest`; anotarlas en
+- [x] `package.json` con dependencias y **versiones exactas**, nunca `latest`; anotarlas en
       la tabla de versiones del README.
-- [ ] Estructura por responsabilidad: configuración, acceso a datos, middleware, rutas.
-- [ ] Toda la configuración desde el entorno, con **fallo al arrancar** si falta una
+- [x] Estructura por responsabilidad: configuración, acceso a datos, middleware, rutas.
+- [x] Toda la configuración desde el entorno, con **fallo al arrancar** si falta una
       variable obligatoria. Es preferible no arrancar a arrancar mal.
-- [ ] Apagado ordenado del servidor y del pool.
+- [x] Apagado ordenado del servidor y del pool.
 
 ### Fase B — Estado del servicio
-- [ ] Pool de conexiones a PostgreSQL.
-- [ ] `GET /api/v1/salud`: consulta trivial a la base; **200** con el estado, **503** si no
+- [x] Pool de conexiones a PostgreSQL.
+- [x] `GET /api/v1/salud`: consulta trivial a la base; **200** con el estado, **503** si no
       responde. Sin datos internos en la respuesta.
 
 ### Fase C — Identidad
-- [ ] Middleware que valida firma, emisor, expiración y audiencia contra el JWKS del realm.
-- [ ] Del token se extraen identificador (`sub`), nombre y roles.
-- [ ] Comprobador de rol reutilizable por ruta.
-- [ ] **401** token ausente, expirado o inválido · **403** rol sin permiso.
+- [x] Middleware que valida firma, emisor, expiración y audiencia contra el JWKS del realm.
+- [x] Del token se extraen identificador (`sub`), nombre y roles.
+- [x] Comprobador de rol reutilizable por ruta.
+- [x] **401** token ausente, expirado o inválido · **403** rol sin permiso.
 
 ### Fase D — Errores y entradas
-- [ ] Manejador central con los códigos de la Tabla 12: 400, 401, 403, 404, 409, 503.
-- [ ] Forma única de respuesta de error, sin trazas.
-- [ ] Rutas inexistentes: 404 con la misma forma, no la página de Express.
+- [x] Manejador central con los códigos de la Tabla 12: 400, 401, 403, 404, 409, 503.
+- [x] Forma única de respuesta de error, sin trazas.
+- [x] Rutas inexistentes: 404 con la misma forma, no la página de Express.
 
 ### Fase E — El contenedor
-- [ ] `Dockerfile` sobre la imagen de Node fijada, ejecutando como **usuario sin
+- [x] `Dockerfile` sobre la imagen de Node fijada, ejecutando como **usuario sin
       privilegios**.
-- [ ] Servicio `backend` en el compose, esperando a que la base esté sana.
-- [ ] Comprobación de salud del contenedor apuntando a la ruta de salud.
+- [x] Servicio `backend` en el compose, esperando a que la base esté sana.
+- [x] Comprobación de salud del contenedor apuntando a la ruta de salud.
 
 ### Fase F — Pruebas
-- [ ] Script versionado en `pruebas/api/` que obtiene tokens **reales** del realm y
+- [x] Script versionado en `pruebas/api/` que obtiene tokens **reales** del realm y
       comprueba las seis situaciones de la sección 7.
 
 ---
@@ -204,12 +205,12 @@ partida.
 
 | Fase | Estado | Fecha | Evidencia de la prueba |
 |---|---|---|---|
-| A — El esqueleto | ⏳ Pendiente | — | — |
-| B — Estado del servicio | ⏳ Pendiente | — | — |
-| C — Identidad | ⏳ Pendiente | — | — |
-| D — Errores y entradas | ⏳ Pendiente | — | — |
-| E — El contenedor | ⏳ Pendiente | — | — |
-| F — Pruebas | ⏳ Pendiente | — | — |
+| A — El esqueleto | ✅ Verificada | 2026-09-23 | Express **5.2.1**, `pg` **8.23.0**, `jsonwebtoken` **9.0.3**, `jwks-rsa` **4.1.0**, fijadas sin `^` y con `package-lock.json`. Estructura: `config`, `errores`, `autenticacion`, `app` (construible sin base ni Keycloak reales, para las pruebas) e `index` (arranque y apagado). Sin `POSTGRES_*` o `KEYCLOAK_ISSUER`, el proceso **no arranca** |
+| B — Estado del servicio | ✅ Verificada | 2026-09-23 | `GET /api/v1/salud` → **200** `{"estado":"ok","baseDeDatos":"ok"}` desde Internet. **Base detenida de verdad** (`docker stop maxpizzapp-bd`): **503** `{"estado":"degradado","baseDeDatos":"sin respuesta"}`, con el motivo técnico solo en el registro. Base arrancada de nuevo: **200** sin reiniciar el backend, porque el pool reconecta solo |
+| C — Identidad | ✅ Verificada | 2026-09-23 | Validación local contra el JWKS del realm leído por la red interna (clave RS256), con **firma, emisor, vigencia y audiencia**, solo `RS256`. En producción, con tokens reales: las dos cuentas → 200 y el servidor reconoce su rol y su usuario; firma manipulada → 401 `TOKEN_INVALIDO` |
+| D — Errores y entradas | ✅ Verificada | 2026-09-23 | Forma única `{"error":{"codigo","mensaje"}}` en 400, 401, 403, 404, 500 y 503. 404 propio en vez de la página de Express; JSON mal formado → 400, no 500; sin `X-Powered-By`. El 409 lo usarán las rutas del negocio, con el mismo manejador |
+| E — El contenedor | ✅ Verificada | 2026-09-23 | `node:24-alpine`, `npm ci --omit=dev`, proceso como usuario **`node`**, no root. Comprobación de salud contra `/api/v1/salud`: **healthy a los 15 s** en el servidor. En producción, el 3000 **no se publica**: está cerrado desde fuera y solo se llega por Caddy |
+| F — Pruebas | ✅ Verificada | 2026-09-23 | `npm test`: **16/16** con un emisor local que fabrica tokens expirados, de otra audiencia, de otro emisor, con clave ajena y con `alg: none`, más los 403 por rol. **Prueba de mutación:** al quitar la comprobación de emisor y de audiencia fallan exactamente esas dos pruebas. `pruebas/api/probar_salud_y_token.py` contra `https://maxpizzapp.tech` con tokens reales: **12/12** |
 
 ---
 
@@ -227,5 +228,18 @@ partida.
 
 ## 11. Cierre
 
-- **Commits que cierran la tarjeta:** —
-- **Fecha de cierre:** —
+- **Commits que cierran la tarjeta:** **10A** (aprobación del plan con sus dos ajustes),
+  **10** (la API y sus 16 pruebas), **11** (el backend en los dos compose), **12** (la prueba
+  con tokens reales) y **12b** (esta evidencia). Los pasos están en el manual de Git del
+  proyecto; los ejecuta el autor.
+- **Criterios de aceptación (sección 7):** los siete cumplidos. 200/503 comprobado apagando la
+  base de verdad; las situaciones de acceso responden el código de la Tabla 12; ningún token
+  pasa con la firma, el emisor, la vigencia o la audiencia equivocados; ninguna concatenación
+  en SQL (la única consulta es `SELECT 1`, y el patrón queda fijado para las siguientes);
+  ningún secreto ni URL de producción en el código; el contenedor llega a *healthy*; ningún
+  error filtra trazas.
+- **Queda abierto:** el **monitor de disponibilidad** del RNF-05 sobre
+  `https://maxpizzapp.tech/api/v1/salud`, cada 5 minutos. Lo da de alta el autor, porque
+  requiere crear una cuenta en un servicio externo. **Anotar aquí la fecha y hora de inicio**:
+  el 2.8 tiene que declarar el periodo realmente medido.
+- **Fecha de cierre:** —, al dar de alta el monitor.
