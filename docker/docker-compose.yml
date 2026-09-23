@@ -151,6 +151,38 @@ services:
       retries: 10
       start_period: 90s
 
+  # --------------------------------------------------------
+  # API: Node + Express.
+  #
+  # Valida los tokens en local contra las claves publicas de
+  # Keycloak, que lee por la red interna (keycloak:8080). El
+  # emisor esperado es la direccion desde la que el NAVEGADOR
+  # pide el token: en desarrollo, http://localhost:<puerto>.
+  # --------------------------------------------------------
+  backend:
+    <<: *servicio-comun
+    build: ../backend
+    container_name: maxpizzapp-backend
+    environment:
+      KEYCLOAK_ISSUER: http://localhost:${KEYCLOAK_PORT}/realms/${KEYCLOAK_REALM}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    ports:
+      # API en http://localhost:3001 (el 3000 lo ocupa el sistema
+      # anterior en la maquina de desarrollo).
+      - "${API_PORT}:3000"
+    # La imagen de Node trae node, pero no curl: se consulta la ruta
+    # de salud con fetch desde el propio proceso.
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/v1/salud').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
 networks:
   # Red privada del proyecto: los contenedores se ven entre si por
   # su nombre de servicio y solo se publican al host los puertos

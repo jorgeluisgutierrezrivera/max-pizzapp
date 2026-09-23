@@ -33,9 +33,9 @@
 #      interna de Docker.
 #
 # COMPROBACION OBLIGATORIA DESPUES DEL PRIMER "up"
-#   ss -tlnp | grep -E ':80|:443|:5432|:8080'
-#   Solo deben aparecer 80 y 443. Si aparece 5432 u 8080, algo
-#   publico un puerto que no debia.
+#   ss -tlnp | grep -E ':80|:443|:3000|:5432|:8080'
+#   Solo deben aparecer 80 y 443. Si aparece 3000, 5432 u 8080,
+#   algo publico un puerto que no debia.
 # ==========================================================
 
 name: maxpizzapp
@@ -143,6 +143,32 @@ services:
       timeout: 5s
       retries: 10
       start_period: 120s
+
+  # --------------------------------------------------------
+  # API: Node + Express. Sin puertos publicados: se llega a ella
+  # solo a traves de Caddy, en https://<dominio>/api/*.
+  #
+  # KEYCLOAK_ISSUER es la URL PUBLICA, porque ese es el "iss" que
+  # Keycloak escribe en los tokens (KC_HOSTNAME). Las claves
+  # publicas, en cambio, se leen por la red interna.
+  # --------------------------------------------------------
+  backend:
+    <<: *servicio-comun
+    build: ../backend
+    container_name: maxpizzapp-backend
+    environment:
+      KEYCLOAK_ISSUER: https://auth.${DOMINIO}/realms/${KEYCLOAK_REALM}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/api/v1/salud').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
 
   # --------------------------------------------------------
   # Proxy inverso y HTTPS: la unica pieza expuesta a Internet.
