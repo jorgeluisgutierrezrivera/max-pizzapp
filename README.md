@@ -44,11 +44,15 @@ Versiones tomadas del entorno de desarrollo real. Las imágenes se fijan por ver
 | npm | 11.12.1 | incluido en la imagen de Node |
 | Flutter | 3.44.8 (stable) | SDK local; se declara en `frontend/pubspec.yaml` |
 | Dart | 3.12.2 | incluido en el SDK de Flutter |
-| PostgreSQL | 17 | imagen `postgres:17-alpine` |
-| Keycloak | 26.7 | imagen `quay.io/keycloak/keycloak:26.7` |
-| Caddy | 2 | imagen `caddy:2-alpine` |
-| Docker Engine | 29.7.2 | entorno de desarrollo |
-| Docker Compose | v5.3.1 | entorno de desarrollo |
+| PostgreSQL | 17.11 | imagen `postgres:17-alpine` |
+| Keycloak | 26.7.4 | imagen `quay.io/keycloak/keycloak:26.7` |
+| Caddy | 2.11.4 | imagen `caddy:2-alpine` |
+| Docker Engine | 29.7.2 (desarrollo) · 29.8.1 (servidor) | instalación del sistema |
+| Docker Compose | v5.3.1 (desarrollo) · v5.5.1 (servidor) | instalación del sistema |
+| Sistema del servidor | Ubuntu 24.04.5 LTS | imagen del proveedor |
+
+Las versiones exactas de PostgreSQL, Keycloak y Caddy se leyeron de los contenedores en
+ejecución en el servidor.
 
 Las versiones de las librerías (Express, Socket.IO, `pg`, `jwks-rsa`, paquetes de Flutter)
 quedan fijadas en `backend/package.json` y `frontend/pubspec.yaml` al crearse cada
@@ -69,12 +73,171 @@ codigo/
 └── docs/         Documentación técnica: BRIEF de desarrollo y planes de trabajo
 ```
 
-## Puesta en marcha (local)
+## Dirección pública
 
-> En construcción — se completa en el Incremento 1 (cimientos: Docker + login).
-> Las instrucciones del despliegue público (VM + HTTPS) se documentarán aquí en el
-> Incremento 2.
+| Qué | Dirección |
+|---|---|
+| Aplicación | **https://maxpizzapp.tech** |
+| Identidad (Keycloak) | https://auth.maxpizzapp.tech |
+
+Hay una cuenta de demostración por rol: `recepcion.demo` y `cocina.demo`. Sus contraseñas
+**no están en este repositorio**: se asignan en el servidor desde el `.env`.
 
 ## Variables de entorno
 
-Copiar `.env.example` como `.env` y completar los valores. El `.env` **no** se versiona.
+Copiar `.env.example` como `.env` y completar los valores. El `.env` **no** se versiona, y
+el de producción no es una copia del de desarrollo: sus contraseñas se generan en el
+servidor y no salen de ahí.
+
+## Puesta en marcha en local
+
+Requisitos: Docker con el plugin de Compose. Todo se ejecuta desde la carpeta `codigo/`.
+
+1. Crear el `.env` a partir de `.env.example` y completar las contraseñas.
+2. Levantar la base de datos y Keycloak:
+
+   ```bash
+   docker compose --env-file .env -f docker/docker-compose.yml up -d
+   docker compose --env-file .env -f docker/docker-compose.yml ps
+   ```
+
+   Keycloak tarda uno o dos minutos en quedar `healthy`. Su consola queda en
+   `http://localhost:8082`.
+3. Asignar las contraseñas de las cuentas de demostración, como explica
+   `docker/keycloak/README.md`.
+4. Comprobar el inicio de sesión de punta a punta:
+
+   ```bash
+   python pruebas/identidad/probar_acceso_pkce.py
+   ```
+
+En desarrollo los puertos del host son 5433 (base), 3001 (API) y 8082 (identidad), para
+no chocar con otros servicios de la máquina.
+
+## Despliegue en el servidor
+
+El despliegue es **un `docker compose` versionado**: con este repositorio, un archivo de
+entorno y un servidor con Docker, se levanta igual en cualquier proveedor.
+
+```
+Internet ──HTTPS 443──▶ Caddy ─┬─ /              ▶ archivos estáticos
+                               ├─ /api/*         ▶ API (backend:3000)
+                               ├─ /socket.io/*   ▶ tiempo real (backend:3000)
+                               └─ auth.<dominio> ▶ Keycloak (keycloak:8080) ──SQL──▶ PostgreSQL
+```
+
+Solo Caddy publica puertos (80 y 443). La base de datos y Keycloak se alcanzan únicamente
+por la red interna de Docker.
+
+### 1. Requisitos del servidor
+
+- Linux con Docker y el plugin de Compose. El servidor actual usa Ubuntu 24.04 LTS, con
+  Docker instalado mediante el script oficial: `curl -fsSL https://get.docker.com | sh`.
+- **Puertos 80 y 443 libres.** Si otro servidor web los ocupa, Caddy no arranca. Se
+  comprueba con `ss -tlnp | grep -E ':80 |:443 '`.
+- **Cortafuegos del proveedor** abierto solo en TCP 22, TCP 80, TCP 443 y UDP 443. No se usa
+  `ufw`, porque los puertos que publica Docker se saltan sus reglas.
+- Al menos 2 GB de RAM. Keycloak es la pieza que más memoria usa.
+
+### 2. DNS
+
+Dos registros apuntando a la IP del servidor, **antes** del primer arranque. Si el dominio
+no resuelve, Let's Encrypt rechaza la validación y se consumen intentos.
+
+| Tipo | Nombre | Valor |
+|---|---|---|
+| A (y AAAA si hay IPv6) | `@` | IP del servidor |
+| A (y AAAA si hay IPv6) | `auth` | IP del servidor |
+
+No debe existir un registro CAA que excluya a Let's Encrypt.
+
+### 3. Código y entorno
+
+```bash
+git clone https://github.com/jorgeluisgutierrezrivera/max-pizzapp.git /opt/maxpizzapp
+cd /opt/maxpizzapp
+```
+
+El `.env` de producción se crea **en el servidor** y con permisos `600`. Las contraseñas se
+generan ahí mismo:
+
+```bash
+umask 077
+cat > .env <<EOF
+POSTGRES_DB=maxpizzapp
+POSTGRES_USER=maxpizzapp
+POSTGRES_PASSWORD=$(openssl rand -hex 24)
+NODE_ENV=production
+KEYCLOAK_REALM=maxpizzapp
+KEYCLOAK_CLIENT_ID=backend-api
+KEYCLOAK_CLIENT_SECRET=
+KEYCLOAK_ADMIN=maxpizzapp-admin
+KEYCLOAK_ADMIN_PASSWORD=$(openssl rand -hex 24)
+KEYCLOAK_DEMO_PASSWORD=$(openssl rand -base64 18 | tr -dc 'A-Za-z0-9' | cut -c1-14)
+KEYCLOAK_INTERNAL_URL=http://keycloak:8080
+DOMINIO=maxpizzapp.tech
+CADDY_EMAIL=correo-de-contacto@ejemplo.com
+EOF
+```
+
+`DOMINIO` va sin protocolo ni barra final. De esa variable salen la dirección de la
+aplicación, la de Keycloak y el emisor de los tokens. **Si cambia el dominio**, también hay
+que cambiarlo en las URI de redirección de `docker/keycloak/realm-maxpizzapp.json`.
+
+### 4. Validar y levantar
+
+```bash
+docker compose --env-file .env -f docker/docker-compose.prod.yml config --quiet
+docker run --rm --env-file .env -v "$PWD/docker/caddy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+  caddy:2-alpine caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+docker compose --env-file .env -f docker/docker-compose.prod.yml up -d
+docker compose --env-file .env -f docker/docker-compose.prod.yml ps
+```
+
+Los tres servicios tienen que quedar `Up`, y la base y Keycloak además `healthy`. Caddy
+obtiene los certificados solo durante el primer arranque. Los certificados quedan en el
+volumen `caddy_datos`, que **no se debe borrar**: Let's Encrypt limita cuántas veces se
+puede pedir el mismo certificado por semana.
+
+Después se asignan las contraseñas de las cuentas de demostración, como explica
+`docker/keycloak/README.md` en el apartado *En producción*.
+
+### 5. Verificar desde fuera del servidor
+
+Una prueba hecha dentro del servidor no demuestra que el sistema sea público. Desde otra
+red:
+
+```bash
+curl -I https://maxpizzapp.tech/        # 200, certificado válido
+curl -I http://maxpizzapp.tech/         # 308 hacia https://
+curl -s https://auth.maxpizzapp.tech/realms/maxpizzapp/.well-known/openid-configuration
+```
+
+El campo `issuer` tiene que ser `https://auth.maxpizzapp.tech/realms/maxpizzapp`. Si
+aparece una dirección interna, la API rechazará todos los tokens.
+
+Ya en el servidor, se comprueba que solo haya puertos públicos 22, 80 y 443:
+
+```bash
+ss -tlnp | grep -E ':(80|443|5432|8080|9000|2019) '
+```
+
+Si aparece 5432 u 8080, algún servicio publicó un puerto que no debía.
+
+El inicio de sesión de punta a punta se prueba ejecutando en el servidor
+`KEYCLOAK_URL=https://auth.maxpizzapp.tech python3 pruebas/identidad/probar_acceso_pkce.py`.
+
+### 6. Actualizar
+
+```bash
+cd /opt/maxpizzapp
+git pull
+docker compose --env-file .env -f docker/docker-compose.prod.yml up -d
+```
+
+Compose solo recrea los servicios cuya configuración cambió. Hay una excepción:
+`--import-realm` **no sobrescribe** un realm que ya existe, así que un cambio en el archivo
+del realm también hay que aplicarlo desde la consola de Keycloak.
+
+Los contenedores se reinician con `restart: unless-stopped`: tras un reinicio completo del
+servidor, el sistema vuelve solo.
