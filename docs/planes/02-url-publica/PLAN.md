@@ -5,9 +5,10 @@
 
 - **Tarjeta:** 02 — URL pública con HTTPS, proxy e identidad
 - **Incremento:** cimientos (infraestructura e identidad)
-- **Estado:** 🟢 Aprobado — aprobado el 2026-09-22, sin cambios sobre lo propuesto
+- **Estado:** 🔵 Verificado — pruebas en verde el 2026-09-23; cierra al subir los
+  commits 30, 30b, 30c y 31
 - **Entrada al tablero:** 2026-09-22
-- **Cierre:** —
+- **Cierre:** 2026-09-23
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
 
 ---
@@ -109,7 +110,7 @@ funcionalidad encima cada día no tiene ese riesgo.
 - [x] Docker y el complemento de Compose instalados.
 - [x] Cortafuegos del proveedor abierto solo en 22, 80 y 443. Se usa el del panel y **no**
       `ufw`: los puertos que publica Docker se saltan las reglas de `ufw`.
-- [ ] Repositorio clonado y `.env` de producción creado **en el servidor**.
+- [x] Repositorio clonado y `.env` de producción creado **en el servidor**.
 
 ### Fase B — Los nombres de dominio
 - [x] `<dominio>` y `auth.<dominio>` resolviendo a la dirección del servidor.
@@ -117,10 +118,10 @@ funcionalidad encima cada día no tiene ese riesgo.
       fallar la validación y consume intentos.
 
 ### Fase C — Proxy y HTTPS
-- [ ] `docker/caddy/Caddyfile`: la raíz sirve los archivos estáticos, `/api/*` va a la API
+- [x] `docker/caddy/Caddyfile`: la raíz sirve los archivos estáticos, `/api/*` va a la API
       (aún no existe: queda declarado), `auth.<dominio>` va a Keycloak.
-- [ ] Cabeceras del proxy hacia Keycloak para que sepa que está detrás de HTTPS.
-- [ ] Certificado emitido y candado válido en el navegador.
+- [x] Cabeceras del proxy hacia Keycloak para que sepa que está detrás de HTTPS.
+- [x] Certificado emitido y candado válido en el navegador.
 
 ### Fase D — Identidad *(local: hecha el 22-sep)*
 - [x] En local: *realm* del proyecto, cliente de la aplicación (público, PKCE), cliente de
@@ -129,18 +130,18 @@ funcionalidad encima cada día no tiene ese riesgo.
 - [x] *Realm* versionado en `docker/keycloak/realm-maxpizzapp.json`. Se escribió a mano en
       lugar de exportarlo de la consola: un *export* en bruto arrastra cientos de líneas de
       configuración por defecto que nadie puede revisar ni defender.
-- [ ] En el servidor: Keycloak en modo producción con el *hostname* público, importando ese
+- [x] En el servidor: Keycloak en modo producción con el *hostname* público, importando ese
       archivo al arrancar.
 - [x] Comprobar el emisor y las claves públicas en el documento de descubrimiento del
       *realm*, que es lo que la API usará para validar tokens.
 - [x] Prueba de acceso de punta a punta con PKCE, versionada en
       `pruebas/identidad/probar_acceso_pkce.py`.
-- [ ] Reemplazar `REEMPLAZAR-POR-EL-DOMINIO` en el *realm* por el dominio real, **antes** de
+- [x] Reemplazar `REEMPLAZAR-POR-EL-DOMINIO` en el *realm* por el dominio real, **antes** de
       importarlo en el servidor.
 
 ### Fase E — Reproducibilidad
-- [ ] `docker/docker-compose.prod.yml` versionado, con Caddy, Keycloak y Postgres.
-- [ ] Procedimiento de despliegue escrito en el README del repositorio.
+- [x] `docker/docker-compose.prod.yml` versionado, con Caddy, Keycloak y Postgres.
+- [x] Procedimiento de despliegue escrito en el README del repositorio.
 
 ---
 
@@ -206,13 +207,13 @@ el sistema es público—, con el navegador y con la terminal:
 
 | Fase | Estado | Fecha | Evidencia de la prueba |
 |---|---|---|---|
-| A — El servidor | 🟡 Casi completa | 2026-09-23 | Hostinger KVM 1 (1 vCPU, 3,8 GB, 48 GB), **Ubuntu 24.04.4 LTS**, kernel 6.8.0-139. Acceso root **solo por llave** ed25519, comprobado sin contraseña (`BatchMode`). Antes de instalar nada, solo `sshd` escuchaba: **80 y 443 libres**. **Docker 29.8.1** y **Compose v5.5.1**. Cortafuegos del panel `maxpizzapp-web`: acepta TCP 22/80/443 y UDP 443, descarta el resto; SSH sigue entrando con el cortafuegos activo. Falta clonar y crear el `.env` |
+| A — El servidor | ✅ Verificada | 2026-09-23 | Hostinger KVM 1 (1 vCPU, 3,8 GB, 48 GB), **Ubuntu 24.04.5 LTS** tras el `apt upgrade` inicial y un reinicio (llegó como 24.04.4), kernel 6.8.0-142. Acceso root **solo por llave** ed25519, comprobado sin contraseña (`BatchMode`). Antes de instalar nada, solo `sshd` escuchaba: **80 y 443 libres**. **Docker 29.8.1** y **Compose v5.5.1**. Cortafuegos del panel `maxpizzapp-web`: acepta TCP 22/80/443 y UDP 443, descarta el resto; SSH sigue entrando con el cortafuegos activo. Repositorio en `/opt/maxpizzapp`; `.env` de producción creado **en el servidor**, con permisos `600` y contraseñas generadas ahí con `openssl rand` (48 caracteres para la base y el administrador de Keycloak), que nunca se imprimieron |
 | B — Los nombres de dominio | ✅ Verificada | 2026-09-23 | `maxpizzapp.tech`, con los nameservers de Hostinger. Consultado a `8.8.8.8` desde fuera del servidor: `@` → `2.25.241.190` (A) y `2a02:4780:75:6d87::1` (AAAA, la IPv6 propia del VPS, comprobada con `ip -6 addr`); `auth` → `2.25.241.190`. Sin registro CAA que bloquee a Let's Encrypt |
-| C — Proxy y HTTPS | ⏳ Pendiente | — | — |
+| C — Proxy y HTTPS | ✅ Verificada | 2026-09-23 | `caddy validate`: configuración válida. Certificados de **Let's Encrypt** obtenidos para `maxpizzapp.tech` y `auth.maxpizzapp.tech` (emisor YE2, válidos hasta el 22-dic-2026). **Desde fuera del servidor**: `https://maxpizzapp.tech` → 200 con certificado válido; `http://` → **308** a HTTPS; cabeceras HSTS, `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy` y HTTP/3 anunciado, sin cabecera `Server`; `/api/v1/salud` → 502, lo esperado sin la tarjeta 03. En el host solo escuchan **22, 80 y 443**; los puertos 5432, 8080, 9000 y 2019 están **cerrados desde fuera** |
 | D — Identidad (local) | ✅ Verificada | 2026-09-22 | Keycloak **26.7.4** levanta contra su propia base en PostgreSQL e **importa el realm** al arrancar. El documento de descubrimiento publica el emisor y **2 claves** (firma RS256 y cifrado); el realm queda con los **2 roles**, los **2 clientes** —`frontend-web` público con PKCE, `backend-api` sin flujos— y las **2 cuentas** de demostración |
 | D — Prueba de acceso | ✅ Verificada | 2026-09-22 | `pruebas/identidad/probar_acceso_pkce.py` recorre el flujo real —pantalla de acceso, credenciales, canje del código con el verificador PKCE— para las dos cuentas. Cada token llega **con su rol y solo el suyo**, con `backend-api` en la audiencia y **60 minutos** de vigencia, que es lo que declara el RNF-02 |
-| D — Identidad (servidor) | ⏳ Pendiente | — | Bloqueada: falta el VPS. Es una importación del mismo archivo, con el *hostname* público |
-| E — Reproducibilidad | ⏳ Pendiente | — | — |
+| D — Identidad (servidor) | ✅ Verificada | 2026-09-23 | Keycloak en modo producción (`start`) importa el realm al arrancar. El documento de descubrimiento publica el emisor **`https://auth.maxpizzapp.tech/realms/maxpizzapp`**: la URL pública, no una interna (riesgo D-09 descartado). Contraseñas de las cuentas demo asignadas con `kcadm` leyendo el `.env`, sin que pasaran por la terminal. `probar_acceso_pkce.py` con `KEYCLOAK_URL=https://auth.maxpizzapp.tech`, ejecutado en el servidor: **las dos cuentas entran** y cada token trae solo su rol, `backend-api` en la audiencia, 60 minutos de vigencia y el emisor público. La prueba ahora **falla si el emisor no coincide** |
+| E — Reproducibilidad | ✅ Verificada | 2026-09-23 | Levantado con `docker compose --env-file .env -f docker/docker-compose.prod.yml up -d`: los tres contenedores sanos en 50 s. **Reinicio completo del servidor**: todo volvió solo en **65 s**, sin intervención. Procedimiento completo en el README: requisitos, DNS, `.env` generado en el servidor, validación, arranque, verificación desde fuera y actualización |
 
 ---
 
@@ -232,5 +233,18 @@ el sistema es público—, con el navegador y con la terminal:
 
 ## 11. Cierre
 
-- **Commits que cierran la tarjeta:** —
-- **Fecha de cierre:** —
+- **Commits que cierran la tarjeta:** **30** (Caddy, página de cortesía, compose de
+  producción y `.env.example`), **30b** (dominio en el realm), **30c** (prueba de acceso
+  contra producción y evidencia) y **31** (procedimiento de despliegue en el README). Los
+  pasos están en el manual de Git del proyecto; los ejecuta el autor.
+- **Pruebas:** en verde el **2026-09-23** (sección 9), todas hechas desde fuera del
+  servidor salvo las que por definición van dentro: los puertos que escuchan y el acceso
+  con la contraseña demo, que no sale de la máquina.
+- **Criterios de aceptación (sección 7):** los seis cumplidos. Dirección pública desde otra
+  red con certificado válido; realm con exactamente dos roles y una cuenta ficticia por
+  rol; emisor = URL pública; ningún secreto en el repositorio; despliegue reproducible con
+  un `docker compose up -d`; y la captura fechada, pendiente de tomar (ver abajo).
+- **Queda abierto:** la **captura fechada** de la URL pública para el apartado 2.9, que
+  toma el autor; y el **monitor de disponibilidad** del RNF-05, que espera a
+  `GET /api/v1/salud` (tarjeta 03).
+- **Fecha de cierre:** 2026-09-23, a la espera de los commits.

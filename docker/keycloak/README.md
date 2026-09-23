@@ -47,12 +47,31 @@ docker exec -it maxpizzapp-auth /opt/keycloak/bin/kcadm.sh set-password \
   -r maxpizzapp --username recepcion.demo
 ```
 
-## Antes de desplegar: reemplazar el marcador del dominio
+### En producción
 
-Las URI de redirección incluyen `https://REEMPLAZAR-POR-EL-DOMINIO/*`. Hay que sustituirlo
-por el dominio real **antes** de importar el realm en el servidor. Si se olvida, el inicio
-de sesión falla con *"Invalid parameter: redirect_uri"*: es un fallo ruidoso e inmediato,
-no silencioso, y se arregla en el mismo archivo.
+La consola está en `https://auth.maxpizzapp.tech/admin`, solo por HTTPS. Las contraseñas de
+las cuentas demo se asignan leyendo el `.env` del servidor, sin escribirlas en la terminal:
+
+```bash
+cd /opt/maxpizzapp && set -a && . ./.env && set +a
+docker exec -e KA="$KEYCLOAK_ADMIN" -e KP="$KEYCLOAK_ADMIN_PASSWORD" -e DP="$KEYCLOAK_DEMO_PASSWORD" \
+  maxpizzapp-auth sh -c '
+    K=/opt/keycloak/bin/kcadm.sh
+    $K config credentials --server http://localhost:8080 --realm master --user "$KA" --password "$KP"
+    for u in recepcion.demo cocina.demo; do $K set-password -r maxpizzapp --username $u --new-password "$DP"; done
+    rm -f /opt/keycloak/.keycloak/kcadm.config'
+```
+
+## El dominio público
+
+Las URI de redirección incluyen `https://maxpizzapp.tech/*`, que reemplazó al marcador
+original antes de la primera importación en el servidor. Si el dominio cambia, hay que
+cambiarlo aquí **antes** de importar. Si se olvida, el inicio de sesión falla con
+*"Invalid parameter: redirect_uri"*: es un fallo ruidoso e inmediato, no silencioso.
+
+**Ojo:** `--import-realm` **no sobrescribe** un realm que ya existe en la base. Un cambio en
+este archivo después del primer despliegue no se aplica solo al reiniciar: hay que hacerlo
+también desde la consola (o `kcadm`) o recrear la base de Keycloak.
 
 Las URI de `localhost` se dejan a propósito: permiten seguir desarrollando contra el mismo
 realm sin mantener dos archivos que se desincronizan.

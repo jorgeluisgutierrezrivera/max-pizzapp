@@ -13,6 +13,10 @@ Uso, con el entorno levantado y las contrasenas de demostracion establecidas:
 
     python pruebas/identidad/probar_acceso_pkce.py
 
+Contra el despliegue publico, indicando la direccion de Keycloak:
+
+    KEYCLOAK_URL=https://auth.maxpizzapp.tech python3 pruebas/identidad/probar_acceso_pkce.py
+
 La contrasena se lee del .env (que no se versiona) y nunca se imprime.
 """
 import base64
@@ -47,7 +51,8 @@ def entorno(clave, por_defecto=None):
     return por_defecto
 
 
-KC = 'http://localhost:%s' % entorno('KEYCLOAK_PORT', '8082')
+KC = (os.environ.get('KEYCLOAK_URL')
+      or 'http://localhost:%s' % entorno('KEYCLOAK_PORT', '8082')).rstrip('/')
 
 
 def b64url(datos):
@@ -62,8 +67,8 @@ def sin_redirecciones(tarro):
         urllib.request.HTTPCookieProcessor(tarro), NoRedir).open
 
 
-def probar(usuario, rol_esperado):
-    print('\n=== %s ===' % usuario)
+def obtener_token(usuario, informar=print):
+    """Recorre el flujo del navegador y devuelve la respuesta del endpoint de token."""
     verificador = b64url(secrets.token_bytes(48))
     desafio = b64url(hashlib.sha256(verificador.encode()).digest())
 
@@ -89,7 +94,7 @@ def probar(usuario, rol_esperado):
     formulario = re.search(r'action="([^"]+)"', pagina)
     if not formulario:
         sys.exit('  no se encontro el formulario de acceso')
-    print('  1. pantalla de acceso servida por Keycloak')
+    informar('  1. pantalla de acceso servida por Keycloak')
 
     datos = urllib.parse.urlencode({
         'username': usuario,
@@ -107,7 +112,7 @@ def probar(usuario, rol_esperado):
     codigo = urllib.parse.parse_qs(urllib.parse.urlparse(destino).query).get('code', [None])[0]
     if not codigo:
         sys.exit('  la redireccion no trae codigo: %s' % destino[:140])
-    print('  2. credenciales aceptadas, codigo de autorizacion recibido')
+    informar('  2. credenciales aceptadas, codigo de autorizacion recibido')
 
     datos = urllib.parse.urlencode({
         'grant_type': 'authorization_code', 'client_id': CLIENTE, 'code': codigo,
@@ -115,7 +120,13 @@ def probar(usuario, rol_esperado):
     }).encode()
     token = json.load(urllib.request.urlopen(
         '%s/realms/%s/protocol/openid-connect/token' % (KC, REALM), data=datos))
-    print('  3. codigo canjeado por token (verificador de PKCE aceptado)')
+    informar('  3. codigo canjeado por token (verificador de PKCE aceptado)')
+    return token
+
+
+def probar(usuario, rol_esperado):
+    print('\n=== %s ===' % usuario)
+    token = obtener_token(usuario)
 
     carga = token['access_token'].split('.')[1]
     carga = json.loads(base64.urlsafe_b64decode(carga + '=' * (-len(carga) % 4)))
@@ -139,6 +150,9 @@ def probar(usuario, rol_esperado):
         fallos.append('la API no figura en la audiencia')
     if vigencia != VIGENCIA_ESPERADA:
         fallos.append('la vigencia no son los 60 minutos que declara el RNF-02')
+    # Riesgo D-09: si el emisor no es la direccion publica, la API rechazara el token.
+    if carga['iss'] != '%s/realms/%s' % (KC, REALM):
+        fallos.append('el emisor no es la direccion por la que se pidio el token')
     if fallos:
         print('  RESULTADO: FALLA ->', '; '.join(fallos))
         return False
