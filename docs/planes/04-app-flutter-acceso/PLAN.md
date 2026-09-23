@@ -5,9 +5,10 @@
 
 - **Tarjeta:** 04 — App Flutter y acceso por rol
 - **Incremento:** cimientos (acceso de punta a punta)
-- **Estado:** 🟢 Aprobado — aprobado el 2026-09-23, con la decisión 8 ya revisada (desarrollo en local)
+- **Estado:** ✅ Hecho — publicada en `https://maxpizzapp.tech` y verificada el 2026-09-23,
+  incluso desde un celular con datos móviles; a la espera del commit 04-E
 - **Entrada al tablero:** 2026-09-23
-- **Cierre:** —
+- **Cierre:** 2026-09-23
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
 
 ---
@@ -271,8 +272,8 @@ comprobar lo que no se ve a simple vista.
 | B — El acceso | ✅ Verificada | 2026-09-23 | **En el navegador, contra el Keycloak local** (tras la fase D): al abrir la app, la ida silenciosa con `prompt=none` vuelve con `login_required` y muestra el acceso **sin mensaje ni bucle**. El autor inicia sesión con `recepcion.demo` y llega a "Sesión iniciada"; la dirección queda en `http://localhost:8090/`, **sin el código**. Inspección de la página después de entrar: **ningún token** en `localStorage` ni en `sessionStorage`, y ninguna cookie legible desde JavaScript. El canje fue un `POST` al *endpoint* de token → **200**. **Recarga:** vuelve a "Sesión iniciada" **sin pedir la contraseña**. **Cerrar sesión:** vuelve al acceso sin error, y al tocar "Iniciar sesión" **Keycloak pide las credenciales de nuevo** (RF-08). **Antes, en las pruebas:** tres piezas: `pkce.dart` (funciones puras), `navegador.dart` (interfaz mínima del navegador, para probar sin él) y `servicio_sesion.dart` (el flujo). Tokens **solo en memoria**; verificador y `state` en `sessionStorage` solo durante la ida y vuelta, y se borran pase lo que pase. Renovación al 80 % del plazo más corto entre el token y la sesión de Keycloak (48 min). **`flutter test`: 28/28**, incluidos el **vector oficial del RFC 7636**, que el verificador nunca viaja en la dirección, el `state` distinto (no se canjea nada), `login_required` sin bucle, el rechazo del canje, la falta de red, la renovación y el cierre en Keycloak con `id_token_hint`. **Prueba de mutación:** al quitar la comprobación del `state` falla exactamente la prueba que debe fallar. `flutter analyze` sin avisos |
 | C — La sesión y el rol | ✅ Verificada | 2026-09-23 | `cliente_api.dart`: agrega el token, convierte el formato único de error en un mensaje para la persona, y ante un 401 **renueva una vez y reintenta**; sin red, o con una respuesta que no es el JSON esperado, da un error legible y no una excepción técnica. `usuario.dart` lee `/sesion`; los roles ajenos al sistema se ignoran. `PantallaSegunRol` muestra "Verificando tu cuenta…", la pantalla del rol, el error con **Reintentar**, o un aviso si la cuenta no tiene rol del sistema. Recepción y Cocina comparten un esqueleto (rol, nombre y salir; en el celular, salir queda como ícono). **`flutter test`: 44/44** y `flutter analyze` sin avisos. **La prueba de *widgets* encontró un error real**: el botón Reintentar no funcionaba, porque el `setState` recibía el `Future` de la asignación. Corregido antes de llegar al navegador. **En el navegador, contra el entorno local:** el autor entra con `recepcion.demo` → **pantalla de Recepción** con su nombre; `GET /api/v1/sesion` → 200 por el mismo origen, sin errores en la consola. Sale y entra con `cocina.demo` (Keycloak **pide las credenciales de nuevo**) → **pantalla de Cocina**. A 375 px, el diseño se adapta. La pantalla de acceso de Keycloak ya sale **en español** |
 | D — El entorno de desarrollo | ✅ Verificada | 2026-09-23 | `web_dev_config.yaml`: puerto 8090 y proxy de `/api/` a `http://localhost:3001/`. `http://localhost:8090/api/v1/salud` → 200 por el mismo origen, **sin CORS en la API**. `http://localhost:8090` agregado a los orígenes web de `frontend-web` **en el archivo del realm y con `kcadm` en los dos Keycloak** (antes: `+`; después: `+` y `http://localhost:8090`), leyendo las credenciales de cada `.env` sin imprimirlas. **Prueba de CORS repetida:** el canje desde `localhost:8090` pasó de **403** a aceptado en los dos; un origen ajeno **sigue en 403**; `https://maxpizzapp.tech` no se vio afectado. Se quitó el `meta viewport` del `index.html`, que Flutter reemplaza por el suyo y avisaba en la consola |
-| E — La publicación | ⏳ Pendiente | — | — |
-| F — Pruebas | ⏳ Pendiente | — | — |
+| E — La publicación | ✅ Verificada | 2026-09-23 | `Caddyfile` y compose validados en local y en el servidor. Caddy recreado: **sin versión publicada, sigue la página de cortesía** (el sitio nunca queda en blanco), con la API y Keycloak intactos. `bash scripts/publicar-web.sh root@2.25.241.190`: compila en la máquina del autor (116 s) y publica `versiones/20260923-182122`. **Desde fuera:** la raíz sirve la app Flutter; `main.dart.js` con `Cache-Control: no-cache` y `ETag`; al revalidar con ese `ETag` → **304, 0 bytes**; una ruta cualquiera → 200 (una sola página); `/api/v1/salud` → 200 y una ruta inexistente de la API **sigue dando su 404 en JSON**, sin que la app la tape. **Vuelta atrás probada:** el enlace a la versión anterior, el sitio en 200, y de regreso a la vigente, con el comando del README. Se conservan las versiones |
+| F — Pruebas | ✅ Verificada | 2026-09-23 | **Desde el celular del autor, con datos móviles** (fuera de la red de la casa): `https://maxpizzapp.tech` abre, entra con `cocina.demo` → **pantalla de Cocina** adaptada al celular; el ícono de salir cierra la sesión y Keycloak vuelve a pedir las credenciales. Confirmado por el autor. **Antes, desde el escritorio:** | `flutter test` **44/44** y `flutter analyze` sin avisos. **En producción, `https://maxpizzapp.tech`:** ida silenciosa a Keycloak sin errores en la consola, con la dirección de Keycloak **deducida del dominio**; el autor entra con `recepcion.demo` → **pantalla de Recepción**; `GET https://maxpizzapp.tech/api/v1/sesion` → 200; el navegador queda **vacío** (ni `localStorage`, ni `sessionStorage`, ni cookies legibles); **la recarga no pide la contraseña**. **No concluyente:** publicar el mismo código dos veces deja el mismo `ETag` (Caddy lo calcula por fecha y tamaño, y el build sin cambios los conserva), así que no demuestra que una versión **distinta** llegue sola; se comprueba en la primera publicación de la tarjeta 05 |
 
 ---
 
@@ -291,5 +292,17 @@ comprobar lo que no se ve a simple vista.
 
 ## 11. Cierre
 
-- **Commits que cierran la tarjeta:** —
-- **Fecha de cierre:** —
+- **Commits que cierran la tarjeta:** **04-P** (el plan aprobado), **04-1** (el proyecto y la
+  pantalla de acceso), **04-2** (el acceso con PKCE), **04-3** (el entorno de desarrollo),
+  **04-4** (la pantalla por rol y Keycloak en español), **04-5** (la publicación) y **04-E**
+  (esta evidencia). Los pasos están en el manual de Git del proyecto; los ejecuta el autor.
+- **Criterios de aceptación (sección 7):** los ocho cumplidos. Las dos cuentas entran en la
+  dirección pública y cada una llega a su pantalla; salir obliga a escribir las credenciales
+  de nuevo; recargar no pide la contraseña; ningún token queda en el almacenamiento del
+  navegador; ninguna dirección está escrita en el código; `flutter analyze` sin avisos y
+  `flutter test` 44/44 con el vector del RFC 7636; se usa bien en el celular, la tableta y el
+  escritorio; y el build se publica con un comando, sin versiones a medias.
+- **Queda para después:** comprobar que una versión **distinta** llega sola al navegador, en
+  la primera publicación de la tarjeta 05; el tema visual de Keycloak (tarjeta 11); y los
+  nombres de las cuentas demo con tildes ("Recepción Demostración").
+- **Fecha de cierre:** 2026-09-23.
