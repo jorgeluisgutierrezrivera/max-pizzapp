@@ -162,12 +162,12 @@ salir. Las pantallas reales llegan con las tarjetas 05 y 06.
 - [x] `flutter analyze` sin avisos.
 
 ### Fase B — El acceso
-- [ ] Verificador, desafío S256 y `state`, con generador aleatorio seguro.
-- [ ] Redirección a Keycloak y recepción del código al volver; limpieza de la URL.
-- [ ] Canje del código por el token y comprobación del `state`.
-- [ ] Recarga de la página sin pedir la contraseña (`prompt=none`).
-- [ ] Renovación del token antes de que venza; vuelta al acceso si falla.
-- [ ] Cierre de sesión en Keycloak, con vuelta a la app.
+- [x] Verificador, desafío S256 y `state`, con generador aleatorio seguro.
+- [x] Redirección a Keycloak y recepción del código al volver; limpieza de la URL.
+- [x] Canje del código por el token y comprobación del `state`.
+- [x] Recarga de la página sin pedir la contraseña (`prompt=none`).
+- [x] Renovación del token antes de que venza; vuelta al acceso si falla.
+- [x] Cierre de sesión en Keycloak, con vuelta a la app.
 
 ### Fase C — La sesión y el rol
 - [ ] Cliente de la API que agrega el token y entiende el formato único de error.
@@ -268,7 +268,7 @@ comprobar lo que no se ve a simple vista.
 | Fase | Estado | Fecha | Evidencia de la prueba |
 |---|---|---|---|
 | A — El proyecto | ✅ Verificada | 2026-09-23 | `flutter create --platforms web --empty`, sin los archivos de IntelliJ ni el README genérico que agrega. Flutter **3.44.8**, Dart **3.12.2**; `http` **1.6.0**, `crypto` **3.0.7**, `web` **1.1.1** y `flutter_lints` **6.0.0**, fijados sin `^`, con `pubspec.lock` versionado. `.gitignore` corregido: ya no ignora `frontend/web/` ni `pubspec.lock`. `index.html` y manifiesto en español, `noindex`, color de marca y **orientación libre** (las tabletas de cocina se usan en horizontal). `configuracion.dart` deduce Keycloak del dominio (`https://auth.` + dominio) o lo toma de `--dart-define` en local, y falla con un mensaje claro si no puede. `flutter analyze`: **sin avisos**. `flutter test`: **9/9**. `flutter build web --release`: compila en 74 s. Servido en local: la pantalla de acceso se ve en tema claro y oscuro, en escritorio y a 375 px, **sin errores en la consola** |
-| B — El acceso | ⏳ Pendiente | — | — |
+| B — El acceso | 🟡 Verificada en pruebas; falta el navegador | 2026-09-23 | Tres piezas: `pkce.dart` (funciones puras), `navegador.dart` (interfaz mínima del navegador, para probar sin él) y `servicio_sesion.dart` (el flujo). Tokens **solo en memoria**; verificador y `state` en `sessionStorage` solo durante la ida y vuelta, y se borran pase lo que pase. Renovación al 80 % del plazo más corto entre el token y la sesión de Keycloak (48 min). **`flutter test`: 28/28**, incluidos el **vector oficial del RFC 7636**, que el verificador nunca viaja en la dirección, el `state` distinto (no se canjea nada), `login_required` sin bucle, el rechazo del canje, la falta de red, la renovación y el cierre en Keycloak con `id_token_hint`. **Prueba de mutación:** al quitar la comprobación del `state` falla exactamente la prueba que debe fallar. `flutter analyze` sin avisos. **La prueba en el navegador con Keycloak real va después de la fase D**, que habilita `localhost:8090` |
 | C — La sesión y el rol | ⏳ Pendiente | — | — |
 | D — El entorno de desarrollo | ⏳ Pendiente | — | — |
 | E — La publicación | ⏳ Pendiente | — | — |
