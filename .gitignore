@@ -22,11 +22,11 @@ frontend/.flutter-plugins-dependencies
 frontend/build/
 frontend/.pub-cache/
 frontend/.pub/
-frontend/pubspec.lock
 **/doc/api/
-
-# --- Build de Flutter web que se despliega (se genera, no se versiona) ---
-web/
+# frontend/pubspec.lock SI se versiona: fija las versiones exactas del build, como
+# package-lock.json en el backend.
+# frontend/web/ SI se versiona: tiene el index.html y el manifiesto de la aplicacion.
+# Lo que se genera y no se versiona es frontend/build/ (ignorado arriba).
 
 # --- Docker / datos persistentes ---
 docker/postgres/data/

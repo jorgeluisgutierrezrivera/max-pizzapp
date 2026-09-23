@@ -152,13 +152,14 @@ salir. Las pantallas reales llegan con las tarjetas 05 y 06.
 ## 4. Fases y checklist
 
 ### Fase A — El proyecto
-- [ ] `flutter create` solo para web, con el nombre `maxpizzapp`.
-- [ ] `pubspec.yaml` con la restricción de Dart y los paquetes en **versiones exactas**.
+- [x] `flutter create` solo para web, con el nombre `maxpizzapp`.
+- [x] `pubspec.yaml` con la restricción de Dart y los paquetes en **versiones exactas**.
       Anotarlos en el README.
-- [ ] Corregir el `.gitignore`: `frontend/web/` se versiona, `pubspec.lock` también.
-- [ ] Estructura por responsabilidad: configuración, autenticación, cliente de la API,
-      pantallas.
-- [ ] `flutter analyze` sin avisos.
+- [x] Corregir el `.gitignore`: `frontend/web/` se versiona, `pubspec.lock` también.
+- [x] Estructura por responsabilidad: configuración, autenticación, cliente de la API,
+      pantallas. *(Las carpetas de autenticación y del cliente de la API se crean en las
+      fases B y C, con su contenido; no se dejan carpetas vacías.)*
+- [x] `flutter analyze` sin avisos.
 
 ### Fase B — El acceso
 - [ ] Verificador, desafío S256 y `state`, con generador aleatorio seguro.
@@ -266,7 +267,7 @@ comprobar lo que no se ve a simple vista.
 
 | Fase | Estado | Fecha | Evidencia de la prueba |
 |---|---|---|---|
-| A — El proyecto | ⏳ Pendiente | — | — |
+| A — El proyecto | ✅ Verificada | 2026-09-23 | `flutter create --platforms web --empty`, sin los archivos de IntelliJ ni el README genérico que agrega. Flutter **3.44.8**, Dart **3.12.2**; `http` **1.6.0**, `crypto` **3.0.7**, `web` **1.1.1** y `flutter_lints` **6.0.0**, fijados sin `^`, con `pubspec.lock` versionado. `.gitignore` corregido: ya no ignora `frontend/web/` ni `pubspec.lock`. `index.html` y manifiesto en español, `noindex`, color de marca y **orientación libre** (las tabletas de cocina se usan en horizontal). `configuracion.dart` deduce Keycloak del dominio (`https://auth.` + dominio) o lo toma de `--dart-define` en local, y falla con un mensaje claro si no puede. `flutter analyze`: **sin avisos**. `flutter test`: **9/9**. `flutter build web --release`: compila en 74 s. Servido en local: la pantalla de acceso se ve en tema claro y oscuro, en escritorio y a 375 px, **sin errores en la consola** |
 | B — El acceso | ⏳ Pendiente | — | — |
 | C — La sesión y el rol | ⏳ Pendiente | — | — |
 | D — El entorno de desarrollo | ⏳ Pendiente | — | — |

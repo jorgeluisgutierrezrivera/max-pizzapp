@@ -64,12 +64,23 @@ Librerías del backend, fijadas sin rangos en `backend/package.json` y con
 | jsonwebtoken | 9.0.3 | Verificación de la firma y de los datos del token |
 | jwks-rsa | 4.1.0 | Lectura y caché de las claves públicas de Keycloak |
 
-Socket.IO y los paquetes de Flutter se fijan del mismo modo cuando entren sus tarjetas.
+Paquetes de la app Flutter, fijados sin rangos en `frontend/pubspec.yaml` y con
+`pubspec.lock`:
+
+| Paquete | Versión | Para qué |
+|---|---|---|
+| http | 1.6.0 | Peticiones a la API y canje del token |
+| crypto | 3.0.7 | SHA-256 del desafío PKCE |
+| web | 1.1.1 | Acceso al navegador: redirección, dirección actual y `sessionStorage` |
+| flutter_lints | 6.0.0 | Reglas de análisis estático (solo desarrollo) |
+
+Socket.IO se fija del mismo modo cuando entre su tarjeta.
 
 ## Pruebas
 
 ```bash
 cd backend && npm test            # 16 pruebas del acceso, sin base ni Keycloak reales
+cd frontend && flutter test       # pruebas de la app Flutter
 python pruebas/identidad/probar_acceso_pkce.py   # inicio de sesión real con PKCE
 python pruebas/api/probar_salud_y_token.py       # la API con tokens reales del realm
 ```

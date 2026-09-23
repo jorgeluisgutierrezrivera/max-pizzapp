@@ -1,0 +1,28 @@
+name: maxpizzapp
+description: "Max Pizzapp: pedidos entre recepcion y cocina en tiempo real"
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.12.2
+  flutter: 3.44.8
+
+# Versiones exactas, sin "^": el build de manana usa lo mismo que el de hoy.
+# pubspec.lock se versiona por la misma razon, como package-lock.json en el backend.
+dependencies:
+  flutter:
+    sdk: flutter
+  # Peticiones HTTP a la API y al canje del token.
+  http: 1.6.0
+  # SHA-256 para el desafio PKCE (S256).
+  crypto: 3.0.7
+  # Acceso al navegador: redireccion, URL actual y sessionStorage.
+  web: 1.1.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: 6.0.0
+
+flutter:
+  uses-material-design: true
