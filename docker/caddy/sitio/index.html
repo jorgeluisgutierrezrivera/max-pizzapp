@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<!--
+  Pagina de cortesia del despliegue.
+
+  POR QUE EXISTE
+    Sirve para tres cosas concretas, todas de la tarjeta 02:
+      1. Comprobar que el certificado TLS es valido, con algo real
+         que cargar en el navegador.
+      2. Tener algo que ensenar en la direccion publica desde el
+         primer dia, aunque la aplicacion todavia no exista.
+      3. Darle un destino al monitor de disponibilidad hasta que
+         exista GET /api/v1/salud.
+
+  En la tarjeta 04 este directorio recibe el Flutter compilado y
+  este archivo se reemplaza. No se acumula: se sustituye.
+
+  No declara nada que no sea cierto y no expone versiones,
+  nombres de maquina ni rutas internas.
+-->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Un proyecto academico en construccion no tiene por que quedar
+     indexado en buscadores. -->
+<meta name="robots" content="noindex, nofollow">
+<title>Max Pizzapp</title>
+<style>
+  :root {
+    --fondo: #fbfbfd;
+    --tarjeta: #ffffff;
+    --borde: #e6e6ed;
+    --texto: #1a1a22;
+    --apagado: #5c5c6b;
+    --acento: #c0392b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fondo: #14141a;
+      --tarjeta: #1c1c24;
+      --borde: #2e2e3a;
+      --texto: #f2f2f6;
+      --apagado: #a0a0b0;
+      --acento: #e8604c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 16px;
+    background: var(--fondo);
+    color: var(--texto);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.55;
+  }
+  .tarjeta {
+    width: 100%;
+    max-width: 520px;
+    background: var(--tarjeta);
+    border: 1px solid var(--borde);
+    border-radius: 14px;
+    padding: 40px 32px;
+  }
+  h1 {
+    margin: 0 0 4px;
+    font-size: 1.75rem;
+    letter-spacing: -0.02em;
+  }
+  h1 span { color: var(--acento); }
+  .bajada {
+    margin: 0 0 28px;
+    color: var(--apagado);
+    font-size: 0.95rem;
+  }
+  .estado {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid var(--borde);
+    border-radius: 999px;
+    font-size: 0.8rem;
+    color: var(--apagado);
+    margin-bottom: 24px;
+  }
+  .punto {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2e9e5b;
+    flex: none;
+  }
+  p { margin: 0 0 16px; font-size: 0.95rem; }
+  footer {
+    margin-top: 28px;
+    padding-top: 20px;
+    border-top: 1px solid var(--borde);
+    font-size: 0.82rem;
+    color: var(--apagado);
+  }
+  footer div + div { margin-top: 2px; }
+  @media (max-width: 420px) {
+    .tarjeta { padding: 28px 20px; }
+    h1 { font-size: 1.45rem; }
+  }
+</style>
+</head>
+<body>
+  <main class="tarjeta">
+    <div class="estado"><span class="punto"></span>Servicio en línea</div>
+
+    <h1>Max <span>Pizzapp</span></h1>
+    <p class="bajada">Gestión de pedidos con sincronización en tiempo real entre recepción y cocina.</p>
+
+    <p>
+      Esta dirección corresponde al despliegue público del sistema. La aplicación
+      se está construyendo por incrementos: lo que se ve aquí es la infraestructura
+      ya funcionando —dominio, certificado y proxy— antes de las pantallas.
+    </p>
+
+    <footer>
+      <div>Proyecto académico · Módulo 4 — Integración y Despliegue de Soluciones</div>
+      <div>Diplomado en Desarrollo Web y Aplicaciones Móviles · UAJMS</div>
+      <div>Jorge Luis Gutierrez Rivera · Gestión 2026</div>
+    </footer>
+  </main>
+</body>
+</html>

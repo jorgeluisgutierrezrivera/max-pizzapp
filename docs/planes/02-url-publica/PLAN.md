@@ -103,16 +103,17 @@ funcionalidad encima cada día no tiene ese riesgo.
 ## 4. Fases y checklist
 
 ### Fase A — El servidor
-- [ ] VPS disponible con acceso administrativo (prestado o contratado — D-21).
-- [ ] Comprobar que los puertos **80 y 443 están libres**: si ya corre otro servidor web,
+- [x] VPS disponible con acceso administrativo: Hostinger KVM 1, contratado (D-24).
+- [x] Comprobar que los puertos **80 y 443 están libres**: si ya corre otro servidor web,
       Caddy no puede tomarlos.
-- [ ] Docker y el complemento de Compose instalados.
-- [ ] Cortafuegos del sistema y del proveedor abiertos en 80 y 443.
+- [x] Docker y el complemento de Compose instalados.
+- [x] Cortafuegos del proveedor abierto solo en 22, 80 y 443. Se usa el del panel y **no**
+      `ufw`: los puertos que publica Docker se saltan las reglas de `ufw`.
 - [ ] Repositorio clonado y `.env` de producción creado **en el servidor**.
 
 ### Fase B — Los nombres de dominio
-- [ ] `<dominio>` y `auth.<dominio>` resolviendo a la dirección del servidor.
-- [ ] Verificado desde fuera antes de pedir certificados: un dominio que no resuelve hace
+- [x] `<dominio>` y `auth.<dominio>` resolviendo a la dirección del servidor.
+- [x] Verificado desde fuera antes de pedir certificados: un dominio que no resuelve hace
       fallar la validación y consume intentos.
 
 ### Fase C — Proxy y HTTPS
@@ -205,8 +206,8 @@ el sistema es público—, con el navegador y con la terminal:
 
 | Fase | Estado | Fecha | Evidencia de la prueba |
 |---|---|---|---|
-| A — El servidor | ⏳ Pendiente | — | Bloqueada: falta confirmar el VPS |
-| B — Los nombres de dominio | ⏳ Pendiente | — | — |
+| A — El servidor | 🟡 Casi completa | 2026-09-23 | Hostinger KVM 1 (1 vCPU, 3,8 GB, 48 GB), **Ubuntu 24.04.4 LTS**, kernel 6.8.0-139. Acceso root **solo por llave** ed25519, comprobado sin contraseña (`BatchMode`). Antes de instalar nada, solo `sshd` escuchaba: **80 y 443 libres**. **Docker 29.8.1** y **Compose v5.5.1**. Cortafuegos del panel `maxpizzapp-web`: acepta TCP 22/80/443 y UDP 443, descarta el resto; SSH sigue entrando con el cortafuegos activo. Falta clonar y crear el `.env` |
+| B — Los nombres de dominio | ✅ Verificada | 2026-09-23 | `maxpizzapp.tech`, con los nameservers de Hostinger. Consultado a `8.8.8.8` desde fuera del servidor: `@` → `2.25.241.190` (A) y `2a02:4780:75:6d87::1` (AAAA, la IPv6 propia del VPS, comprobada con `ip -6 addr`); `auth` → `2.25.241.190`. Sin registro CAA que bloquee a Let's Encrypt |
 | C — Proxy y HTTPS | ⏳ Pendiente | — | — |
 | D — Identidad (local) | ✅ Verificada | 2026-09-22 | Keycloak **26.7.4** levanta contra su propia base en PostgreSQL e **importa el realm** al arrancar. El documento de descubrimiento publica el emisor y **2 claves** (firma RS256 y cifrado); el realm queda con los **2 roles**, los **2 clientes** —`frontend-web` público con PKCE, `backend-api` sin flujos— y las **2 cuentas** de demostración |
 | D — Prueba de acceso | ✅ Verificada | 2026-09-22 | `pruebas/identidad/probar_acceso_pkce.py` recorre el flujo real —pantalla de acceso, credenciales, canje del código con el verificador PKCE— para las dos cuentas. Cada token llega **con su rol y solo el suyo**, con `backend-api` en la audiencia y **60 minutos** de vigencia, que es lo que declara el RNF-02 |
@@ -224,6 +225,8 @@ el sistema es público—, con el navegador y con la terminal:
 | 2026-09-22 | Se añade `docker/postgres/init/00_bases.sql` a los archivos de la tarjeta | Keycloak necesita su propia base de datos. Se le da una base aparte dentro del mismo PostgreSQL, en vez de un segundo motor: es una pieza menos que mantener y una menos que consume memoria en el servidor, que es el recurso escaso (lo advirtió la tutoría T2) |
 | 2026-09-22 | El realm desactiva la acción requerida *Verify Profile* | Sin ella, la primera vez que entra una cuenta Keycloak le exige completar el perfil con un correo. Son cuentas **operativas del local**, no personales: no hay correo que verificar, y en una tableta de cocina ese formulario es fricción sin contrapartida |
 | 2026-09-22 | El realm se escribe a mano en vez de exportarlo de la consola | Un *export* en bruto trae cientos de líneas de configuración por defecto. El archivo escrito a mano se lee, se revisa y se puede defender línea por línea |
+| 2026-09-23 | El servidor es un Hostinger KVM 1 con el dominio `maxpizzapp.tech` | Se descartó el VPS prestado. Se eligió un proveedor que activa el servidor en minutos, sin una verificación de identidad que pueda tardar días: es el riesgo que ya había hecho caer a Oracle. Detalle en D-24 |
+| 2026-09-23 | `docker-compose.prod.yml` es autónomo, no una sobreescritura | Al combinar dos archivos, Compose suma las listas de `ports`: el 8082 de Keycloak en desarrollo quedaría publicado en producción |
 
 ---
 

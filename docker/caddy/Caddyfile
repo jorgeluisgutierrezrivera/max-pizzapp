@@ -1,0 +1,109 @@
+# ==========================================================
+# Max Pizzapp - proxy inverso, HTTPS y unico origen (PRODUCCION)
+#
+# QUE HACE ESTE ARCHIVO
+#   Caddy es la UNICA pieza expuesta a Internet. Termina TLS,
+#   redirige todo el trafico plano a HTTPS y reparte por ruta:
+#
+#     https://<dominio>/             -> archivos estaticos (/srv/sitio)
+#     https://<dominio>/api/*        -> la API (servicio backend)
+#     https://<dominio>/socket.io/*  -> el canal en tiempo real
+#     https://auth.<dominio>/        -> Keycloak
+#
+# POR QUE UN SOLO ORIGEN PARA LA APLICACION Y LA API
+#   Comparten dominio, asi el navegador no trata las llamadas como
+#   "de otro origen": no hay CORS que configurar ni en las
+#   peticiones ni en el WebSocket. Keycloak vive en un subdominio
+#   aparte porque es un producto distinto con su propia interfaz,
+#   no porque necesite otro origen.
+#
+# EL CERTIFICADO
+#   Caddy lo pide a Let's Encrypt al arrancar y lo renueva solo.
+#   Requisito: <dominio> y auth.<dominio> tienen que resolver a la
+#   IP de este servidor ANTES del primer arranque. Un dominio que
+#   no resuelve hace fallar la validacion y consume intentos.
+#
+# EL DOMINIO NO ESTA ESCRITO AQUI
+#   Llega por la variable DOMINIO del archivo de entorno. Asi este
+#   archivo es el mismo en cualquier despliegue y no hay que
+#   editarlo para cambiar de dominio: es justo el error que la
+#   plenaria del 22-sep describio como "la URL escrita a mano en
+#   el codigo".
+# ==========================================================
+
+{
+	# Correo de contacto para Let's Encrypt (avisos de expiracion
+	# del certificado). Llega del entorno: no se escribe un correo
+	# real en el repositorio.
+	email {$CADDY_EMAIL}
+}
+
+# ----------------------------------------------------------
+# Aplicacion y API: mismo origen
+# ----------------------------------------------------------
+{$DOMINIO} {
+	encode zstd gzip
+
+	# Cabeceras de seguridad que no dependen de la aplicacion.
+	#
+	# La politica de contenido (CSP) NO se fija todavia: se define
+	# en la tarjeta de endurecimiento, cuando se sepa que necesita
+	# de verdad el Flutter compilado. Una CSP puesta a ciegas rompe
+	# la aplicacion y eso se descubre el dia de la entrega.
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# El servidor no anuncia que es: un dato menos para quien
+		# busca vulnerabilidades por version.
+		-Server
+	}
+
+	# Canal en tiempo real. Va declarado aparte porque Socket.IO no
+	# cuelga de /api: usa su propia ruta. Caddy pasa la
+	# actualizacion a WebSocket sin configuracion adicional.
+	handle /socket.io/* {
+		reverse_proxy backend:3000
+	}
+
+	# La API. Mientras la tarjeta 03 no exista, esta ruta responde
+	# 502: es lo esperado y no impide que el resto del sitio sirva.
+	handle /api/* {
+		reverse_proxy backend:3000
+	}
+
+	# Todo lo demas: la aplicacion. Por ahora la pagina de cortesia;
+	# en la tarjeta 04 el mismo directorio recibe el Flutter
+	# compilado. "try_files" deja la puerta lista para una
+	# aplicacion de una sola pagina, que resuelve sus rutas en el
+	# cliente.
+	handle {
+		root * /srv/sitio
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+# ----------------------------------------------------------
+# Identidad
+# ----------------------------------------------------------
+# Keycloak necesita SABER que esta detras de HTTPS: si cree que
+# habla en claro, construye los enlaces de la pantalla de acceso
+# con http:// y el navegador los bloquea. Caddy ya envia las
+# cabeceras X-Forwarded-*; el que tiene que confiar en ellas es
+# Keycloak, con KC_PROXY_HEADERS (ver docker-compose.prod.yml).
+auth.{$DOMINIO} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	# Aqui NO se anade X-Frame-Options: Keycloak fija su propia
+	# politica de marcos y duplicarla genera conflictos.
+	reverse_proxy keycloak:8080
+}

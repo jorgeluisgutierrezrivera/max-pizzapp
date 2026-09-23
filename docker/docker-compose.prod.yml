@@ -1,0 +1,188 @@
+# ==========================================================
+# Max Pizzapp - orquestacion de contenedores (PRODUCCION)
+#
+# Uso (desde la raiz del repositorio, en el SERVIDOR, con el .env
+# de produccion ya creado ahi):
+#   docker compose --env-file .env -f docker/docker-compose.prod.yml config
+#   docker compose --env-file .env -f docker/docker-compose.prod.yml up -d
+#   docker compose --env-file .env -f docker/docker-compose.prod.yml ps
+#
+# POR QUE ESTE ARCHIVO ES AUTONOMO Y NO UNA SOBREESCRITURA
+#   Lo natural seria usarlo encima de docker-compose.yml con dos
+#   -f. No se hace, y el motivo es de seguridad: cuando Compose
+#   combina dos archivos, las listas de "ports" se SUMAN, no se
+#   reemplazan. El archivo de desarrollo publica Keycloak en el
+#   puerto 8082 del host; combinando los dos, ese puerto seguiria
+#   publicado en produccion y la consola de administracion de
+#   Keycloak quedaria accesible desde Internet sin que nada lo
+#   advierta. Un archivo completo y legible de arriba a abajo es
+#   preferible a una combinacion que hay que simular mentalmente.
+#
+#   Precio de esta decision: hay dos archivos que describen los
+#   mismos servicios. Si se cambia la imagen o la comprobacion de
+#   salud de un servicio, hay que cambiarla en los dos.
+#
+# QUE CAMBIA RESPECTO DE DESARROLLO
+#   1. Aparece Caddy: la unica pieza expuesta a Internet (80/443).
+#   2. Keycloak pasa de "start-dev" a "start" (modo produccion),
+#      con el hostname publico y confiando en las cabeceras del
+#      proxy. Sin eso, el emisor de los tokens seria una URL
+#      interna y la API rechazaria absolutamente todos.
+#   3. NINGUN servicio publica puertos al host salvo Caddy: la
+#      base de datos y la identidad solo se alcanzan por la red
+#      interna de Docker.
+#
+# COMPROBACION OBLIGATORIA DESPUES DEL PRIMER "up"
+#   ss -tlnp | grep -E ':80|:443|:5432|:8080'
+#   Solo deben aparecer 80 y 443. Si aparece 5432 u 8080, algo
+#   publico un puerto que no debia.
+# ==========================================================
+
+name: maxpizzapp
+
+# Ajustes comunes. Las credenciales llegan siempre desde .env,
+# nunca escritas aqui.
+x-servicio-comun: &servicio-comun
+  restart: unless-stopped
+  env_file:
+    - ../.env
+  networks:
+    - interna
+
+services:
+
+  # --------------------------------------------------------
+  # Base de datos: la unica fuente de verdad del sistema.
+  #
+  # El esquema se aplica solo al CREAR el volumen, leyendo
+  # ./postgres/init en orden alfabetico. En produccion esto pasa
+  # UNA vez, en el primer arranque. Despues los scripts no se
+  # reejecutan: cualquier cambio posterior de esquema es una
+  # migracion, no una edicion de estos archivos.
+  # --------------------------------------------------------
+  postgres:
+    <<: *servicio-comun
+    image: postgres:17-alpine
+    container_name: maxpizzapp-bd
+
+    volumes:
+      - postgres_datos:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+
+    # Sin "ports": en produccion la base NO se publica al host.
+    # Se alcanza solo desde la red interna, por el nombre
+    # "postgres". No descomentar ningun puerto aqui.
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # --------------------------------------------------------
+  # Identidad en modo produccion.
+  #
+  # Diferencias con desarrollo, todas necesarias:
+  #
+  #   command "start"      Modo produccion. Exige saber su hostname
+  #                        y no acepta atajos de desarrollo.
+  #   KC_HOSTNAME          La URL PUBLICA. Es el dato que Keycloak
+  #                        escribe como emisor ("issuer") en cada
+  #                        token. Si aqui hubiera una direccion
+  #                        interna, la API rechazaria todos los
+  #                        tokens y el sintoma -"el login funciona
+  #                        pero nada mas"- no apunta a la causa.
+  #                        Riesgo registrado como D-09.
+  #   KC_HTTP_ENABLED      Keycloak habla HTTP hacia adentro: el
+  #                        TLS lo termina Caddy. El trafico plano
+  #                        nunca sale de la red interna de Docker.
+  #   KC_PROXY_HEADERS     Le dice que confie en las cabeceras
+  #                        X-Forwarded-* que le manda Caddy. Sin
+  #                        esto, Keycloak cree que habla en claro y
+  #                        arma los enlaces de la pantalla de
+  #                        acceso con http://, que el navegador
+  #                        bloquea.
+  # --------------------------------------------------------
+  keycloak:
+    <<: *servicio-comun
+    image: quay.io/keycloak/keycloak:26.7
+    container_name: maxpizzapp-auth
+    command: ["start", "--import-realm"]
+
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+
+      KC_HOSTNAME: https://auth.${DOMINIO}
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
+      KC_HEALTH_ENABLED: "true"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    # Sin "ports": la consola de administracion NO se publica al
+    # host. Se llega a ella por https://auth.<dominio>/admin, a
+    # traves de Caddy y solo por HTTPS.
+
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro
+
+    # La imagen no trae curl ni wget: se consulta el endpoint de
+    # salud abriendo el socket desde el propio shell.
+    healthcheck:
+      test: ["CMD-SHELL", 'exec 3<>/dev/tcp/127.0.0.1/9000 && echo -e "GET /health/ready HTTP/1.1\r\nhost: localhost\r\nConnection: close\r\n\r\n" >&3 && cat <&3 | grep -q "UP"']
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+
+  # --------------------------------------------------------
+  # Proxy inverso y HTTPS: la unica pieza expuesta a Internet.
+  #
+  # NO declara depends_on a proposito. Si Keycloak o la API estan
+  # caidos, Caddy tiene que seguir sirviendo el sitio y devolver un
+  # error claro en las rutas afectadas, en lugar de no arrancar.
+  # Es degradacion controlada, no un descuido.
+  # --------------------------------------------------------
+  caddy:
+    <<: *servicio-comun
+    # Version mayor fijada. La version exacta que quede corriendo
+    # se lee del contenedor y se registra en la tabla de stack del
+    # documento: "docker exec maxpizzapp-proxy caddy version".
+    image: caddy:2-alpine
+    container_name: maxpizzapp-proxy
+
+    ports:
+      - "80:80"
+      - "443:443"
+      # HTTP/3. Mismo puerto, protocolo UDP.
+      - "443:443/udp"
+
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./caddy/sitio:/srv/sitio:ro
+      # CRITICO: aqui viven los certificados y las claves de la
+      # cuenta de Let's Encrypt. Si este volumen se pierde, Caddy
+      # vuelve a pedir certificados desde cero en cada despliegue y
+      # Let's Encrypt limita a 5 certificados iguales por semana.
+      # Quedarse sin HTTPS el sabado de la entrega por haber
+      # borrado un volumen es un final evitable.
+      - caddy_datos:/data
+      - caddy_config:/config
+
+networks:
+  interna:
+    driver: bridge
+
+volumes:
+  postgres_datos:
+  caddy_datos:
+  caddy_config:
