@@ -144,6 +144,20 @@ Requisitos: Docker con el plugin de Compose. Todo se ejecuta desde la carpeta `c
 En desarrollo los puertos del host son 5433 (base), 3001 (API) y 8082 (identidad), para
 no chocar con otros servicios de la máquina.
 
+### La app Flutter en desarrollo
+
+Con el entorno anterior levantado:
+
+```bash
+cd frontend
+flutter run -d chrome --dart-define=KEYCLOAK_URL=http://localhost:8082
+```
+
+La app queda en `http://localhost:8090`. Su servidor de desarrollo reenvía `/api/` al
+backend local (`frontend/web_dev_config.yaml`), así que para el navegador la app y la API
+comparten origen, igual que en producción. El puerto 8090 es fijo: Keycloak lo tiene
+declarado como origen permitido del cliente `frontend-web`.
+
 ## Despliegue en el servidor
 
 El despliegue es **un `docker compose` versionado**: con este repositorio, un archivo de

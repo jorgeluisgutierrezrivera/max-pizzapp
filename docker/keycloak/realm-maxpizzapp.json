@@ -68,7 +68,8 @@
         "https://maxpizzapp.tech/*"
       ],
       "webOrigins": [
-        "+"
+        "+",
+        "http://localhost:8090"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256",

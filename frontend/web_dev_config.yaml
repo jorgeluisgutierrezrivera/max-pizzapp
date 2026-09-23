@@ -1,0 +1,17 @@
+# Servidor de desarrollo de Flutter (solo para "flutter run"; no afecta al build).
+#
+# La app corre en http://localhost:8090 y sus llamadas a /api/ se reenvian al backend
+# local. Para el navegador todo es el mismo origen, igual que en produccion, donde Caddy
+# sirve la app y la API bajo https://maxpizzapp.tech: no hace falta abrir CORS en la API.
+#
+# El puerto 8090 es fijo porque Keycloak lo tiene declarado como origen web permitido del
+# cliente frontend-web. Si se cambia aqui, hay que cambiarlo tambien en el realm.
+#
+# Uso, con el entorno local levantado (docker/docker-compose.yml):
+#   flutter run -d chrome --dart-define=KEYCLOAK_URL=http://localhost:8082
+server:
+  host: "localhost"
+  port: 8090
+  proxy:
+    - target: "http://localhost:3001/"
+      prefix: "/api/"
