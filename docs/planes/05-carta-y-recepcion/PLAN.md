@@ -106,10 +106,10 @@ El pedido armado **todavía no se envía a cocina**: eso es la tarjeta 06, que a
 ## 4. Fases y checklist
 
 ### Fase A — El modelo
-- [ ] `02_porciones_y_carta.sql`: tipos `gama_pizza` y `porcion_pizza`, columnas y
+- [x] `02_porciones_y_carta.sql`: tipos `gama_pizza` y `porcion_pizza`, columnas y
       restricciones de D-25, repetible sin errores.
-- [ ] Probado sobre una base vacía (después de `01_schema.sql`) y sobre la base local actual.
-- [ ] Probar que la base **rechaza** lo imposible: media con dos sabores, mitades iguales,
+- [x] Probado sobre una base vacía (después de `01_schema.sql`) y sobre la base local actual.
+- [x] Probar que la base **rechaza** lo imposible: media con dos sabores, mitades iguales,
       pizza sin gama, bebida con gama, nombre de imagen con una ruta.
 
 ### Fase B — La carta ficticia y sus ilustraciones
@@ -206,7 +206,7 @@ celular, la carta y el pedido se acomodan.
 
 | Fase | Estado | Fecha | Evidencia de la prueba |
 |---|---|---|---|
-| A — El modelo | ⏳ Pendiente | — | — |
+| A — El modelo | ✅ Verificada | 2026-09-23 | **Instalación nueva** en un PostgreSQL 17 descartable: corren `00`, `01` y `02` en orden y sin errores; quedan las 5 columnas nuevas, las **6 restricciones** y **5 tablas**, las mismas cinco entidades. **Repetible:** una segunda ejecución de `02` termina con código 0. **Casos, uno por uno:** se aceptan las 4 líneas válidas (entera de un sabor, media, entera de dos mitades, bebida sin porción) y se **rechazan las 9 imposibles**, cada una por su restricción: media con dos sabores, dos mitades iguales, pizza sin gama, pizza sin precio de media, bebida con gama, imagen con una ruta, imagen con una dirección, precio de media negativo, y borrar un producto que figura **solo como segunda mitad** (`detalle_pedido_mitad_fk`, probado aparte). **Base local existente:** migración aplicada a mano con `psql`, 6 restricciones presentes, backend sano. Producción: en la fase E |
 | B — La carta ficticia y sus ilustraciones | ⏳ Pendiente | — | — |
 | C — La API | ⏳ Pendiente | — | — |
 | D — La pantalla de recepción | ⏳ Pendiente | — | — |

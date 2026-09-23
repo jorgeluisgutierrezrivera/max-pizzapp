@@ -306,6 +306,18 @@ git pull
 docker compose --env-file .env -f docker/docker-compose.prod.yml up -d
 ```
 
+**Si el cambio trae una migración nueva** en `docker/postgres/init/` (`02_…sql`, `03_…sql`):
+los scripts de esa carpeta solo corren al **crear** la base, así que en una base que ya
+existe hay que aplicarla una vez, a mano:
+
+```bash
+docker exec -i maxpizzapp-bd sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+  < docker/postgres/init/02_porciones_y_carta.sql
+```
+
+Las migraciones están escritas para que aplicarlas dos veces no cambie nada ni falle. No se
+edita nunca una migración que ya se aplicó: el cambio siguiente va en un archivo nuevo.
+
 Compose solo recrea los servicios cuya configuración cambió. Hay una excepción:
 `--import-realm` **no sobrescribe** un realm que ya existe, así que un cambio en el archivo
 del realm también hay que aplicarlo desde la consola de Keycloak.
