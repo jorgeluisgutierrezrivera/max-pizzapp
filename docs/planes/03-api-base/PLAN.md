@@ -5,8 +5,8 @@
 
 - **Tarjeta:** 03 — API base: estado del servicio y validación de token
 - **Incremento:** cimientos (servidor de aplicación)
-- **Estado:** 🔵 Verificado — pruebas en verde el 2026-09-23 y desplegada en
-  `https://maxpizzapp.tech/api/v1`; cierra con el alta del monitor del RNF-05 y el commit 12b
+- **Estado:** ✅ Hecho — desplegada en `https://maxpizzapp.tech/api/v1` y verificada el
+  2026-09-23, con el monitor del RNF-05 en marcha; a la espera de los commits 12b y 12c
 - **Entrada al tablero:** 2026-09-22
 - **Cierre:** —
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
@@ -238,8 +238,12 @@ partida.
   en SQL (la única consulta es `SELECT 1`, y el patrón queda fijado para las siguientes);
   ningún secreto ni URL de producción en el código; el contenedor llega a *healthy*; ningún
   error filtra trazas.
-- **Queda abierto:** el **monitor de disponibilidad** del RNF-05 sobre
-  `https://maxpizzapp.tech/api/v1/salud`, cada 5 minutos. Lo da de alta el autor, porque
-  requiere crear una cuenta en un servicio externo. **Anotar aquí la fecha y hora de inicio**:
-  el 2.8 tiene que declarar el periodo realmente medido.
-- **Fecha de cierre:** —, al dar de alta el monitor.
+- **Monitor de disponibilidad del RNF-05:** UptimeRobot, plan gratuito (uso no comercial),
+  monitor HTTP(s) *"Max Pizzapp — salud de la API"* sobre
+  `https://maxpizzapp.tech/api/v1/salud`, **cada 5 minutos**, con aviso por correo. Lo dio de
+  alta el autor. **Inicio del periodo medido: 2026-09-23, ~01:15 hora de Bolivia (05:15
+  UTC).** Los 7 días que exige el RNF-05 se cumplen el **2026-09-30** a la misma hora, antes
+  del E3. Primera lectura: *Up*, 100 % en 24 h, 0 incidentes. El monitor mide las 24 horas,
+  más exigente que la franja de atención de 18:00 a 23:30. El 2.8 declara **las fechas
+  realmente medidas**, sin redondear. El historial se conserva 90 días en el plan gratuito.
+- **Fecha de cierre:** 2026-09-23.
