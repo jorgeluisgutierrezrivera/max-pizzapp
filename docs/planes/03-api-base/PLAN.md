@@ -5,7 +5,7 @@
 
 - **Tarjeta:** 03 — API base: estado del servicio y validación de token
 - **Incremento:** cimientos (servidor de aplicación)
-- **Estado:** 🟠 Propuesto — esperando aprobación
+- **Estado:** 🟢 Aprobado — aprobado el 2026-09-23, con los dos ajustes de la sección 10
 - **Entrada al tablero:** 2026-09-22
 - **Cierre:** —
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
@@ -40,15 +40,21 @@ servidor puede impedirlo**, y esta tarjeta es donde eso se construye.
   rol no alcanza.
 - Acceso a PostgreSQL con **consultas parametrizadas**, sin una sola concatenación.
 - **Manejo central de errores** con los códigos del contrato y sin filtrar trazas al cliente.
-- Servicio `backend` en el compose de desarrollo, con su `Dockerfile`.
+- Servicio `backend` en el compose de desarrollo **y en el de producción**, con su
+  `Dockerfile`.
+- **`GET /api/v1/sesion`**: la única ruta protegida de esta tarjeta; devuelve quién llama y
+  con qué roles.
 - Pruebas de las seis situaciones de acceso, con tokens **reales** del realm.
+- En cuanto `/api/v1/salud` responda en la dirección pública: **alta del monitor de
+  disponibilidad** del RNF-05.
 
 **No incluye (llega en tarjetas posteriores):**
 
 - Las rutas de negocio —carta, pedidos, estados—: tarjetas 05 y 06.
 - El canal en tiempo real: tarjeta 07.
 - La aplicación Flutter: tarjeta 04.
-- El despliegue público: tarjeta 02, que espera el servidor.
+- La infraestructura del despliegue (servidor, dominio, proxy, identidad): tarjeta 02, ya
+  cerrada. Esta tarjeta solo agrega su servicio al compose de producción.
 
 ---
 
@@ -212,6 +218,10 @@ partida.
 | Fecha | Cambio | Motivo |
 |---|---|---|
 | 2026-09-22 | Versión inicial propuesta | Se adelanta mientras la tarjeta 02 está bloqueada esperando el servidor. La API es lo primero que se despliega encima del proxy, y se puede construir y probar entera en local contra el realm que ya funciona |
+| 2026-09-23 | **Aprobado**, con dos ajustes | Revisado por el autor tras cerrar la tarjeta 02 |
+| 2026-09-23 | Ajuste 1: se agrega **`GET /api/v1/sesion`** (Recepción, Cocina) → `200 { sub, nombre, roles }` · 401 | Las pruebas de 401 y 403 necesitan una ruta protegida real. La app la usa en la tarjeta 04 para saber qué pantalla mostrar según el rol **confirmado por el servidor**, no por lo que la app lee del token. Es una ruta nueva del contrato: entra a la Tabla 12 del 2.4 en el mismo acto |
+| 2026-09-23 | Ajuste 2: el servicio `backend` entra también a **`docker-compose.prod.yml`**, y la tarjeta cierra **desplegada** | La plenaria P3 pidió el esqueleto en línea el miércoles 23: frontend, `/api/v1/salud` y base conectada, en su URL pública. La tarjeta 02 ya dejó el proxy esperando a `backend:3000` |
+| 2026-09-23 | El 403 se prueba con el middleware montado sobre una ruta que exige el rol contrario, en las pruebas de integración | Todavía no existe ninguna ruta del negocio exclusiva de un rol (llegan con la tarjeta 06). No se inventa una ruta pública solo para probar |
 
 ---
 

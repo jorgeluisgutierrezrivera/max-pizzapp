@@ -34,8 +34,8 @@ siguiente hasta cerrar la actual.
 | # | Tarjeta | Entrega | Estado |
 |---|---|---|---|
 | 01 | Esquema de datos y PostgreSQL en contenedor | Persistencia lista y verificada | **Hecho** — 22-sep |
-| 02 | URL pública con HTTPS, proxy e identidad | Dirección pública con certificado válido y Keycloak con sus dos roles | **Aprobado** — 22-sep |
-| 03 | API base: estado del servicio y validación de token | Express con la ruta de salud y el middleware que valida firma, emisor, vigencia, audiencia y rol | **Propuesto** |
+| 02 | URL pública con HTTPS, proxy e identidad | Dirección pública con certificado válido y Keycloak con sus dos roles | **Hecho** — 23-sep |
+| 03 | API base: estado del servicio y validación de token | Express con la ruta de salud y el middleware que valida firma, emisor, vigencia, audiencia y rol | **Aprobado** — 23-sep |
 | 04 | App Flutter y acceso por rol | Login end-to-end y navegación según rol | Por hacer |
 | 05 | Carta y pantalla de recepción | Productos y toma de pedido en pantalla | Por hacer |
 | 06 | Pedidos y cola de cocina | Alta de pedidos, cola y cambios de estado por rol | Por hacer |
