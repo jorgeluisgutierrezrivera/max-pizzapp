@@ -13,7 +13,6 @@ class PantallaRecepcion extends StatelessWidget {
   Widget build(BuildContext context) {
     return EsqueletoRol(
       titulo: 'Recepción',
-      icono: Icons.point_of_sale,
       usuario: usuario,
       alCerrarSesion: alCerrarSesion,
       cuerpo: BienvenidaRol(

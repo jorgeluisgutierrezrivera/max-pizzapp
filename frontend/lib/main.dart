@@ -47,8 +47,8 @@ class _App extends StatelessWidget {
     return MaterialApp(
       title: 'Max Pizzapp',
       debugShowCheckedModeBanner: false,
-      theme: temaClaro(),
-      darkTheme: temaOscuro(),
+      // Tema oscuro fijo, con la identidad del local (D-29): no sigue el modo del dispositivo.
+      theme: temaMaxPizzas(),
       home: inicio,
     );
   }

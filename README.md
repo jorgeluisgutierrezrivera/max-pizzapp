@@ -132,6 +132,23 @@ Cada producto con imagen tiene un dibujo en `frontend/web/carta/`. Los hace
 siempre el mismo. Las fotos reales los reemplazan con solo cambiar los archivos. La base
 guarda solo el nombre del archivo, nunca la imagen ni una dirección.
 
+## Identidad visual
+
+La app lleva la identidad de **Max's Pizzas**, con su autorización: el logo «MP» en la
+barra, en la pantalla de acceso y como ícono de la app, y su paleta.
+
+- **Tema oscuro fijo:** carbón `#141414` de fondo. El local trabaja de noche, así que la app
+  no sigue el modo claro u oscuro del dispositivo.
+- **Amarillo del logo `#FAF126`**, con texto negro, para la acción principal de cada
+  pantalla.
+- **Rojo `#F90304`** solo para lo que cierra una venta y los avisos.
+
+Las pruebas miden el contraste de cada combinación de colores con la fórmula de WCAG, así
+que un cambio de color que deje un texto ilegible no pasa. El logo vive en
+`frontend/assets/marca/`, y los íconos de `frontend/web/` se generaron a partir de él.
+
+El **software** se llama Max Pizzapp; el **local**, Max's Pizzas.
+
 ## Variables de entorno
 
 Copiar `.env.example` como `.env` y completar los valores. El `.env` **no** se versiona, y

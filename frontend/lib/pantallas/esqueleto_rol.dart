@@ -1,24 +1,27 @@
 import 'package:flutter/material.dart';
 
 import '../api/usuario.dart';
+import 'logo.dart';
 
-/// Lo comun a las pantallas de cada rol: la barra con el rol, quien esta dentro y el boton
-/// de salir. En pantallas angostas (el celular) solo quedan los iconos.
+/// Lo comun a las pantallas de cada rol: la barra con el logo del local, el rol, quien esta
+/// dentro y el boton de salir. En pantallas angostas (el celular) solo quedan los iconos.
 class EsqueletoRol extends StatelessWidget {
   const EsqueletoRol({
     super.key,
     required this.titulo,
-    required this.icono,
     required this.usuario,
     required this.alCerrarSesion,
     required this.cuerpo,
+    this.acciones = const [],
   });
 
   final String titulo;
-  final IconData icono;
   final Usuario usuario;
   final VoidCallback alCerrarSesion;
   final Widget cuerpo;
+
+  /// Botones propios de la pantalla, antes de quien esta dentro y de salir.
+  final List<Widget> acciones;
 
   @override
   Widget build(BuildContext context) {
@@ -30,12 +33,14 @@ class EsqueletoRol extends StatelessWidget {
         titleSpacing: 16,
         title: Row(
           children: [
-            Icon(icono, color: colores.primary),
-            const SizedBox(width: 10),
-            Text(titulo),
+            const LogoMaxPizzas(tamano: 34),
+            const SizedBox(width: 12),
+            // En un celular angosto, con los botones de la pantalla, el titulo cede espacio.
+            Flexible(child: Text(titulo, overflow: TextOverflow.ellipsis)),
           ],
         ),
         actions: [
+          ...acciones,
           if (!angosta)
             Padding(
               padding: const EdgeInsets.only(right: 8),

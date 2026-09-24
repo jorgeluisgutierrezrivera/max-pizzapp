@@ -13,7 +13,6 @@ class PantallaCocina extends StatelessWidget {
   Widget build(BuildContext context) {
     return EsqueletoRol(
       titulo: 'Cocina',
-      icono: Icons.soup_kitchen,
       usuario: usuario,
       alCerrarSesion: alCerrarSesion,
       cuerpo: BienvenidaRol(

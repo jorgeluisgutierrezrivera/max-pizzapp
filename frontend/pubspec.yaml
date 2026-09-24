@@ -26,3 +26,6 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  # El logo de Max's Pizzas, con autorización del local (D-29).
+  assets:
+    - assets/marca/

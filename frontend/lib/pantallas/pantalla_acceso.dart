@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// Primera pantalla: la marca y el boton que lleva a Keycloak.
+import 'logo.dart';
+
+/// Primera pantalla: el logo del local, el nombre del sistema y el boton que lleva a
+/// Keycloak. El sistema es Max Pizzapp; el local, Max's Pizzas (D-29).
 ///
 /// La app nunca pide la contrasena: la pide Keycloak, en su propia pagina. Por eso aqui no
 /// hay campos de usuario ni de clave.
@@ -38,17 +41,21 @@ class PantallaAcceso extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
+                      const Center(child: LogoMaxPizzas(tamano: 96)),
+                      const SizedBox(height: 20),
                       Text.rich(
                         TextSpan(children: [
                           const TextSpan(text: 'Max '),
                           TextSpan(text: 'Pizzapp', style: TextStyle(color: colores.primary)),
                         ]),
+                        textAlign: TextAlign.center,
                         style: tema.textTheme.headlineMedium
                             ?.copyWith(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 6),
                       Text(
                         'Pedidos entre recepción y cocina, en tiempo real.',
+                        textAlign: TextAlign.center,
                         style: tema.textTheme.bodyMedium
                             ?.copyWith(color: colores.onSurfaceVariant),
                       ),
@@ -64,7 +71,7 @@ class PantallaAcceso extends StatelessWidget {
                       ),
                       const SizedBox(height: 24),
                       Text(
-                        'Max Pizzas · Villa Fátima, Tarija',
+                        "Max's Pizzas · Villa Fátima, Tarija",
                         textAlign: TextAlign.center,
                         style: tema.textTheme.bodySmall
                             ?.copyWith(color: colores.onSurfaceVariant),

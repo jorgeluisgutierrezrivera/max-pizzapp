@@ -10,7 +10,7 @@
   <meta name="description" content="Max Pizzapp: pedidos entre recepcion y cocina en tiempo real">
   <!-- Un sistema interno de un local no tiene por que aparecer en buscadores. -->
   <meta name="robots" content="noindex, nofollow">
-  <meta name="theme-color" content="#C0392B">
+  <meta name="theme-color" content="#141414">
 
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
@@ -20,6 +20,9 @@
 
   <title>Max Pizzapp</title>
   <link rel="manifest" href="manifest.json">
+  <!-- El mismo carbón del tema (D-29): sin esto, la página se ve blanca un instante
+       mientras la app arranca. -->
+  <style>html, body { background: #141414; }</style>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>
