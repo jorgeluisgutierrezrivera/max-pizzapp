@@ -5,8 +5,8 @@
 
 - **Tarjeta:** 05 — La carta y la venta en recepción
 - **Incremento:** pedidos sobre la URL pública
-- **Estado:** 🟡 **Revisión 2 propuesta** — pendiente de aprobación. La versión 1 se aprobó el
-  2026-09-23; sus fases A, B y C se hicieron y subieron, y la pantalla de su fase D **no se
+- **Estado:** 🔵 **En curso — revisión 2 aprobada** el 2026-09-23. La versión 1 se aprobó el
+  mismo día; sus fases A, B y C se hicieron y subieron, y la pantalla de su fase D **no se
   aprobó** (ver la sección 10)
 - **Entrada al tablero:** 2026-09-23
 - **Cierre:** —
@@ -164,12 +164,14 @@ El modelo de porciones, la carta ficticia y la ruta de la carta. Su evidencia es
 sección 9. Lo que de ellas cambia, lo ajustan las fases A2, B2 y C2.
 
 ### Fase A2 — El modelo ajustado a la regla real
-- [ ] `04_solo_enteras_y_extras.sql`: quita porción, gama y precio de media; agrega `extra`,
+- [x] `04_solo_enteras_y_extras.sql`: quita porción, gama y precio de media; agrega `extra`,
       `descripcion` y `linea_de_id`; repetible sin errores.
-- [ ] Probado en una instalación nueva (`00` a `05`) y sobre la base local, que ya tiene la
-      `02`.
-- [ ] La base rechaza lo imposible: dos mitades iguales, un extra colgado de sí mismo, una
+- [x] Probado en una instalación nueva (`00` a `04`; la `05` llega con B2) y sobre la base
+      local, que ya tiene la `02`.
+- [x] La base rechaza lo imposible: dos mitades iguales, un extra colgado de sí mismo, una
       descripción vacía o larga.
+- [x] La ruta de la carta deja de pedir las columnas quitadas, para que la API siga
+      funcionando con el modelo nuevo; lo demás de la API es la fase C2.
 
 ### Fase B2 — La carta real y sus dibujos
 - [ ] `05_carta.sql`: 15 pizzas reales, 3 bebidas y 4 extras ficticios; repetible; no revive
@@ -286,7 +288,7 @@ Y en el celular, que todo se acomode.
 | B — La carta ficticia y sus ilustraciones *(versión 1)* | ✅ Verificada · reemplazada por B2 | 2026-09-23 | **Carta:** 12 productos (5 tradicionales, 4 premium, 3 bebidas). **Instalación nueva** en un PostgreSQL 17 descartable: corren `00` a `03` en orden y sin errores. **Repetible:** aplicada dos veces sobre la base local, siguen siendo 12, sin duplicados (`ON CONFLICT (nombre)`). **No revive agotados:** con la hawaiana marcada no disponible, recargar la carta la deja no disponible. **Ilustraciones:** 12 PNG de 600 × 600 con fondo transparente, entre 6 y 37 KB, dibujadas por `scripts/dibujar-carta.py` con formas simples y sin imágenes de terceros; dos ejecuciones dan archivos idénticos byte a byte. La etiqueta de la gaseosa se rediseñó para que no recordara a ninguna marca real |
 | C — La API *(versión 1)* | ✅ Verificada · ajustada por C2 | 2026-09-23 | **`npm test`: 40 de 40** (16 del acceso y **24 nuevas** de la carta). Con una base simulada que anota cada consulta se comprueba *qué llega a la base*: sin token (401) o sin rol (403) la base ni se consulta; los filtros viajan como **parámetros** y el texto SQL es **el mismo** con o sin filtros; los **9 filtros inválidos**, entre ellos un intento de inyección, responden **400 `FILTRO_INVALIDO` sin tocar la base**; base caída, pool agotado y base reiniciándose dan **503**, y un error de SQL da 500 sin su texto. **Contra el esquema real** (`pruebas/api/probar_carta.py`, tokens reales de los dos roles): la carta completa, en orden, filtros correctos y 400 a `?categoria=pasta`. **Casos reales:** con la hawaiana agotada, `?disponible=false` la devuelve; con el contenedor de la base **detenido**, la API responde **503 `BASE_NO_DISPONIBLE`** a los ~5 s y se recupera sola al volver la base |
 | D — La pantalla de recepción *(versión 1)* | ❌ **No aprobada por el autor** · no se subió | 2026-09-23 | Se construyó y probó (77 pruebas en verde, recorrida en el navegador), y **el autor la rechazó al verla**: al elegir una pizza mostraba todas las combinaciones de mitades con sus sumas, y eso es demasiada información para la vendedora, que se equivocaría más de lo que acertaría. Además, la dueña precisó que no se venden medias pizzas. De esa versión se reutilizan la **regla de precio en centavos**, el patrón de los cuatro estados y dos aprendizajes de sus pruebas: un aviso emergente tapaba la barra de abajo en el celular, y a 320 px el título no cabía junto a los botones |
-| A2 — El modelo ajustado | ⏳ Pendiente | — | — |
+| A2 — El modelo ajustado | ✅ Verificada | 2026-09-23 | **Instalación nueva** en un PostgreSQL 17 descartable: corren `00` a `04` en orden y sin errores. Quedan en `producto` `descripcion` y ya no `gama` ni `precio_media`; en `detalle_pedido`, `linea_de_id` y ya no `porcion`. Los tipos `gama_pizza` y `porcion_pizza` desaparecen, `categoria_producto` suma `extra`, y siguen siendo **5 tablas**. **Repetible:** una segunda ejecución de `04` termina con código 0. **Casos, uno por uno:** se aceptan los 5 válidos (pizza de un sabor, de dos mitades, extra colgado de su pizza, bebida sola en un pedido y producto sin descripción) y se **rechazan los 10 imposibles**, cada uno por su causa: dos mitades iguales, extra colgado de sí mismo, extra con segunda mitad, **extra colgado de una pizza de otro pedido** (lo impide la clave compuesta `(linea_de_id, pedido_id)`), extra colgado de una línea inexistente, descripción en blanco, descripción de más de 200 caracteres, una línea con porción, un producto con gama y una categoría inexistente. **Cascada:** borrar una pizza borra sus extras, y borrar el pedido borra todas sus líneas. **Base local:** la `04` aplicada sobre la `02`; los 12 productos de la carta ficticia siguen ahí hasta la fase B2. **La API sigue funcionando:** la ruta de la carta ya no pide la gama ni el precio de media, y ordena cada categoría por nombre; `npm test` 40 de 40, y la sonda contra la base real, en verde |
 | B2 — La carta real y sus dibujos | ⏳ Pendiente | — | — |
 | C2 — La API ajustada | ⏳ Pendiente | — | — |
 | D1 — La identidad visual | ⏳ Pendiente | — | — |
@@ -303,7 +305,7 @@ Y en el celular, que todo se acomode.
 | 2026-09-23 | Versión inicial propuesta | Primera tarjeta del CRUD del E2. Incorpora las reglas de venta que precisó el autor (D-25) |
 | 2026-09-23 | **Aprobado** sin cambios | Revisado por el autor. Las promociones y los combos quedan fuera de alcance (D-26): no entran en esta tarjeta ni en el modelo |
 | 2026-09-23 | **Pantalla de la fase D no aprobada** | Demasiada información a la vista: todas las combinaciones de mitades con sus sumas. El autor pide una venta guiada, de una pregunta por paso |
-| 2026-09-23 | **Revisión 2 propuesta** | La dueña confirmó que **solo se venden pizzas enteras** (D-27, reemplaza a D-25), que la mitad vale la mitad exacta y que se puede vender **solo bebidas**. Se suman los **extras** (D-28), la **identidad visual** del local, con su nombre oficial **Max's Pizzas** (D-29), el **recorrido guiado** (D-30) y la **carta real** del catálogo, sin grupos |
+| 2026-09-23 | **Revisión 2 propuesta y aprobada** (commit `05-P2`) | La dueña confirmó que **solo se venden pizzas enteras** (D-27, reemplaza a D-25), que la mitad vale la mitad exacta y que se puede vender **solo bebidas**. Se suman los **extras** (D-28), la **identidad visual** del local, con su nombre oficial **Max's Pizzas** (D-29), el **recorrido guiado** (D-30) y la **carta real** del catálogo, sin grupos |
 
 ---
 

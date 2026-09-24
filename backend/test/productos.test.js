@@ -11,9 +11,9 @@ const {
 
 // Filas tal como las entrega pg: los numeric llegan como texto.
 const FILAS = [
-  { id: 3, nombre: 'Pepperoni', categoria: 'pizza', gama: 'tradicional', precio: '65.00', precio_media: '35.00', imagen: 'pepperoni.png', disponible: true },
-  { id: 7, nombre: 'Hawaiana', categoria: 'pizza', gama: 'premium', precio: '80.00', precio_media: '42.00', imagen: 'hawaiana.png', disponible: false },
-  { id: 10, nombre: 'Gaseosa 2 L', categoria: 'bebida', gama: null, precio: '18.00', precio_media: null, imagen: 'gaseosa.png', disponible: true },
+  { id: 7, nombre: 'Hawaiana', categoria: 'pizza', precio: '50.00', imagen: 'hawaiana.png', disponible: false },
+  { id: 3, nombre: 'Peperoni', categoria: 'pizza', precio: '50.00', imagen: 'peperoni.png', disponible: true },
+  { id: 10, nombre: 'Gaseosa 2 L', categoria: 'bebida', precio: '18.00', imagen: 'gaseosa.png', disponible: true },
 ];
 
 function poolQueAnota(responder = async () => ({ rows: FILAS })) {
@@ -88,9 +88,9 @@ test('productos: la carta completa, con precios numericos y agotados incluidos',
   assert.equal(estado, 200);
   assert.deepEqual(cuerpo, {
     productos: [
-      { id: 3, nombre: 'Pepperoni', categoria: 'pizza', gama: 'tradicional', precio: 65, precioMedia: 35, imagen: 'pepperoni.png', disponible: true },
-      { id: 7, nombre: 'Hawaiana', categoria: 'pizza', gama: 'premium', precio: 80, precioMedia: 42, imagen: 'hawaiana.png', disponible: false },
-      { id: 10, nombre: 'Gaseosa 2 L', categoria: 'bebida', gama: null, precio: 18, precioMedia: null, imagen: 'gaseosa.png', disponible: true },
+      { id: 7, nombre: 'Hawaiana', categoria: 'pizza', precio: 50, imagen: 'hawaiana.png', disponible: false },
+      { id: 3, nombre: 'Peperoni', categoria: 'pizza', precio: 50, imagen: 'peperoni.png', disponible: true },
+      { id: 10, nombre: 'Gaseosa 2 L', categoria: 'bebida', precio: 18, imagen: 'gaseosa.png', disponible: true },
     ],
   });
 });

@@ -14,14 +14,15 @@ const FILTROS = ['categoria', 'disponible'];
 
 // Una sola consulta, siempre con el mismo texto. Los filtros viajan como parametros y un
 // filtro ausente llega como NULL, que desactiva su condicion: no se arma SQL concatenando
-// nada que venga del cliente. El orden es el de la carta: pizzas tradicionales, premium y
-// despues las demas categorias (los tipos enumerados ordenan por su declaracion).
+// nada que venga del cliente. El orden es el de la carta: primero las pizzas y despues las
+// demas categorias (los tipos enumerados ordenan por su declaracion), y dentro de cada una
+// por nombre, que es como la vendedora busca lo que le piden (D-30).
 const SQL_CARTA = `
-  SELECT id, nombre, categoria, gama, precio, precio_media, imagen, disponible
+  SELECT id, nombre, categoria, precio, imagen, disponible
     FROM producto
    WHERE ($1::categoria_producto IS NULL OR categoria = $1::categoria_producto)
      AND ($2::boolean IS NULL OR disponible = $2::boolean)
-   ORDER BY categoria, gama NULLS LAST, nombre`;
+   ORDER BY categoria, nombre`;
 
 function filtroInvalido(mensaje) {
   return new ErrorApi(400, 'FILTRO_INVALIDO', mensaje);
@@ -49,14 +50,13 @@ function leerFiltros(query) {
 // PostgreSQL devuelve los numeric como texto, para no perder precision. Los precios de la
 // carta tienen dos decimales y caben sin perdida en un numero de JSON: la app los recibe
 // listos para mostrar. La imagen es solo el nombre del archivo; la app sabe donde buscarlo.
+// No hay precio de media: en una pizza de dos mitades cada una vale la mitad exacta (D-27).
 function aProducto(fila) {
   return {
     id: fila.id,
     nombre: fila.nombre,
     categoria: fila.categoria,
-    gama: fila.gama,
     precio: Number(fila.precio),
-    precioMedia: fila.precio_media === null ? null : Number(fila.precio_media),
     imagen: fila.imagen,
     disponible: fila.disponible,
   };

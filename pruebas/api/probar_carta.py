@@ -20,6 +20,7 @@ import importlib.util
 import os
 import re
 import sys
+import unicodedata
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 _spec = importlib.util.spec_from_file_location(
@@ -31,12 +32,18 @@ identidad, pedir, comprobar, resultados = (
     base_api.identidad, base_api.pedir, base_api.comprobar, base_api.resultados)
 
 NOMBRE_DE_ARCHIVO = re.compile(r'^[a-z0-9-]+\.(png|jpg|webp)$')
-ORDEN_CATEGORIAS = ['pizza', 'entrada', 'bebida', 'postre']
-ORDEN_GAMAS = ['tradicional', 'premium', None]
+ORDEN_CATEGORIAS = ['pizza', 'entrada', 'bebida', 'postre', 'extra']
+
+
+def sin_tildes(texto):
+    return ''.join(c for c in unicodedata.normalize('NFD', texto.casefold())
+                   if unicodedata.category(c) != 'Mn')
 
 
 def clave_de_orden(p):
-    return (ORDEN_CATEGORIAS.index(p['categoria']), ORDEN_GAMAS.index(p['gama']))
+    # Por categoria y, dentro de ella, por nombre sin mirar tildes ni mayusculas: asi
+    # ordena PostgreSQL con la intercalacion del idioma.
+    return (ORDEN_CATEGORIAS.index(p['categoria']), sin_tildes(p['nombre']))
 
 
 if __name__ == '__main__':
@@ -57,13 +64,10 @@ if __name__ == '__main__':
     print('\n--- la carta que devuelve la base ---')
     pizzas = [p for p in carta if p['categoria'] == 'pizza']
     comprobar('hay carta cargada', len(carta) > 0, True, '%d productos' % len(carta))
-    comprobar('ordenada: pizzas tradicionales, premium, luego lo demas',
-              [clave_de_orden(p) for p in carta], sorted(clave_de_orden(p) for p in carta))
-    comprobar('toda pizza tiene gama y precio de media',
-              all(p['gama'] and isinstance(p['precioMedia'], (int, float)) for p in pizzas), True)
-    comprobar('nada que no sea pizza tiene gama ni precio de media',
-              all(p['gama'] is None and p['precioMedia'] is None
-                  for p in carta if p['categoria'] != 'pizza'), True)
+    comprobar('ordenada: primero las pizzas, cada categoria por nombre',
+              [clave_de_orden(p) for p in carta] == sorted(clave_de_orden(p) for p in carta), True)
+    comprobar('sin gama ni precio de media: solo pizzas enteras (D-27)',
+              all('gama' not in p and 'precioMedia' not in p for p in carta), True)
     comprobar('los precios llegan como numeros',
               all(isinstance(p['precio'], (int, float)) for p in carta), True)
     comprobar('la imagen es solo un nombre de archivo',
