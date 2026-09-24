@@ -4,8 +4,8 @@
 > agente de código y al estudiante. Es **autocontenido**: solo referencia material que
 > vive dentro de este repositorio (`codigo/`).
 >
-> **Negocio:** pizzería **Max Pizzas** (Tarija). **Producto de software:** **Max Pizzapp**.
-> En el documento y la defensa se distingue el negocio (Max Pizzas) del software (Max Pizzapp).
+> **Negocio:** pizzería **Max's Pizzas** (Tarija). **Producto de software:** **Max Pizzapp**.
+> En el documento y la defensa se distingue el negocio (Max's Pizzas) del software (Max Pizzapp).
 >
 > **Estudiante:** Jorge Luis Gutierrez Rivera — UAJMS, Diplomado en Desarrollo Web y
 > Aplicaciones Móviles · **Módulo 4 — Integración y Despliegue de Soluciones**.
@@ -15,7 +15,7 @@
 ## 1. Qué es
 
 **Max Pizzapp** es un sistema **web** de gestión de pedidos con **sincronización en
-tiempo real** entre **recepción** y **cocina** de la pizzería **Max Pizzas**. Digitaliza
+tiempo real** entre **recepción** y **cocina** de la pizzería **Max's Pizzas**. Digitaliza
 el tramo del proceso que hoy se coordina de forma manual (se anota en papel y se pasa de palabra):
 
 ```
@@ -32,7 +32,7 @@ y lo que justifica el valor del sistema frente al proceso manual.
 
 ## 2. Problema que resuelve
 
-En Max Pizzas los pedidos se registran y coordinan de forma **manual**, sin un medio que
+En Max's Pizzas los pedidos se registran y coordinan de forma **manual**, sin un medio que
 refleje el **estado de cada pedido en tiempo real**. Esto genera errores en la toma,
 **pérdida del orden de atención** y demoras en la preparación.
 
