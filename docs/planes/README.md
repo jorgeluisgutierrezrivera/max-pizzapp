@@ -38,9 +38,9 @@ siguiente hasta cerrar la actual.
 | 03 | API base: estado del servicio y validación de token | Express con la ruta de salud y el middleware que valida firma, emisor, vigencia, audiencia y rol | **Hecho** — 23-sep |
 | 04 | App Flutter y acceso por rol | Login end-to-end y navegación según rol | **Hecho** — 23-sep |
 | 05 | La carta y la venta en recepción | La carta real y la venta como recorrido guiado, con la identidad del local | **Hecho** — 24-sep |
-| 06 | Pedidos y cola de cocina | Alta de pedidos, cola y cambios de estado por rol | Por hacer |
-| 07 | Sincronización en tiempo real | Eventos de pedido propagados en vivo a las pantallas | Por hacer |
-| 08 | Disponibilidad de productos y cancelación de pedidos | Marcar un producto agotado (RF-13) y cancelar antes de "listo" (RF-09) | Por hacer |
+| 06 | Pedidos y cola de cocina | El CRUD del pedido (alta con precio del servidor, estados por rol y cancelación con motivo), la cola de cocina y el aviso en vivo mínimo | **En curso** — plan aprobado el 24-sep |
+| 07 | Sincronización en tiempo real | El canal en vivo robusto: reconexión, aviso cuando se cae, token renovado y la carta al día en todas las pantallas (la versión mínima llega en la 06) | Por hacer |
+| 08 | Disponibilidad de productos | Marcar un producto agotado (RF-13). La cancelación (RF-09) se adelantó a la 06 (D-33) | Por hacer |
 | 09 | Endurecimiento de seguridad | Cabeceras, límite de intentos y repaso de validaciones | Por hacer |
 | 10 | Pruebas end-to-end y documentación técnica | Suite en verde y plan de pruebas documentado | Por hacer |
 | 11 | Identidad visual del acceso | Tema de Keycloak con la estética de la app y del local (colores, tipografía, marca), solo con estilos | Por hacer — después del E2 |
