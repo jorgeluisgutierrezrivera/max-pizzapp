@@ -28,6 +28,22 @@ void main() {
     expect(vista.headers['Authorization'], 'Bearer token-1');
   });
 
+  test('los parametros de consulta van en la direccion, codificados', () async {
+    late http.Request vista;
+    final api = ClienteApi(
+      base: base,
+      token: () => 't',
+      renovar: () async => true,
+      cliente: MockClient((p) async {
+        vista = p;
+        return json(200, {'pedidos': []});
+      }),
+    );
+    await api.obtener('/pedidos', consulta: {'estado': 'pendiente,en_preparacion'});
+    expect(vista.url.path, '/api/v1/pedidos');
+    expect(vista.url.queryParameters, {'estado': 'pendiente,en_preparacion'});
+  });
+
   test('enviar hace un POST con el cuerpo en JSON; cambiar, un PATCH', () async {
     final vistas = <http.Request>[];
     final api = ClienteApi(

@@ -18,6 +18,8 @@ dependencies:
   crypto: 3.0.7
   # Acceso al navegador: redireccion, URL actual y sessionStorage.
   web: 1.1.1
+  # El canal en vivo con la API: Socket.IO 4, el mismo protocolo que el servidor.
+  socket_io_client: 3.1.6
 
 dev_dependencies:
   flutter_test:

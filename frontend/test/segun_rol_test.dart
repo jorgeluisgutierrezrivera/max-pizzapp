@@ -28,6 +28,10 @@ void main() {
   });
 
   testWidgets('recepcion va a la pantalla de recepcion, con su nombre', (t) async {
+    // En una pantalla de escritorio: en una tableta, la barra le cede el nombre a los botones.
+    t.view.physicalSize = const Size(1280, 800);
+    t.view.devicePixelRatio = 1;
+    addTearDown(t.view.reset);
     await t.pumpWidget(app(() async => usuarioCon(['recepcion'], nombre: 'Ana Prueba')));
     await t.pumpAndSettle();
     expect(find.text('Recepción'), findsOneWidget);

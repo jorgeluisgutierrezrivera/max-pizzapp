@@ -41,7 +41,10 @@ class ClienteApi {
   static const _sinConexion = ErrorApi(
       0, 'SIN_CONEXION', 'No hay conexión con el servidor. Revisa la red e intenta de nuevo.');
 
-  Future<Map<String, dynamic>> obtener(String ruta) => _pedir('GET', ruta);
+  /// GET. Los parametros de consulta van aparte, para que se codifiquen bien:
+  /// obtener('/pedidos', consulta: {'estado': 'pendiente,en_preparacion'}).
+  Future<Map<String, dynamic>> obtener(String ruta, {Map<String, String>? consulta}) =>
+      _pedir('GET', ruta, null, consulta);
 
   /// POST con un cuerpo JSON: crear un pedido, cancelarlo.
   Future<Map<String, dynamic>> enviar(String ruta, Map<String, dynamic> cuerpo) =>
@@ -51,19 +54,22 @@ class ClienteApi {
   Future<Map<String, dynamic>> cambiar(String ruta, Map<String, dynamic> cuerpo) =>
       _pedir('PATCH', ruta, cuerpo);
 
-  Future<Map<String, dynamic>> _pedir(String metodo, String ruta, [Map<String, dynamic>? cuerpo]) async {
-    var respuesta = await _enviarUnaVez(metodo, ruta, cuerpo);
+  Future<Map<String, dynamic>> _pedir(String metodo, String ruta,
+      [Map<String, dynamic>? cuerpo, Map<String, String>? consulta]) async {
+    var respuesta = await _enviarUnaVez(metodo, ruta, cuerpo, consulta);
     // Un 401 se rechaza antes de tocar nada en el servidor: reintentar con el token nuevo no
     // repite ninguna operacion.
     if (respuesta.statusCode == 401 && await renovar()) {
-      respuesta = await _enviarUnaVez(metodo, ruta, cuerpo);
+      respuesta = await _enviarUnaVez(metodo, ruta, cuerpo, consulta);
     }
     return _interpretar(respuesta);
   }
 
-  Future<http.Response> _enviarUnaVez(String metodo, String ruta, Map<String, dynamic>? cuerpo) async {
+  Future<http.Response> _enviarUnaVez(
+      String metodo, String ruta, Map<String, dynamic>? cuerpo, Map<String, String>? consulta) async {
     final vigente = token();
-    final peticion = http.Request(metodo, base.replace(path: '${base.path}$ruta'))
+    final direccion = base.replace(path: '${base.path}$ruta', queryParameters: consulta);
+    final peticion = http.Request(metodo, direccion)
       ..headers.addAll({
         'Accept': 'application/json',
         if (cuerpo != null) 'Content-Type': 'application/json',

@@ -1,7 +1,7 @@
 # Servidor de desarrollo de Flutter (solo para "flutter run"; no afecta al build).
 #
-# La app corre en http://localhost:8090 y sus llamadas a /api/ se reenvian al backend
-# local. Para el navegador todo es el mismo origen, igual que en produccion, donde Caddy
+# La app corre en http://localhost:8090 y sus llamadas a /api/ y /socket.io/ se reenvian al
+# backend local. Para el navegador todo es el mismo origen, igual que en produccion, donde Caddy
 # sirve la app y la API bajo https://maxpizzapp.tech: no hace falta abrir CORS en la API.
 #
 # El puerto 8090 es fijo porque Keycloak lo tiene declarado como origen web permitido del
@@ -15,3 +15,6 @@ server:
   proxy:
     - target: "http://localhost:3001/"
       prefix: "/api/"
+    # El canal en vivo (Socket.IO), que en produccion Caddy reenvia por la misma ruta.
+    - target: "http://localhost:3001/"
+      prefix: "/socket.io/"

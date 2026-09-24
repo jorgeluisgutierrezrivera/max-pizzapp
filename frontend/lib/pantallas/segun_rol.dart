@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 
+import '../api/canal_en_vivo.dart';
 import '../api/cliente_api.dart';
 import '../api/usuario.dart';
 import '../carta/producto.dart';
+import '../pedidos/pedido.dart';
 import 'pantalla_cargando.dart';
 import 'pantalla_cocina.dart';
 import 'pantalla_error.dart';
 import 'pantalla_recepcion.dart';
+import 'timbre.dart';
+
+Future<List<Pedido>> _colaVacia() async => const [];
+Future<Pedido> _sinCambios(int id, EstadoPedido hacia) =>
+    Future.error(const ErrorApi(0, 'SIN_API', 'Esta pantalla no tiene cómo cambiar pedidos.'));
+CanalEnVivo _sinCanal() => const CanalApagado();
 
 /// Pregunta al servidor quien es la persona y muestra la pantalla de su rol.
 ///
@@ -20,12 +28,20 @@ class PantallaSegunRol extends StatefulWidget {
     required this.cargarCarta,
     required this.alCerrarSesion,
     this.enviarPedido,
+    this.cargarCola = _colaVacia,
+    this.cambiarEstado = _sinCambios,
+    this.crearCanal = _sinCanal,
+    this.timbre,
   });
 
   final Future<Usuario> Function() cargarUsuario;
   final Future<Carta> Function() cargarCarta;
   final VoidCallback alCerrarSesion;
   final Future<Map<String, dynamic>> Function(Map<String, dynamic> pedido)? enviarPedido;
+  final Future<List<Pedido>> Function() cargarCola;
+  final Future<Pedido> Function(int id, EstadoPedido hacia) cambiarEstado;
+  final CanalEnVivo Function() crearCanal;
+  final Timbre? timbre;
 
   @override
   State<PantallaSegunRol> createState() => _PantallaSegunRolState();
@@ -70,7 +86,14 @@ class _PantallaSegunRolState extends State<PantallaSegunRol> {
               cargarCarta: widget.cargarCarta,
               enviarPedido: widget.enviarPedido,
             ),
-          Rol.cocina => PantallaCocina(usuario: usuario, alCerrarSesion: widget.alCerrarSesion),
+          Rol.cocina => PantallaCocina(
+              usuario: usuario,
+              alCerrarSesion: widget.alCerrarSesion,
+              cargarCola: widget.cargarCola,
+              cambiarEstado: widget.cambiarEstado,
+              crearCanal: widget.crearCanal,
+              timbre: widget.timbre ?? TimbreMudo(),
+            ),
           null => PantallaError(
               mensaje: 'Tu cuenta no tiene un rol de este sistema. Pide que te asignen '
                   'recepción o cocina.',

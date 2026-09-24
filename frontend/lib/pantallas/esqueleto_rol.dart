@@ -25,7 +25,11 @@ class EsqueletoRol extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final angosta = MediaQuery.sizeOf(context).width < 600;
+    final ancho = MediaQuery.sizeOf(context).width;
+    final angosta = ancho < 600;
+    // El nombre de la cuenta necesita lugar: en una tableta, la barra se lo cede a los
+    // botones de la pantalla.
+    final conNombre = ancho >= 900;
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 16,
@@ -39,7 +43,7 @@ class EsqueletoRol extends StatelessWidget {
         ),
         actions: [
           ...acciones,
-          if (!angosta)
+          if (conNombre)
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: Center(
@@ -65,41 +69,6 @@ class EsqueletoRol extends StatelessWidget {
         ],
       ),
       body: SafeArea(child: cuerpo),
-    );
-  }
-}
-
-/// Cuerpo provisorio de las pantallas de rol hasta que lleguen las tarjetas 05 y 06.
-class BienvenidaRol extends StatelessWidget {
-  const BienvenidaRol({super.key, required this.icono, required this.nombre, required this.texto});
-
-  final IconData icono;
-  final String nombre;
-  final String texto;
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icono, size: 56, color: tema.colorScheme.primary),
-              const SizedBox(height: 16),
-              Text('Hola, $nombre', textAlign: TextAlign.center, style: tema.textTheme.headlineSmall),
-              const SizedBox(height: 8),
-              Text(texto,
-                  textAlign: TextAlign.center,
-                  style: tema.textTheme.bodyMedium
-                      ?.copyWith(color: tema.colorScheme.onSurfaceVariant)),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

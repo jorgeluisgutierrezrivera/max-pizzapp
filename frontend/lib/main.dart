@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 
+import 'api/canal_en_vivo.dart';
 import 'api/cliente_api.dart';
 import 'api/usuario.dart';
 import 'carta/producto.dart';
+import 'pedidos/pedido.dart';
 import 'autenticacion/navegador_web.dart';
 import 'autenticacion/servicio_sesion.dart';
 import 'configuracion.dart';
 import 'pantallas/pantalla_acceso.dart';
 import 'pantallas/pantalla_cargando.dart';
 import 'pantallas/segun_rol.dart';
+import 'pantallas/timbre_web.dart';
 import 'tema.dart';
 
 /// En desarrollo: flutter run --dart-define=KEYCLOAK_URL=http://localhost:8082
@@ -34,7 +37,9 @@ void main() {
     token: () => sesion.tokenAcceso,
     renovar: sesion.renovar,
   );
-  runApp(_App(inicio: _SegunSesion(sesion: sesion, api: api)));
+  final timbre = TimbreWeb();
+  CanalEnVivo crearCanal() => CanalSocketIo(origen: configuracion.origen, token: () => sesion.tokenAcceso);
+  runApp(_App(inicio: _SegunSesion(sesion: sesion, api: api, crearCanal: crearCanal, timbre: timbre)));
   sesion.arrancar();
 }
 
@@ -57,10 +62,12 @@ class _App extends StatelessWidget {
 
 /// Muestra la pantalla que corresponde al estado de la sesion.
 class _SegunSesion extends StatelessWidget {
-  const _SegunSesion({required this.sesion, required this.api});
+  const _SegunSesion({required this.sesion, required this.api, required this.crearCanal, required this.timbre});
 
   final ServicioSesion sesion;
   final ClienteApi api;
+  final CanalEnVivo Function() crearCanal;
+  final TimbreWeb timbre;
 
   @override
   Widget build(BuildContext context) {
@@ -78,6 +85,16 @@ class _SegunSesion extends StatelessWidget {
             ]),
             enviarPedido: (pedido) async =>
                 (await api.enviar('/pedidos', pedido))['pedido'] as Map<String, dynamic>,
+            cargarCola: () async => [
+              for (final p in (await api.obtener('/pedidos',
+                      consulta: {'estado': 'pendiente,en_preparacion'}))['pedidos'] as List<dynamic>)
+                Pedido.desdeJson(p as Map<String, dynamic>),
+            ],
+            cambiarEstado: (id, hacia) async => Pedido.desdeJson(
+                (await api.cambiar('/pedidos/$id/estado', {'estado': hacia.nombreApi}))['pedido']
+                    as Map<String, dynamic>),
+            crearCanal: crearCanal,
+            timbre: timbre,
             alCerrarSesion: sesion.cerrarSesion,
           ),
       },
