@@ -348,8 +348,11 @@ recibe la versión nueva sin que haga falta borrar la caché.
 ```bash
 cd /opt/maxpizzapp
 git pull
-docker compose --env-file .env -f docker/docker-compose.prod.yml up -d
+docker compose --env-file .env -f docker/docker-compose.prod.yml up -d --build
 ```
+
+`--build` hace falta porque la imagen de la API se construye con el código del repositorio:
+sin él, Compose reutiliza la imagen anterior y el código nuevo no llega al contenedor.
 
 **Si el cambio trae una migración nueva** en `docker/postgres/init/`: los scripts de esa
 carpeta solo corren al **crear** la base, así que en una base que ya existe hay que aplicar
@@ -363,7 +366,8 @@ done
 ```
 
 El orden importa: la `04` ajusta lo que agregó la `02`, y la carta (`05`) usa lo que agrega
-la `04`. No hay `03`: era una carta ficticia que la real reemplazó. Volver a cargar la carta
+la `04`. Y van **antes** del `up -d --build`: la API nueva ya consulta las columnas que
+ellas agregan. No hay `03`: era una carta ficticia que la real reemplazó. Volver a cargar la carta
 actualiza los productos por su nombre sin duplicarlos, y no revive uno que cocina marcó
 agotado.
 

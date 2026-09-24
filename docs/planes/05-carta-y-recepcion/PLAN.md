@@ -5,11 +5,12 @@
 
 - **Tarjeta:** 05 — La carta y la venta en recepción
 - **Incremento:** pedidos sobre la URL pública
-- **Estado:** 🔵 **En curso — revisión 2 aprobada** el 2026-09-23. La versión 1 se aprobó el
-  mismo día; sus fases A, B y C se hicieron y subieron, y la pantalla de su fase D **no se
-  aprobó** (ver la sección 10)
+- **Estado:** ✅ Hecho — en producción en `https://maxpizzapp.tech` desde el 2026-09-24 y
+  vista por el autor en su celular; a la espera del commit 05-E. *(La versión 1 se aprobó el
+  23-sep; sus fases A, B y C se subieron, y la pantalla de su fase D **no se aprobó**: ver la
+  sección 10)*
 - **Entrada al tablero:** 2026-09-23
-- **Cierre:** —
+- **Cierre:** 2026-09-24
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
 
 > **Qué cambió en la revisión 2 y por qué.** Al ver la pantalla de la versión 1, el autor la
@@ -203,15 +204,16 @@ sección 9. Lo que de ellas cambia, lo ajustan las fases A2, B2 y C2.
 - [x] Las fotos de las 15 pizzas y el tema claro, aprobados por el autor.
 
 ### Fase E — En producción
-- [ ] Migraciones `02` y `04` y la carta `05` aplicadas en la base de producción, en ese
+- [x] Migraciones `02` y `04` y la carta `05` aplicadas en la base de producción, en ese
       orden.
-- [ ] La API reconstruida y la app publicada: **comprobar que la versión nueva llega sola al
-      navegador**, lo que quedó pendiente en la tarjeta 04.
+- [x] La API reconstruida y la app publicada.
+- [x] **Comprobar que la versión nueva llega sola al navegador**, lo que quedó pendiente en la
+      tarjeta 04: en el celular del autor, que tenía cargada la versión anterior.
 
 ### Fase F — Pruebas
 - [x] La regla de precio con la tabla de la sección 6 *(hecha en D2)*.
 - [x] Pruebas de *widgets* de cada paso del recorrido *(hechas en D2)*.
-- [ ] Recorrido del autor en el navegador y desde el celular.
+- [x] Recorrido del autor en el navegador *(D2)* y desde el celular, en producción.
 
 ---
 
@@ -303,8 +305,8 @@ Y en el celular, que todo se acomode.
 | C2 — La API ajustada | ✅ Verificada | 2026-09-24 | **`npm test`: 42 de 42.** Las filas simuladas llevan la descripción y un extra; la respuesta los devuelve tal cual, con precios numéricos. Hay **2 pruebas nuevas**: `?categoria=extra` llega a la base como parámetro, y **ninguna respuesta trae gama ni precio de media** (D-27). Los 9 filtros inválidos siguen respondiendo 400 sin tocar la base. **Contra la base real** (`probar_carta.py` con tokens reales de los dos roles): 22 productos en orden (pizzas primero, cada categoría por nombre); las 15 pizzas traen sus ingredientes; `?categoria=pizza` devuelve 15 y `?categoria=extra` los 4 extras; `?categoria=pasta` sigue dando 400. **Documento:** el borrador del 2.4 queda al día. La Tabla 12 lleva la respuesta de la carta (descripción, extra, orden) y el cuerpo de `POST /pedidos` (segunda mitad, extras, al menos una línea, puede ser solo de bebidas). El diccionario de datos suma `producto_mitad_id`, `linea_de_id`, `descripcion` e `imagen`, con sus restricciones; las relaciones suman la segunda mitad y la línea de la que cuelga un extra |
 | D1 — La identidad visual | ✅ Verificada | 2026-09-24 | **Antes de empezar**, el código de la pantalla rechazada se apartó fuera del repositorio (se reutiliza en D2) y los cuatro archivos que había modificado volvieron a su versión subida. Con eso vuelven a pasar los **44** tests de siempre, así que el commit de la identidad no arrastra nada de aquella versión. **El tema** (`temaMaxPizzas()`) es oscuro y fijo: carbón `#141414`, amarillo del logo `#FAF126` con texto negro para la acción principal, rojo `#F90304` reservado para *Terminar venta* (`estiloBotonRojo()`) y un rojo más claro para los errores. **El logo**, autorizado por el local: se generó una versión con fondo transparente a partir del original, separando el negro del amarillo y del rojo sin oscurecer los bordes. Va incluido en la app y aparece en la pantalla de acceso (96 px) y en la barra de cada rol, donde reemplaza al ícono del rol. **Los íconos** de la pestaña y de la app instalada salieron del mismo logo, sobre el carbón; los *maskable* dejan el margen que recortan los celulares. `index.html` y el manifiesto usan el carbón, así la página **ya no se ve blanca** mientras la app arranca. **`flutter test`: 52 de 52** (44 anteriores y **8 nuevas**), `flutter analyze` sin observaciones. Las nuevas miden el **contraste WCAG** de cada combinación: texto sobre carbón y negro sobre amarillo, al menos **7 a 1**; texto secundario y errores, al menos 4,5; y el botón rojo con texto blanco de 19 px en negrita, que es *texto grande* según WCAG, al menos 3. Además comprueban el logo en el acceso y en la barra de los dos roles, y que el acceso quepa en 320 px. **En el navegador:** la pantalla de acceso con el logo, el amarillo y el carbón, y el fondo carbón desde el primer instante de la carga |
 | D2 — El recorrido guiado | ✅ Verificada · **aprobada por el autor** | 2026-09-24 | **La lógica aparte de la pantalla:** `lib/carta/` guarda la carta (en centavos enteros, orden alfabético sin mirar tildes) y la venta como **estado inmutable**. Cada paso crea un estado nuevo, así que *Volver* deshace exactamente lo último, incluso una pizza recién agregada; tocar + en bebidas no llena el historial. **`flutter test`: 106 de 106**, `flutter analyze` sin observaciones. **La regla y el recorrido, sin pantalla (36 casos):** la tabla completa de la sección 6 con los precios reales (Salame con Peperoni **Bs 47,50**, Carnívora con Criolla española **Bs 62,50**, 3 Choclo con extra **Bs 150**, solo 2 gaseosas **Bs 36**, y los rechazos); mitad A/B igual a B/A; 20 iguales definidas una sola vez; 20 distintas confirmando y repitiendo la anterior (8 + 6 + 6 = **Bs 985**); la segunda mitad sin el sabor de la primera; agotadas no elegibles; cantidad de 1 a 50; observación de hasta 240, como la base. **La pantalla, tocando botones (17 casos):** los cuatro estados; ventas completas de principio a fin; volver; cancelar con confirmación; agotada marcada; cantidad inválida; resumen editable; *Terminar venta* deshabilitado hasta la tarjeta 06 y, con el envío conectado, entrega la venta armada; y una venta entera a **320 px sin desbordes**. **Lo que salió de probarla:** (1) a 320 px no cabían *Volver* y *Cancelar venta* junto a la miga de pan: en pantallas angostas son íconos con su descripción; (2) un precio largo empujaba el nombre de la pizza fuera de la tarjeta, y después la etiqueta de precio desbordaba la tarjeta de sabor: los dos se achican antes de desbordar; (3) el modo producción de `flutter run` **no aplica el proxy de desarrollo**, y `/api/` devolvía la página de la app (HTTP 200 con HTML). Para revisarla se sirvió el build con un servidor que reenvía `/api/`, como Caddy. **Revisión con el autor, en dos vueltas:** (a) reemplazó "¿cuántas de esta?" por **confirmar cada pizza** y **"Igual a la pizza anterior"**; (b) el tema oscuro se veía pesado: pasó a **fondo crema con barra negra**, botones negros con letra amarilla y precios en etiqueta amarilla, y las pruebas de contraste WCAG se rehicieron para el tema claro. **Las fotos:** las 15 del local, preparadas por `scripts/preparar-fotos.py`, que las asigna por nombre de archivo (con alias para los nombres del local) y las deja en WebP de 640 × 640, **1,2 MB en total contra 48 MB de los originales**. Las bebidas conservan su dibujo, idéntico al ya subido. **En el navegador, contra la API y la base locales,** el autor recorrió la venta con `recepcion.demo` y la **aprobó**: "ahora sí está perfecto". Va también el nombre **Criolla española** en la carta, pedido por el autor dentro de este commit |
-| E — En producción | ⏳ Pendiente | — | — |
-| F — Pruebas | ⏳ Pendiente | — | — |
+| E — En producción | ✅ Verificada | 2026-09-24 | **Antes de tocar nada:** los cuatro contenedores sanos; la base de producción tenía solo el esquema `01`, 0 productos y 0 pedidos. **Respaldo** con `pg_dump` en formato propio, fuera del repositorio, legible solo por root, y comprobado con `pg_restore --list` (las 5 tablas con sus datos). **El código del servidor, idéntico al local:** los hashes de las tres migraciones y de los seis archivos de la API coinciden. **Migraciones** `02` → `04` → `05` aplicadas a mano, en orden y con `ON_ERROR_STOP`. **La base quedó igual que la local:** 22 productos (15 pizzas de Bs 40 a Bs 65, 3 bebidas, 4 extras); `producto` con `descripcion` e `imagen` y sin `gama` ni `precio_media`; `detalle_pedido` con `producto_mitad_id` y `linea_de_id` y sin `porcion`; las restricciones nuevas presentes, y `extra` en el tipo de categoría. **API reconstruida** (`up -d --build backend`), sana. **`probar_carta.py` contra la URL pública, con tokens reales de los dos roles: 18 de 18** (sin token 401; carta ordenada, sin gama, con ingredientes; los cuatro filtros; filtro inválido 400). **App publicada** con `publicar-web.sh` como versión nueva, conservando las dos anteriores para volver atrás; el `main.dart.js` servido es idéntico al compilado; **las 18 imágenes que nombra la base se sirven como imagen**. En un navegador, la pantalla de acceso nueva carga sin errores en la consola. **Lo que salió:** el README decía `up -d` sin `--build`, y la imagen de la API se construye con el código del repositorio: sin `--build` el código nuevo no llega al contenedor. Se corrigió, y se anotó que las migraciones van antes de reconstruir la API. **Por qué la versión nueva debería llegar sola:** Caddy manda `Cache-Control: no-cache` en toda la app, así que el navegador revalida cada archivo por su ETag, y el *service worker* que genera Flutter solo se da de baja, no guarda nada. La prueba en un navegador que tenía la versión anterior está en la fase F |
+| F — Pruebas | ✅ Verificada | 2026-09-24 | **La regla de precio y el recorrido** se probaron en D2: 36 casos de la regla y del recorrido, 17 de la pantalla, **106 de 106** en total, y el recorrido del autor en el navegador contra el entorno local, con su aprobación. **En producción:** el autor abrió `https://maxpizzapp.tech` en su celular, que tenía cargada la versión de la tarjeta 04, **sin borrar la caché**, y le llegó la versión nueva, con el tema claro y el logo; recorrió la venta con `recepcion.demo` y la dio por buena: "yo lo veo bien". Con eso queda demostrado lo que la tarjeta 04 dejó pendiente: **una versión distinta llega sola al navegador** después de publicar |
 
 ---
 
@@ -315,12 +317,28 @@ Y en el celular, que todo se acomode.
 | 2026-09-23 | Versión inicial propuesta | Primera tarjeta del CRUD del E2. Incorpora las reglas de venta que precisó el autor (D-25) |
 | 2026-09-23 | **Aprobado** sin cambios | Revisado por el autor. Las promociones y los combos quedan fuera de alcance (D-26): no entran en esta tarjeta ni en el modelo |
 | 2026-09-23 | **Pantalla de la fase D no aprobada** | Demasiada información a la vista: todas las combinaciones de mitades con sus sumas. El autor pide una venta guiada, de una pregunta por paso |
-| 2026-09-24 | **Recorrido y diseño ajustados con el autor** durante D2 | Confirmar cada pizza y "Igual a la pizza anterior" en lugar de "¿cuántas de esta?"; tema claro en lugar del oscuro; las fotos del local en lugar de los dibujos. La pizza se llama «Criolla española» |
 | 2026-09-23 | **Revisión 2 propuesta y aprobada** (commit `05-P2`) | La dueña confirmó que **solo se venden pizzas enteras** (D-27, reemplaza a D-25), que la mitad vale la mitad exacta y que se puede vender **solo bebidas**. Se suman los **extras** (D-28), la **identidad visual** del local, con su nombre oficial **Max's Pizzas** (D-29), el **recorrido guiado** (D-30) y la **carta real** del catálogo, sin grupos |
+| 2026-09-24 | **Recorrido y diseño ajustados con el autor** durante D2 | Confirmar cada pizza y "Igual a la pizza anterior" en lugar de "¿cuántas de esta?"; tema claro en lugar del oscuro; las fotos del local en lugar de los dibujos. La pizza se llama «Criolla española» |
 
 ---
 
 ## 11. Cierre
 
-- **Commits que cierran la tarjeta:** —
-- **Fecha de cierre:** —
+- **Commits que cierran la tarjeta:** **05-P** (el plan de la versión 1), **05-1** (el modelo
+  de porciones), **05-2** (la carta ficticia), **05-3** (la ruta de la carta), **05-P2** (la
+  revisión 2 del plan), **05-5** (el modelo de solo pizzas enteras y extras), **05-6** (la
+  carta real), **05-7** (la API ajustada), **05-8** (la identidad visual), **05-9** (la venta
+  guiada con las fotos) y **05-E** (esta evidencia). El **05-4**, la pantalla de la versión 1
+  que el autor no aprobó, **no se subió**. Los pasos están en el manual de Git del proyecto;
+  los ejecuta el autor.
+- **Criterios de aceptación (sección 7):** los ocho cumplidos. Una pregunta por pantalla, sin
+  listas de combinaciones; 20 pizzas iguales con los mismos pasos que una; solo bebidas sí,
+  venta vacía no; la tabla de la sección 6 exacta al centavo; la carta real en orden
+  alfabético, con fotos e ingredientes, y los agotados sin poder elegirse; el logo y la paleta
+  del local sobre fondo claro; la versión nueva llegó al celular del autor sin borrar la
+  caché; y la base guarda solo nombres de archivo, nunca una ruta ni una dirección.
+- **Queda para después:** enviar la venta a cocina con el precio calculado por el servidor
+  (tarjeta 06, que conecta *Terminar venta*); marcar agotados (tarjeta 08); **confirmar con
+  la dueña los precios del catálogo**, y reemplazar las bebidas y los extras ficticios por los
+  reales cuando los haya: solo cambia `05_carta.sql`.
+- **Fecha de cierre:** 2026-09-24.
