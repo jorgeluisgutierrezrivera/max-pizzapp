@@ -113,8 +113,8 @@ El pedido armado **todavía no se envía a cocina**: eso es la tarjeta 06, que a
       pizza sin gama, bebida con gama, nombre de imagen con una ruta.
 
 ### Fase B — La carta ficticia y sus ilustraciones
-- [ ] `03_carta_ficticia.sql`: 5 tradicionales, 4 premium y 3 bebidas, repetible sin errores.
-- [ ] Una ilustración por producto en `frontend/web/carta/`, dibujada para el proyecto.
+- [x] `03_carta_ficticia.sql`: 5 tradicionales, 4 premium y 3 bebidas, repetible sin errores.
+- [x] Una ilustración por producto en `frontend/web/carta/`, dibujada para el proyecto.
 
 ### Fase C — La API
 - [ ] `GET /api/v1/productos` con filtros `categoria` y `disponible`, validados.
@@ -144,6 +144,7 @@ El pedido armado **todavía no se envía a cocina**: eso es la tarjeta 06, que a
 - `docker/postgres/init/02_porciones_y_carta.sql` *(nuevo)*
 - `docker/postgres/init/03_carta_ficticia.sql` *(nuevo)*
 - `frontend/web/carta/` *(nuevo: las ilustraciones)*
+- `scripts/dibujar-carta.py` *(nuevo: dibuja las ilustraciones; agregado en la fase B)*
 - `backend/src/rutas/` o `backend/src/app.js` *(la ruta de productos)* y `backend/test/`
 - `frontend/lib/` *(modelo de producto, regla de precio, pantalla de recepción)* y
   `frontend/test/`
@@ -207,7 +208,7 @@ celular, la carta y el pedido se acomodan.
 | Fase | Estado | Fecha | Evidencia de la prueba |
 |---|---|---|---|
 | A — El modelo | ✅ Verificada | 2026-09-23 | **Instalación nueva** en un PostgreSQL 17 descartable: corren `00`, `01` y `02` en orden y sin errores; quedan las 5 columnas nuevas, las **6 restricciones** y **5 tablas**, las mismas cinco entidades. **Repetible:** una segunda ejecución de `02` termina con código 0. **Casos, uno por uno:** se aceptan las 4 líneas válidas (entera de un sabor, media, entera de dos mitades, bebida sin porción) y se **rechazan las 9 imposibles**, cada una por su restricción: media con dos sabores, dos mitades iguales, pizza sin gama, pizza sin precio de media, bebida con gama, imagen con una ruta, imagen con una dirección, precio de media negativo, y borrar un producto que figura **solo como segunda mitad** (`detalle_pedido_mitad_fk`, probado aparte). **Base local existente:** migración aplicada a mano con `psql`, 6 restricciones presentes, backend sano. Producción: en la fase E |
-| B — La carta ficticia y sus ilustraciones | ⏳ Pendiente | — | — |
+| B — La carta ficticia y sus ilustraciones | ✅ Verificada | 2026-09-23 | **Carta:** 12 productos (5 tradicionales, 4 premium, 3 bebidas) con los precios de la tabla de la sección 6 para pepperoni, carnívora y hawaiana. **Instalación nueva** en un PostgreSQL 17 descartable: corren `00` a `03` en orden y sin errores, y quedan 5 + 4 + 3 productos. **Repetible:** aplicada dos veces sobre la base local, termina con código 0 y siguen siendo 12, sin duplicados (`ON CONFLICT (nombre)`). **No revive agotados:** con la hawaiana marcada no disponible, recargar la carta la deja no disponible. Todas las filas pasan las restricciones de la fase A. **Ilustraciones:** 12 PNG de 600 × 600 con fondo transparente, entre 6 y 37 KB (unos 330 KB en total), dibujadas por `scripts/dibujar-carta.py` con formas simples y sin imágenes de terceros. Dos ejecuciones dan archivos idénticos byte a byte. La etiqueta de la gaseosa se rediseñó para que no recordara a ninguna marca real |
 | C — La API | ⏳ Pendiente | — | — |
 | D — La pantalla de recepción | ⏳ Pendiente | — | — |
 | E — En producción | ⏳ Pendiente | — | — |

@@ -100,6 +100,8 @@ codigo/
 ├── backend/      API Node/Express + Socket.IO
 ├── frontend/     App Flutter
 ├── docker/       Compose, Postgres (init SQL), Keycloak (realm), Caddy
+├── pruebas/      Pruebas de extremo a extremo contra Keycloak y la API reales
+├── scripts/      Publicar la app y dibujar las ilustraciones de la carta
 └── docs/         Documentación técnica: BRIEF de desarrollo y planes de trabajo
 ```
 
@@ -112,6 +114,16 @@ codigo/
 
 Hay una cuenta de demostración por rol: `recepcion.demo` y `cocina.demo`. Sus contraseñas
 **no están en este repositorio**: se asignan en el servidor desde el `.env`.
+
+## La carta de demostración
+
+La carta que trae el sistema es **ficticia**: nueve pizzas (cinco tradicionales y cuatro
+premium) y tres bebidas, con nombres genéricos y precios inventados. Vive en
+`docker/postgres/init/03_carta_ficticia.sql` y se reemplaza por la real sin tocar el esquema.
+
+Cada producto tiene una ilustración en `frontend/web/carta/`. Las dibuja
+`scripts/dibujar-carta.py` con formas simples, sin imágenes de terceros, y el resultado es
+siempre el mismo. La base guarda solo el nombre del archivo, nunca la imagen ni una dirección.
 
 ## Variables de entorno
 
@@ -314,6 +326,9 @@ existe hay que aplicarla una vez, a mano:
 docker exec -i maxpizzapp-bd sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
   < docker/postgres/init/02_porciones_y_carta.sql
 ```
+
+La carta ficticia (`03_carta_ficticia.sql`) se carga igual. Volver a cargarla actualiza los
+productos por su nombre sin duplicarlos, y no revive uno que cocina marcó agotado.
 
 Las migraciones están escritas para que aplicarlas dos veces no cambie nada ni falle. No se
 edita nunca una migración que ya se aplicó: el cambio siguiente va en un archivo nuevo.
