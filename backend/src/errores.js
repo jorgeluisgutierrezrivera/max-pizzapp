@@ -2,16 +2,19 @@
 //   { "error": { "codigo": "...", "mensaje": "..." } }
 // "codigo" es estable y lo interpreta la aplicacion; "mensaje" se muestra a la persona.
 
+// "datos" lleva lo que la app necesita para resolver el error por su cuenta, por ejemplo
+// el total correcto cuando la carta cambio en medio de una venta.
 class ErrorApi extends Error {
-  constructor(estado, codigo, mensaje) {
+  constructor(estado, codigo, mensaje, datos = {}) {
     super(mensaje);
     this.estado = estado;
     this.codigo = codigo;
+    this.datos = datos;
   }
 }
 
-function responderError(res, estado, codigo, mensaje) {
-  res.status(estado).json({ error: { codigo, mensaje } });
+function responderError(res, estado, codigo, mensaje, datos = {}) {
+  res.status(estado).json({ error: { ...datos, codigo, mensaje } });
 }
 
 // Errores de red al conectar, la clase 08 de PostgreSQL (excepciones de conexion), el
@@ -36,7 +39,7 @@ function rutaNoEncontrada(req, res) {
 // eslint-disable-next-line no-unused-vars
 function manejadorErrores(err, req, res, next) {
   if (err instanceof ErrorApi) {
-    responderError(res, err.estado, err.codigo, err.message);
+    responderError(res, err.estado, err.codigo, err.message, err.datos);
     return;
   }
   // Cuerpo JSON mal formado: lo detecta express.json() antes de llegar a la ruta.

@@ -79,11 +79,12 @@ Socket.IO se fija del mismo modo cuando entre su tarjeta.
 ## Pruebas
 
 ```bash
-cd backend && npm test            # 40 pruebas del acceso y la carta, sin base ni Keycloak reales
+cd backend && npm test            # 109 pruebas: acceso, carta, regla de precio y pedidos, sin base ni Keycloak reales
 cd frontend && flutter test       # pruebas de la app Flutter
 python pruebas/identidad/probar_acceso_pkce.py   # inicio de sesión real con PKCE
 python pruebas/api/probar_salud_y_token.py       # la API con tokens reales del realm
 python pruebas/api/probar_carta.py               # la carta con token real y la base real
+python pruebas/api/probar_pedidos.py             # crear pedidos: precios, rechazos y la base real
 ```
 
 Las pruebas de `pruebas/` aceptan `KEYCLOAK_URL` y `API_URL` para ejecutarse contra el

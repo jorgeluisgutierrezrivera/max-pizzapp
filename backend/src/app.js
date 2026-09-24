@@ -2,6 +2,7 @@ const express = require('express');
 const { exigirRol, ROLES_DEL_SISTEMA } = require('./autenticacion');
 const { rutaNoEncontrada, manejadorErrores } = require('./errores');
 const { rutasProductos } = require('./rutas/productos');
+const { rutasPedidos } = require('./rutas/pedidos');
 
 // La aplicacion se construye a partir de sus dependencias (base y autenticador) para que
 // las pruebas puedan crearla sin una base real ni un Keycloak real.
@@ -32,6 +33,7 @@ function crearApp({ pool, autenticar, montarExtra }) {
   });
 
   api.use(rutasProductos({ pool, autenticar }));
+  api.use(rutasPedidos({ pool, autenticar }));
 
   if (montarExtra) montarExtra(api, { autenticar, exigirRol });
 
