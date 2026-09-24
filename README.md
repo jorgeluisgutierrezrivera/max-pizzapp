@@ -102,7 +102,7 @@ codigo/
 ├── frontend/     App Flutter
 ├── docker/       Compose, Postgres (init SQL), Keycloak (realm), Caddy
 ├── pruebas/      Pruebas de extremo a extremo contra Keycloak y la API reales
-├── scripts/      Publicar la app y dibujar las ilustraciones de la carta
+├── scripts/      Publicar la app, preparar las fotos de la carta y dibujar las bebidas
 └── docs/         Documentación técnica: BRIEF de desarrollo y planes de trabajo
 ```
 
@@ -127,21 +127,30 @@ La carta vive en `docker/postgres/init/05_carta.sql` y se cambia sin tocar el es
 El local vende **solo pizzas enteras**, de un sabor o de dos mitades. Una pizza de dos
 mitades cuesta (precio A + precio B) / 2, al centavo.
 
-Cada producto con imagen tiene un dibujo en `frontend/web/carta/`. Los hace
-`scripts/dibujar-carta.py` con formas simples, sin imágenes de terceros, y el resultado es
-siempre el mismo. Las fotos reales los reemplazan con solo cambiar los archivos. La base
-guarda solo el nombre del archivo, nunca la imagen ni una dirección.
+Las imágenes viven en `frontend/web/carta/`, y la base guarda solo el nombre del archivo,
+nunca la imagen ni una dirección:
+
+- **Las pizzas usan las fotos del local.** `scripts/preparar-fotos.py` las prepara a partir
+  de una carpeta de originales: asigna cada archivo a su pizza por el nombre y la deja en
+  WebP de 640 × 640 (unos 80 KB cada una). Los originales no se versionan.
+
+  ```bash
+  python scripts/preparar-fotos.py "ruta/a/la/carpeta/de/fotos"
+  ```
+
+- **Las bebidas, ficticias, tienen un dibujo** hecho por `scripts/dibujar-carta.py` con
+  formas simples, sin imágenes de terceros.
 
 ## Identidad visual
 
 La app lleva la identidad de **Max's Pizzas**, con su autorización: el logo «MP» en la
 barra, en la pantalla de acceso y como ícono de la app, y su paleta.
 
-- **Tema oscuro fijo:** carbón `#141414` de fondo. El local trabaja de noche, así que la app
-  no sigue el modo claro u oscuro del dispositivo.
-- **Amarillo del logo `#FAF126`**, con texto negro, para la acción principal de cada
-  pantalla.
-- **Rojo `#F90304`** solo para lo que cierra una venta y los avisos.
+- **Tema claro fijo:** fondo crema con tarjetas blancas, para que luzcan las fotos de las
+  pizzas. La app no sigue el modo claro u oscuro del dispositivo.
+- **Negro y amarillo del logo `#FAF126`:** la barra superior negra con el logo, los botones
+  principales negros con letra amarilla y los precios en etiqueta amarilla.
+- **Rojo `#F90304`** solo para lo que cierra una venta.
 
 Las pruebas miden el contraste de cada combinación de colores con la fórmula de WCAG, así
 que un cambio de color que deje un texto ilegible no pasa. El logo vive en

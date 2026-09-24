@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'api/cliente_api.dart';
 import 'api/usuario.dart';
+import 'carta/producto.dart';
 import 'autenticacion/navegador_web.dart';
 import 'autenticacion/servicio_sesion.dart';
 import 'configuracion.dart';
@@ -71,6 +72,10 @@ class _SegunSesion extends StatelessWidget {
           PantallaAcceso(alIniciarSesion: sesion.iniciarSesion, mensaje: sesion.mensaje),
         EstadoSesion.conSesion => PantallaSegunRol(
             cargarUsuario: () async => Usuario.desdeJson(await api.obtener('/sesion')),
+            cargarCarta: () async => Carta([
+              for (final p in (await api.obtener('/productos'))['productos'] as List<dynamic>)
+                Producto.desdeJson(p as Map<String, dynamic>),
+            ]),
             alCerrarSesion: sesion.cerrarSesion,
           ),
       },

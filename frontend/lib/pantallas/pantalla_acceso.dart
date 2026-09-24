@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../tema.dart';
 import 'logo.dart';
 
 /// Primera pantalla: el logo del local, el nombre del sistema y el boton que lleva a
@@ -46,7 +47,7 @@ class PantallaAcceso extends StatelessWidget {
                       Text.rich(
                         TextSpan(children: [
                           const TextSpan(text: 'Max '),
-                          TextSpan(text: 'Pizzapp', style: TextStyle(color: colores.primary)),
+                          const TextSpan(text: 'Pizzapp', style: TextStyle(color: rojoMarca)),
                         ]),
                         textAlign: TextAlign.center,
                         style: tema.textTheme.headlineMedium

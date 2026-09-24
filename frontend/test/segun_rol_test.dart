@@ -4,13 +4,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maxpizzapp/api/cliente_api.dart';
 import 'package:maxpizzapp/api/usuario.dart';
+import 'package:maxpizzapp/carta/producto.dart';
 import 'package:maxpizzapp/pantallas/segun_rol.dart';
 
 Usuario usuarioCon(List<String> roles, {String nombre = 'Persona de prueba'}) =>
     Usuario.desdeJson({'sub': 'x', 'nombre': nombre, 'usuario': 'cuenta', 'roles': roles});
 
 Widget app(Future<Usuario> Function() cargar, {VoidCallback? alCerrar}) => MaterialApp(
-      home: PantallaSegunRol(cargarUsuario: cargar, alCerrarSesion: alCerrar ?? () {}),
+      home: PantallaSegunRol(
+        cargarUsuario: cargar,
+        cargarCarta: () async => Carta(const []),
+        alCerrarSesion: alCerrar ?? () {},
+      ),
     );
 
 void main() {
@@ -26,7 +31,7 @@ void main() {
     await t.pumpWidget(app(() async => usuarioCon(['recepcion'], nombre: 'Ana Prueba')));
     await t.pumpAndSettle();
     expect(find.text('Recepción'), findsOneWidget);
-    expect(find.text('Hola, Ana Prueba'), findsOneWidget);
+    expect(find.text('Ana Prueba'), findsOneWidget);
     expect(find.text('Cocina'), findsNothing);
   });
 

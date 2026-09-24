@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../api/cliente_api.dart';
 import '../api/usuario.dart';
+import '../carta/producto.dart';
 import 'pantalla_cargando.dart';
 import 'pantalla_cocina.dart';
 import 'pantalla_error.dart';
@@ -13,9 +14,15 @@ import 'pantalla_recepcion.dart';
 /// de validar el token. La app puede ocultar lo que un rol no debe ver; impedirlo es tarea
 /// del servidor.
 class PantallaSegunRol extends StatefulWidget {
-  const PantallaSegunRol({super.key, required this.cargarUsuario, required this.alCerrarSesion});
+  const PantallaSegunRol({
+    super.key,
+    required this.cargarUsuario,
+    required this.cargarCarta,
+    required this.alCerrarSesion,
+  });
 
   final Future<Usuario> Function() cargarUsuario;
+  final Future<Carta> Function() cargarCarta;
   final VoidCallback alCerrarSesion;
 
   @override
@@ -55,7 +62,11 @@ class _PantallaSegunRolState extends State<PantallaSegunRol> {
         }
         final usuario = estado.requireData;
         return switch (usuario.rol) {
-          Rol.recepcion => PantallaRecepcion(usuario: usuario, alCerrarSesion: widget.alCerrarSesion),
+          Rol.recepcion => PantallaRecepcion(
+              usuario: usuario,
+              alCerrarSesion: widget.alCerrarSesion,
+              cargarCarta: widget.cargarCarta,
+            ),
           Rol.cocina => PantallaCocina(usuario: usuario, alCerrarSesion: widget.alCerrarSesion),
           null => PantallaError(
               mensaje: 'Tu cuenta no tiene un rol de este sistema. Pide que te asignen '

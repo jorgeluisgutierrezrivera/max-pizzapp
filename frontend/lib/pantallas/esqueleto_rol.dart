@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../api/usuario.dart';
+import '../tema.dart';
 import 'logo.dart';
 
 /// Lo comun a las pantallas de cada rol: la barra con el logo del local, el rol, quien esta
@@ -26,8 +27,6 @@ class EsqueletoRol extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final angosta = MediaQuery.sizeOf(context).width < 600;
-    final colores = Theme.of(context).colorScheme;
-
     return Scaffold(
       appBar: AppBar(
         titleSpacing: 16,
@@ -45,8 +44,7 @@ class EsqueletoRol extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: Center(
-                child: Text(usuario.nombreVisible,
-                    style: TextStyle(color: colores.onSurfaceVariant)),
+                child: Text(usuario.nombreVisible, style: const TextStyle(color: Colors.white70)),
               ),
             ),
           if (angosta)
@@ -59,6 +57,7 @@ class EsqueletoRol extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(right: 12),
               child: TextButton.icon(
+                style: TextButton.styleFrom(foregroundColor: amarilloMarca),
                 onPressed: alCerrarSesion,
                 icon: const Icon(Icons.logout),
                 label: const Text('Cerrar sesión'),

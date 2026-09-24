@@ -34,13 +34,14 @@ a la vez, en el orden en que se lo pide el cliente en el mostrador:
 3. ¿Un sabor o mitad y mitad?
 4. El sabor, o las dos mitades.
 5. ¿Algún extra?
-6. Si son distintas: ¿cuántas de esta? *(hasta completar la cantidad)*
+6. Confirmar la pizza. Si son distintas, la siguiente puede ser **igual a la anterior** con un
+   toque, o armarse de nuevo, hasta completar la cantidad.
 7. Las bebidas.
 8. Una observación para cocina ("sin cebolla").
 9. El resumen, con el total.
 
 Todo con **la carta real** de Max's Pizzas y con **su identidad visual**: su logo, su paleta
-negra, amarilla y roja, y un tema oscuro pensado para un local que trabaja de noche.
+negra, amarilla y roja, sobre un fondo claro que deja lucir las fotos de las pizzas.
 
 El pedido armado **todavía no se envía a cocina**: el botón *Terminar venta* lo conecta la
 tarjeta 06, que agrega el `POST`, el precio calculado por el servidor y la cola de cocina.
@@ -61,7 +62,7 @@ tarjeta 06, que agrega el `POST`, el precio calculado por el servidor y la cola 
   reemplazan cambiando solo los archivos.
 - **`GET /api/v1/productos` ajustado:** sin gama ni precio de media, con descripción, con la
   categoría `extra` y la carta en orden alfabético.
-- **La identidad visual (D-29):** logo, paleta, tema oscuro fijo, ícono de la pestaña y
+- **La identidad visual (D-29):** logo, paleta, tema claro fijo, ícono de la pestaña y
   pantalla de acceso.
 - **El recorrido guiado de la venta (D-30)**, con los cuatro estados de una pantalla con datos
   (cargando, vacía, error con Reintentar y con datos), adaptable a tableta, celular y
@@ -129,9 +130,12 @@ tarjeta 06, que agrega el `POST`, el precio calculado por el servidor y la cola 
    - **La cantidad es libre**, con − / + y el teclado, de 1 a 50. El techo solo ataja un
      error de tipeo (200 en vez de 20).
    - **"¿Todas iguales?"** Si la respuesta es sí, la pizza se define una vez y vale para
-     todas: 20 pizzas iguales llevan el mismo tiempo que una. Si es no, cada pizza definida
-     pregunta **"¿cuántas de esta?"**, con el atajo "las N que faltan", y una barra muestra
-     **"faltan X de N"**. Con una sola pizza no se pregunta.
+     todas: 20 pizzas iguales llevan el mismo tiempo que una. Si es no, cada pizza se
+     **confirma** ("Confirmar pizza 1 · Bs 50"), y desde la segunda la primera pregunta ofrece
+     **"Igual a la pizza anterior"**, que la repite con un toque, junto a "Un solo sabor" y
+     "Mitad y mitad". Una barra muestra **"faltan X de N"**. Con una sola pizza no se pregunta.
+     *(Revisado con el autor el 24-sep: al principio era "¿cuántas de esta?", y el autor
+     prefirió confirmar cada pizza y repetir la anterior.)*
    - En cada paso, arriba, **dónde está** ("Pizza · Mitad y mitad · Segunda mitad") y
      **Volver**. En la segunda mitad ya no aparece el sabor de la primera.
    - **Solo bebidas** es un botón del primer paso, que salta directo a las bebidas.
@@ -142,9 +146,13 @@ tarjeta 06, que agrega el `POST`, el precio calculado por el servidor y la cola 
    - **Sin sugerencias de mezclas ni listas de combinaciones.**
 
 7. **La identidad visual del local (D-29), con su permiso.**
-   - **Tema oscuro fijo:** fondo carbón `#141414`, **amarillo `#FAF126`** para las acciones
-     principales, con texto negro, **rojo `#F90304`** solo para *Terminar venta* y los
-     avisos, y texto blanco.
+   - **Tema claro fijo:** fondo crema `#FBF6EE` con tarjetas blancas, **barra superior
+     negra** con el logo, **botones principales negros con letra amarilla `#FAF126`**,
+     **precios en etiqueta amarilla** con letra negra y **rojo `#F90304`** solo para
+     *Terminar venta*. *(Revisado con el autor el 24-sep: el primer tema, oscuro, se veía
+     pesado y apagaba las fotos.)*
+   - **Las pizzas se muestran con las fotos del local**, preparadas con
+     `scripts/preparar-fotos.py`; las bebidas, ficticias, siguen con su dibujo.
    - **El logo** va en la barra, en la pantalla de acceso y como ícono de la pestaña y de la
      app instalada.
    - **La distinción no se rompe:** el software se llama **Max Pizzapp**; el local, **Max's
@@ -184,14 +192,15 @@ sección 9. Lo que de ellas cambia, lo ajustan las fases A2, B2 y C2.
 - [x] Pruebas automáticas y la sonda real actualizadas; la Tabla 12 del 2.4, también.
 
 ### Fase D1 — La identidad visual
-- [x] Tema oscuro fijo con la paleta, el logo en la barra y en el acceso, e íconos de la app
-      hechos a partir del logo.
+- [x] Tema fijo con la paleta, el logo en la barra y en el acceso, e íconos de la app hechos
+      a partir del logo. *(El tema pasó de oscuro a claro en la fase D2, a pedido del autor.)*
 
 ### Fase D2 — El recorrido guiado
-- [ ] Los nueve pasos de la sección 1, con Volver, "dónde está" y el total a la vista.
-- [ ] Cantidad libre, "¿todas iguales?", "¿cuántas de esta?", solo bebidas y resumen
+- [x] Los nueve pasos de la sección 1, con Volver, "dónde está" y el total a la vista.
+- [x] Cantidad libre, "¿todas iguales?", confirmar y repetir la anterior, solo bebidas y resumen
       editable.
-- [ ] Los cuatro estados y adaptable a tableta, celular y escritorio.
+- [x] Los cuatro estados y adaptable a tableta, celular y escritorio.
+- [x] Las fotos de las 15 pizzas y el tema claro, aprobados por el autor.
 
 ### Fase E — En producción
 - [ ] Migraciones `02` y `04` y la carta `05` aplicadas en la base de producción, en ese
@@ -200,8 +209,8 @@ sección 9. Lo que de ellas cambia, lo ajustan las fases A2, B2 y C2.
       navegador**, lo que quedó pendiente en la tarjeta 04.
 
 ### Fase F — Pruebas
-- [ ] La regla de precio con la tabla de la sección 6.
-- [ ] Pruebas de *widgets* de cada paso del recorrido.
+- [x] La regla de precio con la tabla de la sección 6 *(hecha en D2)*.
+- [x] Pruebas de *widgets* de cada paso del recorrido *(hechas en D2)*.
 - [ ] Recorrido del autor en el navegador y desde el celular.
 
 ---
@@ -210,8 +219,9 @@ sección 9. Lo que de ellas cambia, lo ajustan las fases A2, B2 y C2.
 
 - `docker/postgres/init/04_solo_enteras_y_extras.sql` y `05_carta.sql` *(nuevos)*;
   `03_carta_ficticia.sql` *(se elimina)*
-- `scripts/dibujar-carta.py` y `frontend/web/carta/` *(los 15 dibujos; se quitan los que ya
-  no van)*
+- `scripts/dibujar-carta.py` *(desde D2, solo las bebidas)*, `scripts/preparar-fotos.py`
+  *(nuevo en D2)* y `frontend/web/carta/` *(las fotos de las pizzas y los dibujos de las
+  bebidas)*
 - `backend/src/rutas/productos.js`, `backend/test/productos.test.js`,
   `pruebas/api/probar_carta.py`
 - `frontend/lib/` *(tema, logo, carta, regla de precio, recorrido)*, `frontend/web/`
@@ -229,7 +239,7 @@ tarjeta 06:
 |---|---|
 | 1 Peperoni | 50 |
 | 1 mitad Salame, mitad Peperoni | (45 + 50) / 2 = **47,50** |
-| 1 mitad Carnívora, mitad Criolla / Española | (60 + 65) / 2 = **62,50** |
+| 1 mitad Carnívora, mitad Criolla española | (60 + 65) / 2 = **62,50** |
 | 2 mitad Salame, mitad Peperoni | 2 × 47,50 = **95** |
 | 1 Hawaiana con extra queso (8) | 50 + 8 = **58** |
 | 3 Choclo iguales, cada una con extra choclo (5) | 3 × (45 + 5) = **150** |
@@ -261,9 +271,9 @@ Y en el celular, que todo se acomode.
 - 20 pizzas iguales se registran con los **mismos pasos** que una.
 - Se puede vender **solo bebidas**; no se puede terminar una venta vacía.
 - El total calcula **exactamente** la tabla de la sección 6, con la mitad exacta.
-- La carta real, en orden alfabético, con sus dibujos e ingredientes; los agotados no se
+- La carta real, en orden alfabético, con sus fotos e ingredientes; los agotados no se
   pueden elegir.
-- La app lleva el logo y la paleta del local, en tema oscuro.
+- La app lleva el logo y la paleta del local, sobre un fondo claro.
 - Una versión nueva de la app llega al navegador **sin borrar la caché**.
 - Ninguna imagen ni dirección completa guardada en la base.
 
@@ -292,7 +302,7 @@ Y en el celular, que todo se acomode.
 | B2 — La carta real y sus dibujos | ✅ Verificada | 2026-09-24 | **La carta:** las **15 pizzas del catálogo del local** con sus ingredientes y precios (Bs 40 a 65, por confirmar con la dueña), **3 bebidas** y **4 extras** ficticios (queso, jamón, peperoni y choclo, de Bs 5 a 10). **Instalación nueva** en un PostgreSQL 17 descartable: sin la `03`, corren `00`, `01`, `02`, `04` y `05` en orden y sin errores, y quedan 15 + 3 + 4 = 22 productos. **Repetible:** cargada dos veces más, siguen siendo 22 y termina con código 0. **No revive agotados:** con el Salame marcado no disponible, recargar la carta lo deja no disponible. **Base local:** carta aplicada; se borraron a mano los 5 productos ficticios que no están en la carta real (la base local no tenía pedidos), y los 4 que coinciden por nombre (Carnívora, Cuatro quesos, Hawaiana y Napolitana) se actualizaron. **Dibujos:** el script suma salame, choclo, aceituna entera, champiñones, carne molida, chorizo, parmesano y albahaca, y reparte por sectores las pizzas de dos y tres estaciones. Son 15 pizzas y 3 bebidas, en total unos 570 KB; dos ejecuciones dan archivos idénticos byte a byte. Se quitaron los 5 dibujos que ya no van. **Revisión visual:** en la primera tanda el choclo se confundía con el queso, la carne se veía demasiado chica y la albahaca no encontraba lugar entre tantos ingredientes. Se corrigió con granos más anaranjados y con borde, migas más grandes y la albahaca repartida aparte, por encima. **Cruce:** las 18 imágenes que nombra la base existen en `frontend/web/carta/`, y no sobra ningún archivo. La sonda contra la API real ve los 22 productos en orden |
 | C2 — La API ajustada | ✅ Verificada | 2026-09-24 | **`npm test`: 42 de 42.** Las filas simuladas llevan la descripción y un extra; la respuesta los devuelve tal cual, con precios numéricos. Hay **2 pruebas nuevas**: `?categoria=extra` llega a la base como parámetro, y **ninguna respuesta trae gama ni precio de media** (D-27). Los 9 filtros inválidos siguen respondiendo 400 sin tocar la base. **Contra la base real** (`probar_carta.py` con tokens reales de los dos roles): 22 productos en orden (pizzas primero, cada categoría por nombre); las 15 pizzas traen sus ingredientes; `?categoria=pizza` devuelve 15 y `?categoria=extra` los 4 extras; `?categoria=pasta` sigue dando 400. **Documento:** el borrador del 2.4 queda al día. La Tabla 12 lleva la respuesta de la carta (descripción, extra, orden) y el cuerpo de `POST /pedidos` (segunda mitad, extras, al menos una línea, puede ser solo de bebidas). El diccionario de datos suma `producto_mitad_id`, `linea_de_id`, `descripcion` e `imagen`, con sus restricciones; las relaciones suman la segunda mitad y la línea de la que cuelga un extra |
 | D1 — La identidad visual | ✅ Verificada | 2026-09-24 | **Antes de empezar**, el código de la pantalla rechazada se apartó fuera del repositorio (se reutiliza en D2) y los cuatro archivos que había modificado volvieron a su versión subida. Con eso vuelven a pasar los **44** tests de siempre, así que el commit de la identidad no arrastra nada de aquella versión. **El tema** (`temaMaxPizzas()`) es oscuro y fijo: carbón `#141414`, amarillo del logo `#FAF126` con texto negro para la acción principal, rojo `#F90304` reservado para *Terminar venta* (`estiloBotonRojo()`) y un rojo más claro para los errores. **El logo**, autorizado por el local: se generó una versión con fondo transparente a partir del original, separando el negro del amarillo y del rojo sin oscurecer los bordes. Va incluido en la app y aparece en la pantalla de acceso (96 px) y en la barra de cada rol, donde reemplaza al ícono del rol. **Los íconos** de la pestaña y de la app instalada salieron del mismo logo, sobre el carbón; los *maskable* dejan el margen que recortan los celulares. `index.html` y el manifiesto usan el carbón, así la página **ya no se ve blanca** mientras la app arranca. **`flutter test`: 52 de 52** (44 anteriores y **8 nuevas**), `flutter analyze` sin observaciones. Las nuevas miden el **contraste WCAG** de cada combinación: texto sobre carbón y negro sobre amarillo, al menos **7 a 1**; texto secundario y errores, al menos 4,5; y el botón rojo con texto blanco de 19 px en negrita, que es *texto grande* según WCAG, al menos 3. Además comprueban el logo en el acceso y en la barra de los dos roles, y que el acceso quepa en 320 px. **En el navegador:** la pantalla de acceso con el logo, el amarillo y el carbón, y el fondo carbón desde el primer instante de la carga |
-| D2 — El recorrido guiado | ⏳ Pendiente | — | — |
+| D2 — El recorrido guiado | ✅ Verificada · **aprobada por el autor** | 2026-09-24 | **La lógica aparte de la pantalla:** `lib/carta/` guarda la carta (en centavos enteros, orden alfabético sin mirar tildes) y la venta como **estado inmutable**. Cada paso crea un estado nuevo, así que *Volver* deshace exactamente lo último, incluso una pizza recién agregada; tocar + en bebidas no llena el historial. **`flutter test`: 106 de 106**, `flutter analyze` sin observaciones. **La regla y el recorrido, sin pantalla (36 casos):** la tabla completa de la sección 6 con los precios reales (Salame con Peperoni **Bs 47,50**, Carnívora con Criolla española **Bs 62,50**, 3 Choclo con extra **Bs 150**, solo 2 gaseosas **Bs 36**, y los rechazos); mitad A/B igual a B/A; 20 iguales definidas una sola vez; 20 distintas confirmando y repitiendo la anterior (8 + 6 + 6 = **Bs 985**); la segunda mitad sin el sabor de la primera; agotadas no elegibles; cantidad de 1 a 50; observación de hasta 240, como la base. **La pantalla, tocando botones (17 casos):** los cuatro estados; ventas completas de principio a fin; volver; cancelar con confirmación; agotada marcada; cantidad inválida; resumen editable; *Terminar venta* deshabilitado hasta la tarjeta 06 y, con el envío conectado, entrega la venta armada; y una venta entera a **320 px sin desbordes**. **Lo que salió de probarla:** (1) a 320 px no cabían *Volver* y *Cancelar venta* junto a la miga de pan: en pantallas angostas son íconos con su descripción; (2) un precio largo empujaba el nombre de la pizza fuera de la tarjeta, y después la etiqueta de precio desbordaba la tarjeta de sabor: los dos se achican antes de desbordar; (3) el modo producción de `flutter run` **no aplica el proxy de desarrollo**, y `/api/` devolvía la página de la app (HTTP 200 con HTML). Para revisarla se sirvió el build con un servidor que reenvía `/api/`, como Caddy. **Revisión con el autor, en dos vueltas:** (a) reemplazó "¿cuántas de esta?" por **confirmar cada pizza** y **"Igual a la pizza anterior"**; (b) el tema oscuro se veía pesado: pasó a **fondo crema con barra negra**, botones negros con letra amarilla y precios en etiqueta amarilla, y las pruebas de contraste WCAG se rehicieron para el tema claro. **Las fotos:** las 15 del local, preparadas por `scripts/preparar-fotos.py`, que las asigna por nombre de archivo (con alias para los nombres del local) y las deja en WebP de 640 × 640, **1,2 MB en total contra 48 MB de los originales**. Las bebidas conservan su dibujo, idéntico al ya subido. **En el navegador, contra la API y la base locales,** el autor recorrió la venta con `recepcion.demo` y la **aprobó**: "ahora sí está perfecto". Va también el nombre **Criolla española** en la carta, pedido por el autor dentro de este commit |
 | E — En producción | ⏳ Pendiente | — | — |
 | F — Pruebas | ⏳ Pendiente | — | — |
 
@@ -305,6 +315,7 @@ Y en el celular, que todo se acomode.
 | 2026-09-23 | Versión inicial propuesta | Primera tarjeta del CRUD del E2. Incorpora las reglas de venta que precisó el autor (D-25) |
 | 2026-09-23 | **Aprobado** sin cambios | Revisado por el autor. Las promociones y los combos quedan fuera de alcance (D-26): no entran en esta tarjeta ni en el modelo |
 | 2026-09-23 | **Pantalla de la fase D no aprobada** | Demasiada información a la vista: todas las combinaciones de mitades con sus sumas. El autor pide una venta guiada, de una pregunta por paso |
+| 2026-09-24 | **Recorrido y diseño ajustados con el autor** durante D2 | Confirmar cada pizza y "Igual a la pizza anterior" en lugar de "¿cuántas de esta?"; tema claro en lugar del oscuro; las fotos del local en lugar de los dibujos. La pizza se llama «Criolla española» |
 | 2026-09-23 | **Revisión 2 propuesta y aprobada** (commit `05-P2`) | La dueña confirmó que **solo se venden pizzas enteras** (D-27, reemplaza a D-25), que la mitad vale la mitad exacta y que se puede vender **solo bebidas**. Se suman los **extras** (D-28), la **identidad visual** del local, con su nombre oficial **Max's Pizzas** (D-29), el **recorrido guiado** (D-30) y la **carta real** del catálogo, sin grupos |
 
 ---

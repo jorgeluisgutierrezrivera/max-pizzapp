@@ -2,47 +2,50 @@ import 'package:flutter/material.dart';
 
 /// La identidad de Max's Pizzas (D-29), tomada de su logo y de sus publicaciones.
 ///
-/// Tema oscuro FIJO: el local trabaja de noche, y un fondo claro encandila en el mostrador.
-/// La app no sigue el modo claro u oscuro del dispositivo; siempre se ve igual.
-const negroCarbon = Color(0xFF141414);
+/// Fondo CLARO y cálido, para que luzcan las fotos de las pizzas, con el negro y el amarillo
+/// de la marca en la barra superior y en los botones. La app no sigue el modo claro u oscuro
+/// del dispositivo: siempre se ve igual.
+const negroMarca = Color(0xFF141414);
 const amarilloMarca = Color(0xFFFAF126); // el amarillo del logo
 const rojoMarca = Color(0xFFF90304); // el rojo de los puntos del logo y de los afiches
-const blancoTexto = Color(0xFFF2F2F2);
+const cremaFondo = Color(0xFFFBF6EE);
+const bordeSuave = Color(0xFFE8DCC8);
+const textoPrincipal = Color(0xFF1B1B1B);
+const textoSecundario = Color(0xFF5E574C);
 
 /// Cómo se usa cada color, para que ninguno pierda su significado:
-///   - amarillo, con texto negro: la acción principal de cada pantalla;
-///   - rojo: solo lo que cierra una venta y los avisos que importan;
-///   - todo lo demás, en grises sobre el carbón.
+///   - negro con letra amarilla: la barra superior y la acción principal de cada pantalla;
+///   - amarillo con letra negra: los precios y lo que está elegido;
+///   - rojo: solo lo que cierra una venta;
+///   - lo demás, texto oscuro sobre crema y tarjetas blancas.
 ThemeData temaMaxPizzas() {
   const colores = ColorScheme(
-    brightness: Brightness.dark,
-    primary: amarilloMarca,
-    onPrimary: negroCarbon,
-    primaryContainer: Color(0xFF3A3812),
-    onPrimaryContainer: amarilloMarca,
+    brightness: Brightness.light,
+    primary: negroMarca,
+    onPrimary: amarilloMarca,
+    primaryContainer: amarilloMarca,
+    onPrimaryContainer: negroMarca,
     secondary: rojoMarca,
     onSecondary: Colors.white,
-    secondaryContainer: Color(0xFF4D1210),
-    onSecondaryContainer: Color(0xFFFFDAD6),
-    // El rojo de error es más claro que el de la marca: sobre el carbón, un texto en
-    // #F90304 se lee con dificultad.
-    error: Color(0xFFFF6B5E),
-    onError: negroCarbon,
-    errorContainer: Color(0xFF5C1B16),
-    onErrorContainer: Color(0xFFFFDAD4),
-    surface: negroCarbon,
-    onSurface: blancoTexto,
-    surfaceContainerLowest: Color(0xFF0B0B0B),
-    surfaceContainerLow: Color(0xFF1B1B1B),
-    surfaceContainer: Color(0xFF212121),
-    surfaceContainerHigh: Color(0xFF292929),
-    surfaceContainerHighest: Color(0xFF323232),
-    onSurfaceVariant: Color(0xFFB8B8B8),
-    outline: Color(0xFF6E6E6E),
-    outlineVariant: Color(0xFF383838),
-    inverseSurface: blancoTexto,
-    onInverseSurface: negroCarbon,
-    inversePrimary: Color(0xFF6B6700),
+    secondaryContainer: Color(0xFFFFE1DC),
+    onSecondaryContainer: Color(0xFF5C0A04),
+    error: Color(0xFFB3261E),
+    onError: Colors.white,
+    errorContainer: Color(0xFFF9DEDC),
+    onErrorContainer: Color(0xFF410E0B),
+    surface: cremaFondo,
+    onSurface: textoPrincipal,
+    surfaceContainerLowest: Colors.white,
+    surfaceContainerLow: Colors.white,
+    surfaceContainer: Color(0xFFF6EFE3),
+    surfaceContainerHigh: Color(0xFFF1E8DA),
+    surfaceContainerHighest: Color(0xFFEADFCB),
+    onSurfaceVariant: textoSecundario,
+    outline: Color(0xFF8C8374),
+    outlineVariant: bordeSuave,
+    inverseSurface: negroMarca,
+    onInverseSurface: cremaFondo,
+    inversePrimary: amarilloMarca,
     shadow: Colors.black,
     scrim: Colors.black,
   );
@@ -51,17 +54,26 @@ ThemeData temaMaxPizzas() {
     colorScheme: colores,
     useMaterial3: true,
     visualDensity: VisualDensity.standard,
-    scaffoldBackgroundColor: negroCarbon,
+    scaffoldBackgroundColor: cremaFondo,
     appBarTheme: const AppBarTheme(
-      backgroundColor: Color(0xFF0B0B0B),
-      foregroundColor: blancoTexto,
+      backgroundColor: negroMarca,
+      foregroundColor: Colors.white,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
-      titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: blancoTexto),
+      titleTextStyle: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: Colors.white),
     ),
-    cardTheme: const CardThemeData(color: Color(0xFF1B1B1B), surfaceTintColor: Colors.transparent),
-    dividerTheme: const DividerThemeData(color: Color(0xFF383838)),
+    cardTheme: CardThemeData(
+      color: Colors.white,
+      surfaceTintColor: Colors.transparent,
+      elevation: 1,
+      shadowColor: Colors.black.withValues(alpha: 0.25),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: bordeSuave),
+      ),
+    ),
+    dividerTheme: const DividerThemeData(color: bordeSuave),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         minimumSize: const Size.fromHeight(52),
@@ -70,15 +82,21 @@ ThemeData temaMaxPizzas() {
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: amarilloMarca,
-        side: const BorderSide(color: amarilloMarca),
+        foregroundColor: textoPrincipal,
+        side: const BorderSide(color: textoPrincipal, width: 1.2),
         textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
     ),
-    textButtonTheme: TextButtonThemeData(
-      style: TextButton.styleFrom(foregroundColor: amarilloMarca),
+    textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(foregroundColor: textoPrincipal)),
+    chipTheme: const ChipThemeData(
+      backgroundColor: Colors.white,
+      selectedColor: amarilloMarca,
+      checkmarkColor: negroMarca,
+      side: BorderSide(color: bordeSuave),
+      labelStyle: TextStyle(color: textoPrincipal),
     ),
-    progressIndicatorTheme: const ProgressIndicatorThemeData(color: amarilloMarca),
+    inputDecorationTheme: const InputDecorationTheme(filled: true, fillColor: Colors.white),
+    progressIndicatorTheme: const ProgressIndicatorThemeData(color: negroMarca, linearTrackColor: bordeSuave),
   );
 }
 
@@ -90,3 +108,27 @@ ButtonStyle estiloBotonRojo() => FilledButton.styleFrom(
       minimumSize: const Size.fromHeight(56),
       textStyle: const TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
     );
+
+/// Un precio en una etiqueta amarilla con letra negra, como los precios de los afiches.
+class EtiquetaPrecio extends StatelessWidget {
+  const EtiquetaPrecio(this.texto, {super.key, this.grande = false});
+
+  final String texto;
+  final bool grande;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.symmetric(horizontal: grande ? 12 : 8, vertical: grande ? 5 : 3),
+      decoration: BoxDecoration(color: amarilloMarca, borderRadius: BorderRadius.circular(8)),
+      child: Text(
+        texto,
+        style: TextStyle(
+          color: negroMarca,
+          fontWeight: FontWeight.w800,
+          fontSize: grande ? 20 : 15,
+        ),
+      ),
+    );
+  }
+}

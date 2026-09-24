@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maxpizzapp/api/usuario.dart';
+import 'package:maxpizzapp/carta/producto.dart';
 import 'package:maxpizzapp/pantallas/pantalla_acceso.dart';
 import 'package:maxpizzapp/pantallas/segun_rol.dart';
 import 'package:maxpizzapp/tema.dart';
@@ -22,21 +23,30 @@ void main() {
   final colores = tema.colorScheme;
 
   group('el tema', () {
-    test('es oscuro y usa los colores del logo', () {
-      expect(colores.brightness, Brightness.dark);
-      expect(colores.primary, amarilloMarca);
-      expect(colores.surface, negroCarbon);
-      expect(tema.scaffoldBackgroundColor, negroCarbon);
+    test('es claro, con el negro, el amarillo y el rojo del logo', () {
+      expect(colores.brightness, Brightness.light);
+      expect(colores.primary, negroMarca);
+      expect(colores.onPrimary, amarilloMarca);
+      expect(colores.surface, cremaFondo);
+      expect(tema.scaffoldBackgroundColor, cremaFondo);
+      expect(tema.appBarTheme.backgroundColor, negroMarca);
       expect(amarilloMarca, const Color(0xFFFAF126));
       expect(rojoMarca, const Color(0xFFF90304));
     });
 
-    test('el texto sobre el carbón se lee de sobra (al menos 7 a 1)', () {
+    test('el texto sobre el crema y sobre las tarjetas blancas se lee de sobra (al menos 7 a 1)', () {
       expect(contraste(colores.onSurface, colores.surface), greaterThanOrEqualTo(7));
+      expect(contraste(colores.onSurface, Colors.white), greaterThanOrEqualTo(7));
     });
 
-    test('el texto negro sobre el botón amarillo, también', () {
+    test('la letra amarilla sobre el botón negro, y los precios negros sobre amarillo, también', () {
       expect(contraste(colores.onPrimary, colores.primary), greaterThanOrEqualTo(7));
+      expect(contraste(negroMarca, amarilloMarca), greaterThanOrEqualTo(7));
+    });
+
+    test('la barra superior negra: título blanco y nombre en blanco atenuado', () {
+      expect(contraste(Colors.white, negroMarca), greaterThanOrEqualTo(7));
+      expect(contraste(Colors.white70, negroMarca), greaterThanOrEqualTo(4.5));
     });
 
     test('el texto secundario y los errores cumplen el mínimo para texto normal', () {
@@ -71,7 +81,11 @@ void main() {
         final usuario = Usuario.desdeJson({'sub': 'x', 'nombre': 'Ana', 'usuario': 'a', 'roles': [rol]});
         await t.pumpWidget(MaterialApp(
           theme: tema,
-          home: PantallaSegunRol(cargarUsuario: () async => usuario, alCerrarSesion: () {}),
+          home: PantallaSegunRol(
+            cargarUsuario: () async => usuario,
+            cargarCarta: () async => Carta(const []),
+            alCerrarSesion: () {},
+          ),
         ));
         await t.pumpAndSettle();
         expect(find.descendant(of: find.byType(AppBar), matching: logo), findsOneWidget);
