@@ -7,25 +7,40 @@ import '../../tema.dart';
 import 'comunes.dart';
 
 /// Ancho máximo del contenido de un paso de preguntas: en una pantalla ancha, los botones
-/// no se estiran de lado a lado.
+/// no se estiran de lado a lado. Las preguntas de opciones grandes usan más, para ponerlas
+/// en fila.
 const _anchoDePregunta = 560.0;
+const _anchoDeOpciones = 780.0;
 
-/// Un paso de preguntas: centrado, con ancho máximo y desplazable si no cabe.
+/// Un paso de preguntas: centrado, con ancho máximo y desplazable si no cabe. En una
+/// pantalla ancha también se centra en la altura: la pregunta queda a la vista, sin un
+/// vacío debajo. En el celular empieza arriba, como siempre.
 class _Centrado extends StatelessWidget {
-  const _Centrado({required this.hijos});
+  const _Centrado({required this.hijos, this.conOpciones = false});
   final List<Widget> hijos;
+  final bool conOpciones;
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-      child: Center(
+    return LayoutBuilder(builder: (context, lados) {
+      const relleno = EdgeInsets.fromLTRB(16, 8, 16, 24);
+      final contenido = Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: _anchoDePregunta),
+          constraints: BoxConstraints(maxWidth: conOpciones ? _anchoDeOpciones : _anchoDePregunta),
           child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: hijos),
         ),
-      ),
-    );
+      );
+      final ancha = lados.maxWidth >= anchoOpcionesEnFila;
+      return SingleChildScrollView(
+        padding: relleno,
+        child: ancha && lados.hasBoundedHeight
+            ? ConstrainedBox(
+                constraints: BoxConstraints(minHeight: lados.maxHeight - relleno.vertical),
+                child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [contenido]),
+              )
+            : contenido,
+      );
+    });
   }
 }
 
@@ -142,21 +157,22 @@ class PasoIguales extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final n = recorrido.estado.cantidadDelTramo;
-    return _Centrado(hijos: [
+    return _Centrado(conOpciones: true, hijos: [
       Pregunta('¿Las $n pizzas son todas iguales?', aclaracion: 'Iguales: el mismo sabor y los mismos extras.'),
-      OpcionGrande(
-        icono: Icons.copy_all,
-        titulo: 'Sí, todas iguales',
-        detalle: 'Se arma una sola vez y vale para las $n.',
-        alTocar: () => recorrido.elegirIguales(true),
-      ),
-      const SizedBox(height: 12),
-      OpcionGrande(
-        icono: Icons.call_split,
-        titulo: 'No, son distintas',
-        detalle: 'Se arma cada una y se dice cuántas van de cada una.',
-        alTocar: () => recorrido.elegirIguales(false),
-      ),
+      OpcionesGrandes(opciones: [
+        OpcionGrande(
+          icono: Icons.copy_all,
+          titulo: 'Sí, todas iguales',
+          detalle: 'Se arma una sola vez y vale para las $n.',
+          alTocar: () => recorrido.elegirIguales(true),
+        ),
+        OpcionGrande(
+          icono: Icons.call_split,
+          titulo: 'No, son distintas',
+          detalle: 'Se arma y se confirma cada una.',
+          alTocar: () => recorrido.elegirIguales(false),
+        ),
+      ]),
     ]);
   }
 }
@@ -172,35 +188,34 @@ class PasoTipo extends StatelessWidget {
     final estado = recorrido.estado;
     final anterior = estado.ultimaPizza;
     final distintas = !estado.iguales && estado.cantidadDelTramo > 1;
-    return _Centrado(hijos: [
+    return _Centrado(conOpciones: true, hijos: [
       Pregunta(distintas ? '¿Cómo es la pizza ${estado.pizzaActual}?' : '¿Un solo sabor o mitad y mitad?'),
-      // Desde la segunda pizza distinta: repetir la anterior con un toque.
-      if (recorrido.puedeRepetirAnterior && anterior != null) ...[
+      OpcionesGrandes(opciones: [
+        // Desde la segunda pizza distinta: repetir la anterior con un toque.
+        if (recorrido.puedeRepetirAnterior && anterior != null)
+          OpcionGrande(
+            icono: Icons.copy_all,
+            titulo: 'Igual a la pizza anterior',
+            detalle: [
+              anterior.titulo,
+              ...anterior.extras.map((e) => '+ ${e.nombre}'),
+              formatoBs(anterior.precioUnitario),
+            ].join(' · '),
+            alTocar: recorrido.repetirAnterior,
+          ),
         OpcionGrande(
-          icono: Icons.copy_all,
-          titulo: 'Igual a la pizza anterior',
-          detalle: [
-            anterior.titulo,
-            ...anterior.extras.map((e) => '+ ${e.nombre}'),
-            formatoBs(anterior.precioUnitario),
-          ].join(' · '),
-          alTocar: recorrido.repetirAnterior,
+          icono: Icons.local_pizza_outlined,
+          titulo: 'Un solo sabor',
+          detalle: 'Entera, toda del mismo sabor.',
+          alTocar: () => recorrido.elegirTipo(mitades: false),
         ),
-        const SizedBox(height: 12),
-      ],
-      OpcionGrande(
-        icono: Icons.local_pizza_outlined,
-        titulo: 'Un solo sabor',
-        detalle: 'Entera, toda del mismo sabor.',
-        alTocar: () => recorrido.elegirTipo(mitades: false),
-      ),
-      const SizedBox(height: 12),
-      OpcionGrande(
-        icono: Icons.contrast,
-        titulo: 'Mitad y mitad',
-        detalle: 'Dos medias de sabores distintos: cada una vale la mitad de su precio.',
-        alTocar: () => recorrido.elegirTipo(mitades: true),
-      ),
+        OpcionGrande(
+          icono: Icons.contrast,
+          titulo: 'Mitad y mitad',
+          detalle: 'Dos medias de sabores distintos: cada una vale la mitad de su precio.',
+          alTocar: () => recorrido.elegirTipo(mitades: true),
+        ),
+      ]),
     ]);
   }
 }
@@ -571,7 +586,121 @@ class _PasoObservacionState extends State<PasoObservacion> {
         onChanged: widget.recorrido.escribirObservacion,
       ),
       const SizedBox(height: 20),
-      FilledButton(onPressed: widget.recorrido.continuarDeObservacion, child: const Text('Ver resumen')),
+      FilledButton(onPressed: widget.recorrido.continuarDeObservacion, child: const Text('Continuar')),
+    ]);
+  }
+}
+
+// --- 9. ¿Para llevar o para comer aquí? (D-34) ---------------------------------------
+
+class PasoParaLlevar extends StatelessWidget {
+  const PasoParaLlevar({super.key, required this.recorrido});
+  final RecorridoVenta recorrido;
+
+  @override
+  Widget build(BuildContext context) {
+    return _Centrado(conOpciones: true, hijos: [
+      const Pregunta('¿Para llevar o para comer aquí?', aclaracion: 'Cocina lo ve en el pedido.'),
+      OpcionesGrandes(opciones: [
+        OpcionGrande(
+          icono: Icons.takeout_dining,
+          titulo: 'Para llevar',
+          detalle: 'Se entrega en caja.',
+          alTocar: () => recorrido.elegirParaLlevar(true),
+        ),
+        OpcionGrande(
+          icono: Icons.restaurant,
+          titulo: 'Para comer aquí',
+          detalle: 'Se sirve en el local.',
+          alTocar: () => recorrido.elegirParaLlevar(false),
+        ),
+      ]),
+    ]);
+  }
+}
+
+// --- 10. ¿A nombre de quién? (D-31) ----------------------------------------------------
+
+class PasoCliente extends StatefulWidget {
+  const PasoCliente({super.key, required this.recorrido});
+  final RecorridoVenta recorrido;
+
+  @override
+  State<PasoCliente> createState() => _PasoClienteState();
+}
+
+class _PasoClienteState extends State<PasoCliente> {
+  late final _nombre = TextEditingController(text: widget.recorrido.estado.nombreCliente);
+  late final _celular = TextEditingController(text: widget.recorrido.estado.celular);
+  String? _error;
+
+  @override
+  void dispose() {
+    _nombre.dispose();
+    _celular.dispose();
+    super.dispose();
+  }
+
+  void _continuar() {
+    final problema = widget.recorrido.problemaDelCliente;
+    if (problema != null) {
+      setState(() => _error = problema);
+      return;
+    }
+    widget.recorrido.continuarDeCliente();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final paraLlevar = widget.recorrido.estado.paraLlevar ?? false;
+    return _Centrado(hijos: [
+      const Pregunta('¿A nombre de quién?', aclaracion: 'Con ese nombre se anuncia el pedido.'),
+      TextField(
+        key: const Key('cliente-nombre'),
+        controller: _nombre,
+        autofocus: true,
+        maxLength: RecorridoVenta.largoNombre,
+        textCapitalization: TextCapitalization.words,
+        textInputAction: TextInputAction.next,
+        decoration: const InputDecoration(
+          labelText: 'Nombre',
+          border: OutlineInputBorder(),
+          counterText: '',
+        ),
+        onChanged: (texto) {
+          widget.recorrido.escribirNombre(texto);
+          setState(() => _error = null);
+        },
+      ),
+      const SizedBox(height: 16),
+      TextField(
+        key: const Key('cliente-celular'),
+        controller: _celular,
+        keyboardType: TextInputType.phone,
+        inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(8)],
+        textInputAction: TextInputAction.done,
+        decoration: InputDecoration(
+          labelText: 'Celular (opcional)',
+          // Para llevar es cuando más sirve: si el cliente se va, se lo llama al estar listo.
+          helperText: paraLlevar
+              ? 'Conviene pedirlo: para avisarle cuando esté listo.'
+              : 'Para avisarle cuando esté listo.',
+          border: const OutlineInputBorder(),
+        ),
+        onChanged: (texto) {
+          widget.recorrido.escribirCelular(texto);
+          setState(() => _error = null);
+        },
+        onSubmitted: (_) => _continuar(),
+      ),
+      if (_error != null)
+        Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: Text(_error!, key: const Key('cliente-error'), style: TextStyle(color: tema.colorScheme.error)),
+        ),
+      const SizedBox(height: 24),
+      FilledButton(onPressed: _continuar, child: const Text('Ver resumen')),
     ]);
   }
 }

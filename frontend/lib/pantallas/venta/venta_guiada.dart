@@ -9,6 +9,9 @@ import 'resumen_venta.dart';
 /// debajo, abajo, en una barra que se abre (celular, tableta vertical).
 const anchoConPanelLateral = 900.0;
 
+/// En una pantalla muy ancha, la venta no se estira más que esto: el resto queda de margen.
+const anchoMaximoDeVenta = 1280.0;
+
 const _pasosDePizza = {Paso.tipo, Paso.sabor, Paso.primeraMitad, Paso.segundaMitad, Paso.extras};
 
 /// Dónde está la vendedora: "Pizza 2 de 20 · Mitad y mitad · Segunda mitad".
@@ -31,6 +34,8 @@ String migaDePan(EstadoVenta e) {
     Paso.iguales => '${e.cantidadDelTramo} pizzas',
     Paso.bebidas => 'Bebidas',
     Paso.observacion => 'Observación',
+    Paso.llevar => 'Para llevar o comer aquí',
+    Paso.cliente => 'Cliente',
     _ => 'Resumen',
   };
 }
@@ -42,11 +47,17 @@ class VentaGuiada extends StatelessWidget {
     required this.recorrido,
     required this.imagen,
     required this.alTerminar,
+    this.enviando = false,
+    this.errorDeEnvio,
   });
 
   final RecorridoVenta recorrido;
   final ConstructorImagen imagen;
   final VoidCallback? alTerminar;
+
+  /// Mientras la venta viaja al servidor, y lo que salió mal si no llegó.
+  final bool enviando;
+  final String? errorDeEnvio;
 
   Widget _paso() {
     final e = recorrido.estado;
@@ -64,7 +75,10 @@ class VentaGuiada extends StatelessWidget {
         Paso.extras => PasoExtras(recorrido: recorrido),
         Paso.bebidas => PasoBebidas(recorrido: recorrido, imagen: imagen),
         Paso.observacion => PasoObservacion(recorrido: recorrido),
-        Paso.resumen => PasoResumen(recorrido: recorrido, alTerminar: alTerminar),
+        Paso.llevar => PasoParaLlevar(recorrido: recorrido),
+        Paso.cliente => PasoCliente(recorrido: recorrido),
+        Paso.resumen => PasoResumen(
+            recorrido: recorrido, alTerminar: alTerminar, enviando: enviando, errorDeEnvio: errorDeEnvio),
       },
     );
   }
@@ -78,19 +92,36 @@ class VentaGuiada extends StatelessWidget {
         final columna = Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _Encabezado(recorrido: recorrido),
+            _Encabezado(recorrido: recorrido, plano: lateral),
             Expanded(child: _paso()),
             if (!lateral && recorrido.estado.paso != Paso.resumen) BarraVenta(recorrido: recorrido),
           ],
         );
         if (!lateral) return columna;
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Expanded(child: columna),
-            const VerticalDivider(width: 1),
-            SizedBox(width: 340, child: PanelVenta(recorrido: recorrido)),
-          ],
+        // En una pantalla ancha, todo en un contenedor centrado: la pregunta y la venta quedan
+        // juntas, y la venta es una tarjeta al lado, no una franja pegada al borde.
+        return Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: anchoMaximoDeVenta),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: columna),
+                  const SizedBox(width: 24),
+                  SizedBox(
+                    width: 360,
+                    child: Card(
+                      margin: EdgeInsets.zero,
+                      clipBehavior: Clip.antiAlias,
+                      child: PanelVenta(recorrido: recorrido),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         );
       }),
     );
@@ -100,8 +131,11 @@ class VentaGuiada extends StatelessWidget {
 /// Arriba de cada paso: Volver, dónde está, Cancelar venta y, si las pizzas son distintas,
 /// cuántas faltan.
 class _Encabezado extends StatelessWidget {
-  const _Encabezado({required this.recorrido});
+  const _Encabezado({required this.recorrido, this.plano = false});
   final RecorridoVenta recorrido;
+
+  /// En una pantalla ancha, sin fondo propio: va sobre el crema, alineado con la pregunta.
+  final bool plano;
 
   Future<void> _confirmarCancelar(BuildContext context) async {
     final si = await showDialog<bool>(
@@ -131,8 +165,8 @@ class _Encabezado extends StatelessWidget {
     // descripción): si no, la miga de pan no tiene lugar.
     final angosto = MediaQuery.sizeOf(context).width < 480;
     return Material(
-      color: Colors.white,
-      elevation: 1,
+      color: plano ? Colors.transparent : Colors.white,
+      elevation: plano ? 0 : 1,
       shadowColor: Colors.black.withValues(alpha: 0.2),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(4, 4, 4, 8),

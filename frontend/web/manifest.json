@@ -4,7 +4,7 @@
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FBF6EE",
-    "theme_color": "#141414",
+    "theme_color": "#C0392B",
     "description": "Max Pizzapp: pedidos entre recepcion y cocina en tiempo real",
     "orientation": "any",
     "prefer_related_applications": false,

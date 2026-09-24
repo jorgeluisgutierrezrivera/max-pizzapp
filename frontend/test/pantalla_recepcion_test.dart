@@ -6,9 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:maxpizzapp/api/cliente_api.dart';
 import 'package:maxpizzapp/api/usuario.dart';
 import 'package:maxpizzapp/carta/producto.dart';
-import 'package:maxpizzapp/carta/venta.dart';
 import 'package:maxpizzapp/pantallas/pantalla_recepcion.dart';
+import 'package:maxpizzapp/pantallas/venta/comunes.dart';
 import 'package:maxpizzapp/pantallas/venta/pasos.dart';
+import 'package:maxpizzapp/pantallas/venta/resumen_venta.dart';
 import 'package:maxpizzapp/tema.dart';
 
 var _id = 0;
@@ -33,16 +34,28 @@ final carta = Carta([
 final usuario = Usuario.desdeJson(
     {'sub': 'x', 'nombre': 'Ana Prueba', 'usuario': 'recepcion.demo', 'roles': ['recepcion']});
 
-Widget app(Future<Carta> Function() cargar, {void Function(EstadoVenta)? alTerminar}) => MaterialApp(
+typedef Enviar = Future<Map<String, dynamic>> Function(Map<String, dynamic> pedido);
+
+Widget app(Future<Carta> Function() cargar, {Enviar? enviar}) => MaterialApp(
       theme: temaMaxPizzas(),
       home: PantallaRecepcion(
         usuario: usuario,
         alCerrarSesion: () {},
         cargarCarta: cargar,
         imagen: (ruta, respaldo, ajuste) => respaldo,
-        alTerminarVenta: alTerminar,
+        enviarPedido: enviar,
       ),
     );
+
+/// Lo que devuelve el servidor al guardar: el número y el total son los suyos.
+Map<String, dynamic> pedidoGuardado(Map<String, dynamic> enviado, {int id = 12, String estado = 'pendiente'}) => {
+      'id': id,
+      'estado': estado,
+      'paraLlevar': enviado['paraLlevar'],
+      'cliente': enviado['cliente'],
+      'total': enviado['totalEsperado'],
+      'lineas': const [],
+    };
 
 void tamano(WidgetTester t, double ancho, double alto) {
   t.view.physicalSize = Size(ancho, alto);
@@ -79,6 +92,18 @@ Future<void> empezar(WidgetTester t, {double ancho = 1400, double alto = 1400}) 
   tamano(t, ancho, alto);
   await t.pumpWidget(app(() async => carta));
   await t.pumpAndSettle();
+}
+
+/// De la observación al resumen: "Continuar", para llevar o no, y a nombre de quién.
+Future<void> cerrarVenta(WidgetTester t, {String nombre = 'Ana Prueba', String? celular, bool paraLlevar = true}) async {
+  await tocarTexto(t, 'Continuar');
+  expect(find.text('¿Para llevar o para comer aquí?'), findsOneWidget);
+  await tocarTexto(t, paraLlevar ? 'Para llevar' : 'Para comer aquí');
+  expect(find.text('¿A nombre de quién?'), findsOneWidget);
+  await t.enterText(find.byKey(const Key('cliente-nombre')), nombre);
+  if (celular != null) await t.enterText(find.byKey(const Key('cliente-celular')), celular);
+  await t.pump();
+  await tocarTexto(t, 'Ver resumen');
 }
 
 Future<void> escribirCantidad(WidgetTester t, int n) async {
@@ -138,7 +163,7 @@ void main() {
       await tocarTexto(t, 'Continuar');
       await t.enterText(find.byKey(const Key('observacion')), 'Bien cocida');
       await t.pump();
-      await tocarTexto(t, 'Ver resumen');
+      await cerrarVenta(t);
       expect(texto(t, 'total-resumen'), 'Bs 65,50');
       expect(find.text('Bien cocida'), findsOneWidget);
     });
@@ -154,7 +179,7 @@ void main() {
       await tocarTexto(t, 'Confirmar las 3 pizzas · Bs 150');
       expect(texto(t, 'total-panel'), 'Bs 150');
       await tocarTexto(t, 'Sin bebidas');
-      await tocarTexto(t, 'Ver resumen');
+      await cerrarVenta(t);
       expect(texto(t, 'total-resumen'), 'Bs 150');
       expect(find.text('+ Extra choclo'), findsWidgets);
     });
@@ -207,7 +232,7 @@ void main() {
       await tocar(t, find.byKey(Key('bebida-${gaseosa.id}-mas')));
       await tocar(t, find.byKey(Key('bebida-${gaseosa.id}-mas')));
       await tocarTexto(t, 'Continuar');
-      await tocarTexto(t, 'Ver resumen');
+      await cerrarVenta(t);
       expect(texto(t, 'total-resumen'), 'Bs 36');
     });
   });
@@ -267,7 +292,7 @@ void main() {
       await tocarSabor(t, 'Salame');
       await tocarTexto(t, 'Confirmar pizza · Bs 45');
       await tocarTexto(t, 'Sin bebidas');
-      await tocarTexto(t, 'Ver resumen');
+      await cerrarVenta(t);
       await tocarTexto(t, 'Agregar pizzas');
       expect(find.text('¿Cuántas pizzas más?'), findsOneWidget);
       expect(find.text('Sin pizza, solo bebidas'), findsNothing);
@@ -276,7 +301,7 @@ void main() {
       await tocarSabor(t, 'Hawaiana');
       await tocarTexto(t, 'Confirmar pizza · Bs 50');
       await tocarTexto(t, 'Sin bebidas');
-      await tocarTexto(t, 'Ver resumen');
+      await tocarTexto(t, 'Continuar'); // el cliente ya estaba: directo al resumen
       expect(texto(t, 'total-resumen'), 'Bs 95');
       await tocar(t, find.byTooltip('Quitar').first);
       expect(texto(t, 'total-resumen'), 'Bs 50');
@@ -284,13 +309,19 @@ void main() {
   });
 
   group('terminar la venta', () {
-    Future<void> hastaElResumen(WidgetTester t) async {
+    Future<void> hastaElResumen(WidgetTester t, {String? celular}) async {
       await tocarTexto(t, 'Continuar');
       await tocarTexto(t, 'Un solo sabor');
       await tocarSabor(t, 'Peperoni');
       await tocarTexto(t, 'Confirmar pizza · Bs 50');
       await tocarTexto(t, 'Sin bebidas');
-      await tocarTexto(t, 'Ver resumen');
+      await cerrarVenta(t, celular: celular);
+    }
+
+    Future<void> conEnvio(WidgetTester t, Enviar enviar) async {
+      tamano(t, 1400, 1400);
+      await t.pumpWidget(app(() async => carta, enviar: enviar));
+      await t.pumpAndSettle();
     }
 
     testWidgets('sin el envío a cocina, el botón se ve deshabilitado y lo explica', (t) async {
@@ -301,15 +332,152 @@ void main() {
       expect(find.text('El envío a cocina todavía no está disponible.'), findsOneWidget);
     });
 
-    testWidgets('con el envío conectado, entrega la venta armada', (t) async {
-      tamano(t, 1400, 1400);
-      EstadoVenta? enviada;
-      await t.pumpWidget(app(() async => carta, alTerminar: (v) => enviada = v));
+    testWidgets('el resumen dice si es para llevar y a nombre de quién, y se puede cambiar', (t) async {
+      await empezar(t);
+      await hastaElResumen(t, celular: '70000001');
+      expect(texto(t, 'cliente-resumen'), 'Para llevar · Ana Prueba · 70000001');
+      await tocar(t, find.descendant(of: find.widgetWithText(ListTile, 'Para llevar · Ana Prueba · 70000001'),
+          matching: find.text('Cambiar')));
+      await tocarTexto(t, 'Para comer aquí');
+      expect(t.widget<TextField>(find.byKey(const Key('cliente-nombre'))).controller!.text, 'Ana Prueba',
+          reason: 'lo ya escrito se conserva');
+      await tocarTexto(t, 'Ver resumen');
+      expect(texto(t, 'cliente-resumen'), 'Para comer aquí · Ana Prueba · 70000001');
+    });
+
+    testWidgets('envía la venta y muestra el número del pedido; "Nueva venta" empieza otra', (t) async {
+      Map<String, dynamic>? enviado;
+      await conEnvio(t, (pedido) async {
+        enviado = pedido;
+        return pedidoGuardado(pedido);
+      });
+      await hastaElResumen(t, celular: '70000001');
+      await tocarTexto(t, 'Terminar venta');
+      expect(enviado, {
+        'paraLlevar': true,
+        'cliente': {'nombre': 'Ana Prueba', 'celular': '70000001'},
+        'observacion': null,
+        'lineas': [
+          {'productoId': carta.pizzas.firstWhere((p) => p.nombre == 'Peperoni').id, 'cantidad': 1},
+        ],
+        'totalEsperado': 50.0,
+      });
+      expect(texto(t, 'pedido-enviado'), 'Pedido #12 enviado a cocina');
+      expect(find.text('Ana Prueba · Para llevar'), findsOneWidget);
+      expect(texto(t, 'total-enviado'), 'Bs 50');
+      await tocarTexto(t, 'Nueva venta');
+      expect(find.text('¿Cuántas pizzas?'), findsOneWidget);
+      expect(texto(t, 'total-panel'), 'Bs 0');
+    });
+
+    testWidgets('mientras viaja dice "Enviando" y no se puede tocar dos veces', (t) async {
+      final respuesta = Completer<Map<String, dynamic>>();
+      var envios = 0;
+      await conEnvio(t, (pedido) {
+        envios++;
+        return respuesta.future;
+      });
+      await hastaElResumen(t);
+      await t.tap(find.text('Terminar venta'));
+      await t.pump();
+      final boton = find.widgetWithText(FilledButton, 'Enviando a cocina…');
+      expect(boton, findsOneWidget);
+      expect(t.widget<FilledButton>(boton).onPressed, isNull);
+      await t.tap(boton, warnIfMissed: false);
+      expect(envios, 1);
+      respuesta.complete({'id': 3, 'estado': 'pendiente', 'paraLlevar': true, 'cliente': {'nombre': 'Ana Prueba'}, 'total': 50});
       await t.pumpAndSettle();
+      expect(texto(t, 'pedido-enviado'), 'Pedido #3 enviado a cocina');
+    });
+
+    testWidgets('un pedido de solo bebidas queda listo para entregar (D-32)', (t) async {
+      await conEnvio(t, (pedido) async => pedidoGuardado(pedido, id: 7, estado: 'listo'));
+      await tocarTexto(t, 'Sin pizza, solo bebidas');
+      await tocar(t, find.byKey(Key('bebida-${carta.bebidas.last.id}-mas')));
+      await tocarTexto(t, 'Continuar');
+      await cerrarVenta(t);
+      await tocarTexto(t, 'Terminar venta');
+      expect(texto(t, 'pedido-enviado'), 'Pedido #7 listo para entregar');
+      expect(find.text('Es solo de bebidas: no pasa por cocina.'), findsOneWidget);
+    });
+
+    testWidgets('un producto agotado: la venta queda como estaba y el mensaje dice cuál', (t) async {
+      await conEnvio(t, (pedido) async => throw const ErrorApi(409, 'PRODUCTO_NO_DISPONIBLE',
+          'Peperoni no esta disponible.', {'producto': {'id': 2, 'nombre': 'Peperoni'}}));
       await hastaElResumen(t);
       await tocarTexto(t, 'Terminar venta');
-      expect(enviada?.total, 5000);
-      expect(enviada?.grupos.single.pizza.titulo, 'Peperoni');
+      expect(texto(t, 'error-envio'), 'Peperoni se agotó. Quítalo de la venta y vuelve a enviarla.');
+      expect(texto(t, 'total-resumen'), 'Bs 50');
+      expect(find.text('Resumen de la venta'), findsOneWidget);
+    });
+
+    testWidgets('sin conexión la venta sigue ahí, y al reintentar se envía', (t) async {
+      var intentos = 0;
+      await conEnvio(t, (pedido) async {
+        intentos++;
+        if (intentos == 1) {
+          throw const ErrorApi(0, 'SIN_CONEXION', 'No hay conexión con el servidor.');
+        }
+        return pedidoGuardado(pedido);
+      });
+      await hastaElResumen(t);
+      await tocarTexto(t, 'Terminar venta');
+      expect(texto(t, 'error-envio'),
+          'No se pudo enviar: no hay conexión con el servidor. La venta sigue aquí; vuelve a intentarlo.');
+      await tocarTexto(t, 'Terminar venta');
+      expect(intentos, 2);
+      expect(texto(t, 'pedido-enviado'), 'Pedido #12 enviado a cocina');
+    });
+
+    testWidgets('si la carta cambió, dice el total correcto y que no se guardó nada', (t) async {
+      await conEnvio(t, (pedido) async => throw const ErrorApi(
+          409, 'PRECIO_CAMBIADO', 'La carta cambio.', {'totalCorrecto': 55}));
+      await hastaElResumen(t);
+      await tocarTexto(t, 'Terminar venta');
+      expect(texto(t, 'error-envio'), 'La carta cambió mientras se armaba la venta y no se guardó nada. '
+          'El total correcto es Bs 55. Cancela esta venta y ármala de nuevo.');
+    });
+
+    testWidgets('el cliente: sin nombre no avanza, y un celular mal escrito tampoco', (t) async {
+      await empezar(t);
+      await tocarTexto(t, 'Sin pizza, solo bebidas');
+      await tocar(t, find.byKey(Key('bebida-${carta.bebidas.last.id}-mas')));
+      await tocarTexto(t, 'Continuar');
+      await tocarTexto(t, 'Continuar');
+      await tocarTexto(t, 'Para llevar');
+      expect(find.text('Conviene pedirlo: para avisarle cuando esté listo.'), findsOneWidget);
+      await tocarTexto(t, 'Ver resumen');
+      expect(texto(t, 'cliente-error'), 'Escribe el nombre del cliente.');
+      await t.enterText(find.byKey(const Key('cliente-nombre')), 'Ana Prueba');
+      await t.enterText(find.byKey(const Key('cliente-celular')), '5000');
+      await t.pump();
+      await tocarTexto(t, 'Ver resumen');
+      expect(texto(t, 'cliente-error'), 'El celular tiene 8 dígitos y empieza con 6 o 7.');
+      expect(find.text('¿A nombre de quién?'), findsOneWidget);
+    });
+  });
+
+  group('en pantallas anchas', () {
+    testWidgets('las opciones de una pregunta van en fila, como fichas', (t) async {
+      await empezar(t, ancho: 1440, alto: 900);
+      await tocarTexto(t, 'Continuar');
+      final fichas = t.widgetList<OpcionGrande>(find.byType(OpcionGrande));
+      expect(fichas.map((o) => o.vertical), [true, true]);
+      final (a, b) = (t.getCenter(find.text('Un solo sabor')), t.getCenter(find.text('Mitad y mitad')));
+      expect((a.dy - b.dy).abs(), lessThan(1), reason: 'a la misma altura');
+    });
+
+    testWidgets('en el celular, una debajo de otra, como antes', (t) async {
+      await empezar(t, ancho: 375, alto: 812);
+      await tocarTexto(t, 'Continuar');
+      expect(t.widgetList<OpcionGrande>(find.byType(OpcionGrande)).map((o) => o.vertical), [false, false]);
+    });
+
+    testWidgets('la venta es una tarjeta al lado de la pregunta, dentro de un ancho máximo', (t) async {
+      await empezar(t, ancho: 2400, alto: 1000);
+      final panel = t.getRect(find.byType(PanelVenta));
+      expect(panel.right, lessThan(2400 - 500), reason: 'no queda pegada al borde derecho');
+      expect(t.takeException(), isNull);
     });
   });
 
@@ -351,7 +519,7 @@ void main() {
       await tocarTexto(t, 'Igual a la pizza anterior');
       await tocar(t, find.byKey(Key('bebida-${carta.bebidas.first.id}-mas')));
       await tocarTexto(t, 'Continuar');
-      await tocarTexto(t, 'Ver resumen');
+      await cerrarVenta(t);
       expect(t.takeException(), isNull);
       expect(texto(t, 'total-resumen'), 'Bs 117'); // 2 × (47,50 + 8) + 6
     });

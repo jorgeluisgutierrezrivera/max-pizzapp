@@ -48,7 +48,7 @@ class _App extends StatelessWidget {
     return MaterialApp(
       title: 'Max Pizzapp',
       debugShowCheckedModeBanner: false,
-      // Tema oscuro fijo, con la identidad del local (D-29): no sigue el modo del dispositivo.
+      // Tema claro fijo, con la identidad del local (D-29): no sigue el modo del dispositivo.
       theme: temaMaxPizzas(),
       home: inicio,
     );
@@ -76,6 +76,8 @@ class _SegunSesion extends StatelessWidget {
               for (final p in (await api.obtener('/productos'))['productos'] as List<dynamic>)
                 Producto.desdeJson(p as Map<String, dynamic>),
             ]),
+            enviarPedido: (pedido) async =>
+                (await api.enviar('/pedidos', pedido))['pedido'] as Map<String, dynamic>,
             alCerrarSesion: sesion.cerrarSesion,
           ),
       },

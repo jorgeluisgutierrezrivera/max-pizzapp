@@ -9,19 +9,34 @@ import 'comunes.dart';
 String? _detalleDeExtras(PizzaElegida pizza) =>
     pizza.extras.isEmpty ? null : pizza.extras.map((e) => '+ ${e.nombre}').join(', ');
 
-// --- 9. El resumen -------------------------------------------------------------------
+/// "Para llevar · Ana Prueba · 70000001"
+String datosDelCliente(EstadoVenta e) => [
+      e.paraLlevar == true ? 'Para llevar' : 'Para comer aquí',
+      e.nombreCliente,
+      if (e.celular.isNotEmpty) e.celular,
+    ].join(' · ');
+
+// --- 11. El resumen -----------------------------------------------------------------
 
 /// El último paso: todo lo que lleva la venta, editable, y el botón que la termina.
 ///
 /// El total es una VISTA PREVIA: el precio que se cobra lo calcula el servidor al
-/// registrar el pedido (tarjeta 06), con la misma regla.
+/// registrar el pedido, con la misma regla, y si no coincide no guarda nada.
 class PasoResumen extends StatelessWidget {
-  const PasoResumen({super.key, required this.recorrido, required this.alTerminar});
+  const PasoResumen({
+    super.key,
+    required this.recorrido,
+    required this.alTerminar,
+    this.enviando = false,
+    this.errorDeEnvio,
+  });
 
   final RecorridoVenta recorrido;
 
-  /// Nulo mientras el envío a cocina no exista (llega con la tarjeta 06).
+  /// Envía la venta a cocina. Nulo si la pantalla no tiene cómo enviarla.
   final VoidCallback? alTerminar;
+  final bool enviando;
+  final String? errorDeEnvio;
 
   @override
   Widget build(BuildContext context) {
@@ -69,9 +84,20 @@ class PasoResumen extends StatelessWidget {
               Card(
                 margin: EdgeInsets.zero,
                 child: ListTile(
+                  leading: Icon(estado.paraLlevar == true ? Icons.takeout_dining : Icons.restaurant),
+                  title: Text(datosDelCliente(estado), key: const Key('cliente-resumen')),
+                  trailing: TextButton(
+                      onPressed: enviando ? null : recorrido.cambiarCliente, child: const Text('Cambiar')),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Card(
+                margin: EdgeInsets.zero,
+                child: ListTile(
                   leading: const Icon(Icons.sticky_note_2_outlined),
                   title: Text(estado.observacion.isEmpty ? 'Sin observación para cocina' : estado.observacion),
-                  trailing: TextButton(onPressed: recorrido.cambiarObservacion, child: const Text('Cambiar')),
+                  trailing: TextButton(
+                      onPressed: enviando ? null : recorrido.cambiarObservacion, child: const Text('Cambiar')),
                 ),
               ),
               const SizedBox(height: 16),
@@ -100,12 +126,38 @@ class PasoResumen extends StatelessWidget {
                       style: tema.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800)),
                 ],
               ),
+              if (errorDeEnvio != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 16),
+                  child: Card(
+                    margin: EdgeInsets.zero,
+                    color: colores.errorContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.error_outline, color: colores.onErrorContainer),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(errorDeEnvio!,
+                                key: const Key('error-envio'),
+                                style: TextStyle(color: colores.onErrorContainer, fontWeight: FontWeight.w600)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
               const SizedBox(height: 20),
+              // Deshabilitado mientras viaja: dos toques no mandan dos pedidos.
               FilledButton.icon(
                 style: estiloBotonRojo(),
-                onPressed: estado.vacia ? null : alTerminar,
-                icon: const Icon(Icons.send),
-                label: const Text('Terminar venta'),
+                onPressed: estado.vacia || enviando ? null : alTerminar,
+                icon: enviando
+                    ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2.5))
+                    : const Icon(Icons.send),
+                label: Text(enviando ? 'Enviando a cocina…' : 'Terminar venta'),
               ),
               if (alTerminar == null && !estado.vacia)
                 Padding(
@@ -222,6 +274,12 @@ class PanelVenta extends StatelessWidget {
                   child: Text('Observación: ${estado.observacion}',
                       style: tema.textTheme.bodySmall?.copyWith(color: colores.onSurfaceVariant)),
                 ),
+              if (estado.clienteCompleto)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(datosDelCliente(estado),
+                      style: tema.textTheme.bodySmall?.copyWith(color: colores.onSurfaceVariant)),
+                ),
             ],
           ),
         ),
@@ -290,9 +348,11 @@ class BarraVenta extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
-    // Negra como la barra de arriba: la venta queda enmarcada con los colores de la marca.
+    // Blanca, con una línea arriba: con la barra superior ya roja, dos franjas de color
+    // cargarían la pantalla. El rojo queda para la acción, "Ver venta".
     return Material(
-      color: negroMarca,
+      color: Colors.white,
+      shape: const Border(top: BorderSide(color: bordeSuave)),
       child: SafeArea(
         top: false,
         child: Padding(
@@ -302,10 +362,10 @@ class BarraVenta extends StatelessWidget {
               Expanded(
                 child: Text(_resumen(recorrido.estado),
                     key: const Key('resumen-barra'),
-                    style: tema.textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w700)),
+                    style: tema.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
               ),
               TextButton.icon(
-                style: TextButton.styleFrom(foregroundColor: amarilloMarca),
+                style: TextButton.styleFrom(foregroundColor: rojoLadrillo),
                 onPressed: recorrido.estado.vacia
                     ? null
                     : () => showModalBottomSheet<void>(

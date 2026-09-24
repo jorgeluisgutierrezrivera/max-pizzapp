@@ -6,12 +6,13 @@ import '../carta/producto.dart';
 import '../carta/venta.dart';
 import 'esqueleto_rol.dart';
 import 'venta/comunes.dart';
+import 'venta/pedido_enviado.dart';
 import 'venta/venta_guiada.dart';
 
-/// La pantalla de recepción: carga la carta y guía la venta (D-30).
+/// La pantalla de recepción: carga la carta, guía la venta (D-30) y la envía a cocina.
 ///
 /// Muestra los cuatro estados de una pantalla con datos: cargando, error con Reintentar,
-/// carta vacía y la venta.
+/// carta vacía y la venta. Al terminar, la confirmación con el número del pedido.
 class PantallaRecepcion extends StatefulWidget {
   const PantallaRecepcion({
     super.key,
@@ -19,7 +20,7 @@ class PantallaRecepcion extends StatefulWidget {
     required this.alCerrarSesion,
     required this.cargarCarta,
     this.imagen = imagenDeRed,
-    this.alTerminarVenta,
+    this.enviarPedido,
   });
 
   final Usuario usuario;
@@ -27,8 +28,9 @@ class PantallaRecepcion extends StatefulWidget {
   final Future<Carta> Function() cargarCarta;
   final ConstructorImagen imagen;
 
-  /// Envía la venta a cocina. Nulo hasta la tarjeta 06: el botón se ve, deshabilitado.
-  final void Function(EstadoVenta venta)? alTerminarVenta;
+  /// Envía el cuerpo de POST /api/v1/pedidos y devuelve el pedido guardado. Nulo si no hay
+  /// cómo enviarlo: el botón se ve, deshabilitado.
+  final Future<Map<String, dynamic>> Function(Map<String, dynamic> pedido)? enviarPedido;
 
   @override
   State<PantallaRecepcion> createState() => _PantallaRecepcionState();
@@ -37,6 +39,10 @@ class PantallaRecepcion extends StatefulWidget {
 class _PantallaRecepcionState extends State<PantallaRecepcion> {
   late Future<Carta> _carta;
   RecorridoVenta? _recorrido;
+
+  bool _enviando = false;
+  String? _errorDeEnvio;
+  Map<String, dynamic>? _enviado;
 
   @override
   void initState() {
@@ -62,6 +68,30 @@ class _PantallaRecepcionState extends State<PantallaRecepcion> {
       _recorrido = RecorridoVenta(carta);
     }
     return _recorrido!;
+  }
+
+  Future<void> _terminar(RecorridoVenta recorrido) async {
+    setState(() {
+      _enviando = true;
+      _errorDeEnvio = null;
+    });
+    try {
+      final pedido = await widget.enviarPedido!(recorrido.estado.aPedido());
+      if (!mounted) return;
+      // Guardado: la venta se vacía para empezar otra, y se muestra la confirmación.
+      recorrido.cancelar();
+      setState(() {
+        _enviando = false;
+        _enviado = pedido;
+      });
+    } catch (error) {
+      if (!mounted) return;
+      // No se guardó: la venta queda tal cual, para corregirla o volver a enviarla.
+      setState(() {
+        _enviando = false;
+        _errorDeEnvio = explicarErrorDeEnvio(error);
+      });
+    }
   }
 
   @override
@@ -94,15 +124,41 @@ class _PantallaRecepcionState extends State<PantallaRecepcion> {
             );
           }
           final recorrido = _recorridoPara(carta);
-          final terminar = widget.alTerminarVenta;
+          final enviado = _enviado;
+          if (enviado != null) {
+            return PedidoEnviado(pedido: enviado, alNuevaVenta: () => setState(() => _enviado = null));
+          }
           return VentaGuiada(
             recorrido: recorrido,
             imagen: widget.imagen,
-            alTerminar: terminar == null ? null : () => terminar(recorrido.estado),
+            alTerminar: widget.enviarPedido == null ? null : () => _terminar(recorrido),
+            enviando: _enviando,
+            errorDeEnvio: _errorDeEnvio,
           );
         },
       ),
     );
+  }
+}
+
+/// Qué decirle a la vendedora cuando la venta no se guardó. Los mensajes de la API van sin
+/// tildes; los casos que la app sabe resolver se explican aquí, con lo que hay que hacer.
+String explicarErrorDeEnvio(Object error) {
+  if (error is! ErrorApi) return 'No se pudo enviar la venta. Intenta de nuevo.';
+  switch (error.codigo) {
+    case 'PRODUCTO_NO_DISPONIBLE':
+      final producto = error.datos['producto'];
+      final nombre = producto is Map ? producto['nombre'] : null;
+      return '${nombre ?? 'Un producto'} se agotó. Quítalo de la venta y vuelve a enviarla.';
+    case 'PRECIO_CAMBIADO':
+      final correcto = error.datos['totalCorrecto'];
+      final total = correcto is num ? ' El total correcto es ${formatoBs((correcto * 100).round())}.' : '';
+      return 'La carta cambió mientras se armaba la venta y no se guardó nada.$total '
+          'Cancela esta venta y ármala de nuevo.';
+    case 'SIN_CONEXION':
+      return 'No se pudo enviar: no hay conexión con el servidor. La venta sigue aquí; vuelve a intentarlo.';
+    default:
+      return error.mensaje;
   }
 }
 

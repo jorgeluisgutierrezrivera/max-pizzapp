@@ -19,11 +19,13 @@ class PantallaSegunRol extends StatefulWidget {
     required this.cargarUsuario,
     required this.cargarCarta,
     required this.alCerrarSesion,
+    this.enviarPedido,
   });
 
   final Future<Usuario> Function() cargarUsuario;
   final Future<Carta> Function() cargarCarta;
   final VoidCallback alCerrarSesion;
+  final Future<Map<String, dynamic>> Function(Map<String, dynamic> pedido)? enviarPedido;
 
   @override
   State<PantallaSegunRol> createState() => _PantallaSegunRolState();
@@ -66,6 +68,7 @@ class _PantallaSegunRolState extends State<PantallaSegunRol> {
               usuario: usuario,
               alCerrarSesion: widget.alCerrarSesion,
               cargarCarta: widget.cargarCarta,
+              enviarPedido: widget.enviarPedido,
             ),
           Rol.cocina => PantallaCocina(usuario: usuario, alCerrarSesion: widget.alCerrarSesion),
           null => PantallaError(

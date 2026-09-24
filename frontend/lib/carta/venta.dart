@@ -69,8 +69,16 @@ class LineaBebida {
   int get subtotal => bebida.precio * cantidad;
 }
 
-/// Los pasos del recorrido (D-30). Uno por pantalla.
-enum Paso { cantidad, iguales, tipo, sabor, primeraMitad, segundaMitad, extras, bebidas, observacion, resumen }
+/// Los pasos del recorrido (D-30). Uno por pantalla. "llevar" y "cliente" llegan con la
+/// tarjeta 06: el pedido dice si es para llevar (D-34) y a nombre de quién va (D-31).
+enum Paso {
+  cantidad, iguales, tipo, sabor, primeraMitad, segundaMitad, extras, bebidas, observacion,
+  llevar, cliente, resumen,
+}
+
+/// Celular boliviano: 8 dígitos que empiezan con 6 o 7. La misma regla que el servidor y la
+/// base (D-31).
+final celularValido = RegExp(r'^[67][0-9]{7}$');
 
 /// La pizza que se está definiendo, a medio camino.
 @immutable
@@ -95,6 +103,9 @@ class EstadoVenta {
     this.iguales = false,
     this.enCurso = const PizzaEnCurso(),
     this.ultimaPizza,
+    this.paraLlevar,
+    this.nombreCliente = '',
+    this.celular = '',
   });
 
   final Paso paso;
@@ -112,6 +123,15 @@ class EstadoVenta {
 
   /// La última pizza confirmada en esta tanda: la que ofrece "Igual a la pizza anterior".
   final PizzaElegida? ultimaPizza;
+
+  /// Nulo mientras no se preguntó (D-34).
+  final bool? paraLlevar;
+  final String nombreCliente;
+  final String celular;
+
+  /// Si ya se sabe a nombre de quién va y si es para llevar: al volver del resumen a cambiar
+  /// algo, no se vuelve a preguntar.
+  bool get clienteCompleto => paraLlevar != null && nombreCliente.trim().isNotEmpty;
 
   int get unidadesDePizza => grupos.fold(0, (s, g) => s + g.cantidad);
   int get unidadesDeBebida => bebidas.fold(0, (s, b) => s + b.cantidad);
@@ -133,6 +153,9 @@ class EstadoVenta {
     PizzaEnCurso? enCurso,
     PizzaElegida? ultimaPizza,
     bool sinUltimaPizza = false,
+    bool? paraLlevar,
+    String? nombreCliente,
+    String? celular,
   }) =>
       EstadoVenta(
         paso: paso ?? this.paso,
@@ -144,7 +167,33 @@ class EstadoVenta {
         iguales: iguales ?? this.iguales,
         enCurso: enCurso ?? this.enCurso,
         ultimaPizza: sinUltimaPizza ? null : (ultimaPizza ?? this.ultimaPizza),
+        paraLlevar: paraLlevar ?? this.paraLlevar,
+        nombreCliente: nombreCliente ?? this.nombreCliente,
+        celular: celular ?? this.celular,
       );
+
+  /// El cuerpo de POST /api/v1/pedidos. Las pizzas iguales ya vienen juntas en un grupo; cada
+  /// extra va dentro de su pizza. El total es el que se mostró, en bolivianos: el servidor
+  /// lo compara con el suyo y, si no coinciden, no guarda nada (409 PRECIO_CAMBIADO).
+  Map<String, dynamic> aPedido() => {
+        'paraLlevar': paraLlevar,
+        'cliente': {
+          'nombre': nombreCliente.trim(),
+          'celular': celular.trim().isEmpty ? null : celular.trim(),
+        },
+        'observacion': observacion.trim().isEmpty ? null : observacion.trim(),
+        'lineas': [
+          for (final g in grupos)
+            {
+              'productoId': g.pizza.sabor.id,
+              if (g.pizza.segundaMitad != null) 'mitadId': g.pizza.segundaMitad!.id,
+              'cantidad': g.cantidad,
+              if (g.pizza.extras.isNotEmpty) 'extras': [for (final e in g.pizza.extras) e.id],
+            },
+          for (final b in bebidas) {'productoId': b.bebida.id, 'cantidad': b.cantidad},
+        ],
+        'totalEsperado': total / 100,
+      };
 }
 
 /// El recorrido guiado de una venta: una pregunta por pantalla, siempre hacia adelante,
@@ -163,6 +212,7 @@ class RecorridoVenta extends ChangeNotifier {
   /// El mismo límite que la base para una línea (detalle_pedido_cantidad_valida).
   static const maximoPorLinea = 999;
   static const largoObservacion = 240;
+  static const largoNombre = 120;
 
   EstadoVenta _estado = const EstadoVenta();
   final List<EstadoVenta> _anteriores = [];
@@ -382,14 +432,65 @@ class RecorridoVenta extends ChangeNotifier {
     _cambiarAqui(_estado.con(observacion: texto));
   }
 
-  /// Pasa al resumen. Desde ahí ya no se "vuelve": se edita con sus botones.
+  /// Sigue a "¿para llevar?". Si ya se sabe a nombre de quién va (se volvió desde el
+  /// resumen a cambiar algo), vuelve directo al resumen.
   void continuarDeObservacion() {
     _exigirPaso(Paso.observacion);
-    _ir(_estado.con(paso: Paso.resumen, observacion: _estado.observacion.trim()));
+    final limpio = _estado.con(observacion: _estado.observacion.trim());
+    if (limpio.clienteCompleto) {
+      _alResumen(limpio);
+    } else {
+      _ir(limpio.con(paso: Paso.llevar));
+    }
+  }
+
+  // --- 9. ¿Para llevar o para comer aquí? (D-34) -----------------------------------
+
+  void elegirParaLlevar(bool paraLlevar) {
+    _exigirPaso(Paso.llevar);
+    _ir(_estado.con(paso: Paso.cliente, paraLlevar: paraLlevar));
+  }
+
+  // --- 10. ¿A nombre de quién? (D-31) -------------------------------------------------
+
+  void escribirNombre(String nombre) {
+    _exigirPaso(Paso.cliente);
+    if (nombre.length > largoNombre) {
+      throw const VentaInvalida('El nombre admite hasta $largoNombre caracteres.');
+    }
+    _cambiarAqui(_estado.con(nombreCliente: nombre));
+  }
+
+  void escribirCelular(String celular) {
+    _exigirPaso(Paso.cliente);
+    _cambiarAqui(_estado.con(celular: celular));
+  }
+
+  /// El nombre es obligatorio; el celular, opcional, pero si se escribe tiene que ser uno
+  /// boliviano. Devuelve el problema, o null si no hay.
+  String? get problemaDelCliente {
+    if (_estado.nombreCliente.trim().isEmpty) return 'Escribe el nombre del cliente.';
+    final celular = _estado.celular.trim();
+    if (celular.isNotEmpty && !celularValido.hasMatch(celular)) {
+      return 'El celular tiene 8 dígitos y empieza con 6 o 7.';
+    }
+    return null;
+  }
+
+  void continuarDeCliente() {
+    _exigirPaso(Paso.cliente);
+    final problema = problemaDelCliente;
+    if (problema != null) throw VentaInvalida(problema);
+    _alResumen(_estado.con(nombreCliente: _estado.nombreCliente.trim(), celular: _estado.celular.trim()));
+  }
+
+  /// Pasa al resumen. Desde ahí ya no se "vuelve": se edita con sus botones.
+  void _alResumen(EstadoVenta estado) {
+    _ir(estado.con(paso: Paso.resumen));
     _anteriores.clear();
   }
 
-  // --- 9. Resumen ----------------------------------------------------------------
+  // --- 11. Resumen ---------------------------------------------------------------
 
   void cambiarCantidadDeGrupo(int indice, int cantidad) {
     _exigirPaso(Paso.resumen);
@@ -417,6 +518,12 @@ class RecorridoVenta extends ChangeNotifier {
   void cambiarObservacion() {
     _exigirPaso(Paso.resumen);
     _ir(_estado.con(paso: Paso.observacion));
+  }
+
+  /// Vuelve a preguntar si es para llevar y a nombre de quién, con lo ya escrito.
+  void cambiarCliente() {
+    _exigirPaso(Paso.resumen);
+    _ir(_estado.con(paso: Paso.llevar));
   }
 
   // --- Validaciones --------------------------------------------------------------

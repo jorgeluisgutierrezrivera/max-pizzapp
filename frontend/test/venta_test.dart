@@ -39,6 +39,16 @@ void definir(RecorridoVenta r, Producto sabor, {Producto? mitad, List<Producto> 
   r.confirmarExtras(extras);
 }
 
+/// De la observación al resumen: para llevar, a nombre de Ana Prueba (D-31, D-34).
+void cerrarVenta(RecorridoVenta r, {bool paraLlevar = true, String nombre = 'Ana Prueba', String celular = ''}) {
+  r
+    ..continuarDeObservacion()
+    ..elegirParaLlevar(paraLlevar)
+    ..escribirNombre(nombre)
+    ..escribirCelular(celular)
+    ..continuarDeCliente();
+}
+
 void main() {
   group('la tabla de la sección 6', () {
     test('1 Peperoni = 50', () {
@@ -228,8 +238,8 @@ void main() {
       r
         ..cambiarBebida(gaseosa, 2)
         ..continuarDeBebidas()
-        ..escribirObservacion('  bien frías  ')
-        ..continuarDeObservacion();
+        ..escribirObservacion('  bien frías  ');
+      cerrarVenta(r);
       expect(r.estado.paso, Paso.resumen);
       expect(r.estado.observacion, 'bien frías');
       expect(r.estado.total, bs(36));
@@ -270,7 +280,8 @@ void main() {
     });
 
     test('en el resumen no se vuelve: se edita', () {
-      final r = RecorridoVenta(carta)..soloBebidas()..cambiarBebida(gaseosa, 1)..continuarDeBebidas()..continuarDeObservacion();
+      final r = RecorridoVenta(carta)..soloBebidas()..cambiarBebida(gaseosa, 1)..continuarDeBebidas();
+      cerrarVenta(r);
       expect(r.puedeVolver, isFalse);
     });
   });
@@ -279,10 +290,11 @@ void main() {
     RecorridoVenta hastaElResumen() {
       final r = RecorridoVenta(carta)..elegirCantidad(2)..elegirIguales(true);
       definir(r, peperoni);
-      return r
+      r
         ..cambiarBebida(gaseosa, 1)
-        ..continuarDeBebidas()
-        ..continuarDeObservacion();
+        ..continuarDeBebidas();
+      cerrarVenta(r);
+      return r;
     }
 
     test('se cambia la cantidad de un grupo, y en cero se quita', () {
@@ -306,6 +318,9 @@ void main() {
       r
         ..continuarDeBebidas()
         ..continuarDeObservacion();
+      // El cliente ya estaba: vuelve directo al resumen, sin preguntarlo otra vez.
+      expect(r.estado.paso, Paso.resumen);
+      expect(r.estado.nombreCliente, 'Ana Prueba');
       expect(r.estado.unidadesDePizza, 3);
       expect(r.estado.total, bs(2 * 50 + 47.50 + 18));
     });
@@ -315,6 +330,123 @@ void main() {
       expect(r.estado.vacia, isTrue);
       expect(r.estado.paso, Paso.cantidad);
       expect(r.empezada, isFalse);
+    });
+  });
+
+  group('para llevar y el cliente (D-31, D-34)', () {
+    RecorridoVenta hastaLaObservacion() => RecorridoVenta(carta)
+      ..soloBebidas()
+      ..cambiarBebida(gaseosa, 1)
+      ..continuarDeBebidas();
+
+    test('después de la observación: para llevar, el cliente y recién el resumen', () {
+      final r = hastaLaObservacion()..continuarDeObservacion();
+      expect(r.estado.paso, Paso.llevar);
+      r.elegirParaLlevar(false);
+      expect(r.estado.paso, Paso.cliente);
+      expect(r.estado.paraLlevar, isFalse);
+      r
+        ..escribirNombre('  Ana Prueba ')
+        ..escribirCelular(' 70000001 ')
+        ..continuarDeCliente();
+      expect(r.estado.paso, Paso.resumen);
+      expect(r.estado.nombreCliente, 'Ana Prueba');
+      expect(r.estado.celular, '70000001');
+    });
+
+    test('el nombre es obligatorio', () {
+      final r = hastaLaObservacion()..continuarDeObservacion()..elegirParaLlevar(true);
+      expect(r.problemaDelCliente, 'Escribe el nombre del cliente.');
+      expect(r.continuarDeCliente, throwsA(isA<VentaInvalida>()));
+      r.escribirNombre('   ');
+      expect(r.continuarDeCliente, throwsA(isA<VentaInvalida>()));
+      expect(r.estado.paso, Paso.cliente);
+    });
+
+    test('el celular es opcional, pero si se escribe tiene que ser boliviano', () {
+      final r = hastaLaObservacion()..continuarDeObservacion()..elegirParaLlevar(true)..escribirNombre('Ana Prueba');
+      for (final malo in ['7000001', '700000011', '50000001', '7000 001']) {
+        r.escribirCelular(malo);
+        expect(r.problemaDelCliente, 'El celular tiene 8 dígitos y empieza con 6 o 7.', reason: malo);
+      }
+      for (final bueno in ['', '70000001', '60000002']) {
+        r.escribirCelular(bueno);
+        expect(r.problemaDelCliente, isNull, reason: bueno);
+      }
+    });
+
+    test('el nombre admite hasta 120 caracteres, como la base', () {
+      final r = hastaLaObservacion()..continuarDeObservacion()..elegirParaLlevar(true);
+      r.escribirNombre('a' * 120);
+      expect(() => r.escribirNombre('a' * 121), throwsA(isA<VentaInvalida>()));
+    });
+
+    test('volver desde el cliente regresa a para llevar, y de ahí a la observación', () {
+      final r = hastaLaObservacion()..continuarDeObservacion()..elegirParaLlevar(true);
+      r.volver();
+      expect(r.estado.paso, Paso.llevar);
+      r.volver();
+      expect(r.estado.paso, Paso.observacion);
+    });
+
+    test('desde el resumen se cambia el cliente con lo ya escrito', () {
+      final r = hastaLaObservacion();
+      cerrarVenta(r, celular: '70000001');
+      r.cambiarCliente();
+      expect(r.estado.paso, Paso.llevar);
+      r.elegirParaLlevar(false);
+      expect(r.estado.nombreCliente, 'Ana Prueba', reason: 'no se vuelve a escribir');
+      r.continuarDeCliente();
+      expect(r.estado.paso, Paso.resumen);
+      expect(r.estado.paraLlevar, isFalse);
+    });
+
+    test('cambiar la observación desde el resumen vuelve directo al resumen', () {
+      final r = hastaLaObservacion();
+      cerrarVenta(r);
+      r
+        ..cambiarObservacion()
+        ..escribirObservacion('sin hielo')
+        ..continuarDeObservacion();
+      expect(r.estado.paso, Paso.resumen);
+      expect(r.estado.observacion, 'sin hielo');
+    });
+  });
+
+  group('el pedido que se envía (POST /api/v1/pedidos)', () {
+    test('las pizzas con su segunda mitad y sus extras, las bebidas y el total en bolivianos', () {
+      final r = RecorridoVenta(carta)..elegirCantidad(3)..elegirIguales(false);
+      definir(r, salame, mitad: peperoni); // 47,50
+      r.repetirAnterior(); // 47,50
+      definir(r, hawaiana, extras: [extraChoclo, extraQueso]); // 63
+      r
+        ..cambiarBebida(gaseosa, 2) // 36
+        ..continuarDeBebidas()
+        ..escribirObservacion(' sin cebolla ');
+      cerrarVenta(r, celular: '70000001');
+      expect(r.estado.aPedido(), {
+        'paraLlevar': true,
+        'cliente': {'nombre': 'Ana Prueba', 'celular': '70000001'},
+        'observacion': 'sin cebolla',
+        'lineas': [
+          {'productoId': salame.id, 'mitadId': peperoni.id, 'cantidad': 2},
+          {'productoId': hawaiana.id, 'cantidad': 1, 'extras': [extraQueso.id, extraChoclo.id]..sort()},
+          {'productoId': gaseosa.id, 'cantidad': 2},
+        ],
+        'totalEsperado': 194.0,
+      });
+    });
+
+    test('sin celular ni observación viajan como nulos; el total conserva los centavos', () {
+      final r = RecorridoVenta(carta)..elegirCantidad(1);
+      definir(r, salame, mitad: peperoni);
+      r.continuarDeBebidas();
+      cerrarVenta(r, paraLlevar: false);
+      final pedido = r.estado.aPedido();
+      expect(pedido['cliente'], {'nombre': 'Ana Prueba', 'celular': null});
+      expect(pedido['observacion'], isNull);
+      expect(pedido['paraLlevar'], isFalse);
+      expect(pedido['totalEsperado'], 47.5);
     });
   });
 

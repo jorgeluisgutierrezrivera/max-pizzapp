@@ -23,15 +23,15 @@ void main() {
   final colores = tema.colorScheme;
 
   group('el tema', () {
-    test('es claro, con el negro, el amarillo y el rojo del logo', () {
+    test('es claro, con el rojo ladrillo y el amarillo suave; los colores puros, solo en el logo', () {
       expect(colores.brightness, Brightness.light);
-      expect(colores.primary, negroMarca);
-      expect(colores.onPrimary, amarilloMarca);
+      expect(colores.primary, rojoLadrillo);
+      expect(colores.onPrimary, Colors.white);
       expect(colores.surface, cremaFondo);
       expect(tema.scaffoldBackgroundColor, cremaFondo);
-      expect(tema.appBarTheme.backgroundColor, negroMarca);
+      expect(tema.appBarTheme.backgroundColor, rojoLadrillo);
+      expect(rojoLadrillo, const Color(0xFFC0392B));
       expect(amarilloMarca, const Color(0xFFFAF126));
-      expect(rojoMarca, const Color(0xFFF90304));
     });
 
     test('el texto sobre el crema y sobre las tarjetas blancas se lee de sobra (al menos 7 a 1)', () {
@@ -39,14 +39,21 @@ void main() {
       expect(contraste(colores.onSurface, Colors.white), greaterThanOrEqualTo(7));
     });
 
-    test('la letra amarilla sobre el botón negro, y los precios negros sobre amarillo, también', () {
-      expect(contraste(colores.onPrimary, colores.primary), greaterThanOrEqualTo(7));
-      expect(contraste(negroMarca, amarilloMarca), greaterThanOrEqualTo(7));
+    test('la letra blanca sobre el rojo de los botones cumple el mínimo para texto normal', () {
+      expect(contraste(colores.onPrimary, colores.primary), greaterThanOrEqualTo(4.5));
     });
 
-    test('la barra superior negra: título blanco y nombre en blanco atenuado', () {
-      expect(contraste(Colors.white, negroMarca), greaterThanOrEqualTo(7));
-      expect(contraste(Colors.white70, negroMarca), greaterThanOrEqualTo(4.5));
+    test('los precios, con letra oscura sobre el amarillo suave, se leen de sobra', () {
+      expect(contraste(textoSobreAmarillo, amarilloSuave), greaterThanOrEqualTo(7));
+    });
+
+    test('la barra superior roja: el título, el nombre y "Cerrar sesión", en blanco', () {
+      expect(contraste(Colors.white, rojoLadrillo), greaterThanOrEqualTo(4.5));
+    });
+
+    test('el rojo de los botones de contorno y de los enlaces se lee sobre el crema', () {
+      expect(contraste(rojoLadrillo, cremaFondo), greaterThanOrEqualTo(4.5));
+      expect(contraste(rojoLadrillo, Colors.white), greaterThanOrEqualTo(4.5));
     });
 
     test('el texto secundario y los errores cumplen el mínimo para texto normal', () {
@@ -55,7 +62,7 @@ void main() {
       expect(contraste(colores.onErrorContainer, colores.errorContainer), greaterThanOrEqualTo(4.5));
     });
 
-    test('el botón rojo lleva texto blanco grande, que así cumple el mínimo', () {
+    test('el botón de Terminar venta lleva texto blanco grande, que así cumple el mínimo', () {
       final estilo = estiloBotonRojo();
       final fondo = estilo.backgroundColor!.resolve({})!;
       final texto = estilo.foregroundColor!.resolve({})!;

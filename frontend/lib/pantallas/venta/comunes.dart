@@ -51,6 +51,7 @@ class OpcionGrande extends StatelessWidget {
     required this.titulo,
     required this.detalle,
     required this.alTocar,
+    this.vertical = false,
   });
 
   final IconData icono;
@@ -58,10 +59,28 @@ class OpcionGrande extends StatelessWidget {
   final String detalle;
   final VoidCallback alTocar;
 
+  /// Como ficha: el ícono arriba y el texto centrado. La usan las opciones puestas en fila.
+  final bool vertical;
+
+  OpcionGrande comoFicha() =>
+      OpcionGrande(key: key, icono: icono, titulo: titulo, detalle: detalle, alTocar: alTocar, vertical: true);
+
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
     final colores = tema.colorScheme;
+    final circulo = Container(
+      width: vertical ? 72 : 52,
+      height: vertical ? 72 : 52,
+      decoration: const BoxDecoration(color: rojoSuave, shape: BoxShape.circle),
+      child: Icon(icono, size: vertical ? 38 : 28, color: rojoLadrillo),
+    );
+    final textoTitulo = Text(titulo,
+        textAlign: vertical ? TextAlign.center : TextAlign.start,
+        style: tema.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700));
+    final textoDetalle = Text(detalle,
+        textAlign: vertical ? TextAlign.center : TextAlign.start,
+        style: tema.textTheme.bodyMedium?.copyWith(color: colores.onSurfaceVariant));
     return Material(
       color: Colors.white,
       elevation: 1,
@@ -73,33 +92,65 @@ class OpcionGrande extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: alTocar,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
-          child: Row(
-            children: [
-              Container(
-                width: 52,
-                height: 52,
-                decoration: const BoxDecoration(color: negroMarca, shape: BoxShape.circle),
-                child: Icon(icono, size: 28, color: amarilloMarca),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
+        child: vertical
+            ? Padding(
+                padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [circulo, const SizedBox(height: 16), textoTitulo, const SizedBox(height: 6), textoDetalle],
+                ),
+              )
+            : Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+                child: Row(
                   children: [
-                    Text(titulo, style: tema.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-                    const SizedBox(height: 2),
-                    Text(detalle, style: tema.textTheme.bodyMedium?.copyWith(color: colores.onSurfaceVariant)),
+                    circulo,
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [textoTitulo, const SizedBox(height: 2), textoDetalle],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, color: colores.onSurfaceVariant),
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right, color: colores.onSurfaceVariant),
-            ],
-          ),
-        ),
       ),
     );
+  }
+}
+
+/// Desde este ancho, las opciones de una pregunta van en fila, como fichas del mismo alto;
+/// por debajo (el celular), una debajo de otra.
+const anchoOpcionesEnFila = 640.0;
+
+class OpcionesGrandes extends StatelessWidget {
+  const OpcionesGrandes({super.key, required this.opciones});
+  final List<OpcionGrande> opciones;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(builder: (context, lados) {
+      if (lados.maxWidth < anchoOpcionesEnFila) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final (i, o) in opciones.indexed) ...[if (i > 0) const SizedBox(height: 12), o],
+          ],
+        );
+      }
+      return IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (final (i, o) in opciones.indexed) ...[
+              if (i > 0) const SizedBox(width: 16),
+              Expanded(child: o.comoFicha()),
+            ],
+          ],
+        ),
+      );
+    });
   }
 }
 
