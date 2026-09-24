@@ -14,6 +14,20 @@ function responderError(res, estado, codigo, mensaje) {
   res.status(estado).json({ error: { codigo, mensaje } });
 }
 
+// Errores de red al conectar, la clase 08 de PostgreSQL (excepciones de conexion), el
+// servidor apagandose o arrancando (57P01-57P03) y los dos avisos del pool de pg que no
+// traen codigo: se agoto la espera por una conexion, o la conexion se corto a la mitad.
+const ERRORES_DE_RED = ['ECONNREFUSED', 'ECONNRESET', 'ENOTFOUND', 'EAI_AGAIN', 'ETIMEDOUT'];
+const BASE_APAGANDOSE = ['57P01', '57P02', '57P03'];
+
+function esBaseNoDisponible(err) {
+  const codigo = err && typeof err.code === 'string' ? err.code : '';
+  return ERRORES_DE_RED.includes(codigo)
+    || codigo.startsWith('08')
+    || BASE_APAGANDOSE.includes(codigo)
+    || /timeout exceeded when trying to connect|Connection terminated/i.test((err && err.message) || '');
+}
+
 function rutaNoEncontrada(req, res) {
   responderError(res, 404, 'RUTA_NO_ENCONTRADA', 'La ruta solicitada no existe.');
 }
@@ -28,6 +42,14 @@ function manejadorErrores(err, req, res, next) {
   // Cuerpo JSON mal formado: lo detecta express.json() antes de llegar a la ruta.
   if (err.type === 'entity.parse.failed') {
     responderError(res, 400, 'JSON_INVALIDO', 'El cuerpo de la peticion no es JSON valido.');
+    return;
+  }
+  // La base no responde: es una dependencia caida, no un fallo del codigo. Un 503 le dice
+  // a la app que reintentar tiene sentido; un 500 diria que no.
+  if (esBaseNoDisponible(err)) {
+    console.error('[bd] la base no responde:', req.method, req.originalUrl, err.code || err.message);
+    responderError(res, 503, 'BASE_NO_DISPONIBLE',
+      'No se pueden leer los datos en este momento. Intenta de nuevo en unos segundos.');
     return;
   }
   // Cualquier otra cosa es un fallo nuestro. La traza queda en el registro del servidor;

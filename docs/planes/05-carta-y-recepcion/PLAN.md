@@ -117,9 +117,9 @@ El pedido armado **todavía no se envía a cocina**: eso es la tarjeta 06, que a
 - [x] Una ilustración por producto en `frontend/web/carta/`, dibujada para el proyecto.
 
 ### Fase C — La API
-- [ ] `GET /api/v1/productos` con filtros `categoria` y `disponible`, validados.
-- [ ] Pruebas: el listado, los filtros, un filtro inválido (400), sin token (401).
-- [ ] La Tabla 12 del 2.4 actualizada: roles de la ruta y cuerpo de `POST /pedidos`.
+- [x] `GET /api/v1/productos` con filtros `categoria` y `disponible`, validados.
+- [x] Pruebas: el listado, los filtros, un filtro inválido (400), sin token (401).
+- [x] La Tabla 12 del 2.4 actualizada: roles de la ruta y cuerpo de `POST /pedidos`.
 
 ### Fase D — La pantalla de recepción
 - [ ] La carta agrupada, con ilustración, precios de entera y media, y agotados atenuados.
@@ -145,7 +145,8 @@ El pedido armado **todavía no se envía a cocina**: eso es la tarjeta 06, que a
 - `docker/postgres/init/03_carta_ficticia.sql` *(nuevo)*
 - `frontend/web/carta/` *(nuevo: las ilustraciones)*
 - `scripts/dibujar-carta.py` *(nuevo: dibuja las ilustraciones; agregado en la fase B)*
-- `backend/src/rutas/` o `backend/src/app.js` *(la ruta de productos)* y `backend/test/`
+- `backend/src/rutas/productos.js` *(nuevo)*, `backend/src/app.js`, `backend/src/errores.js` *(el 503)* y `backend/test/` *(`productos.test.js` nuevo; el emisor de tokens de prueba pasa a `test/soporte/emisor.js`, compartido)*
+- `pruebas/api/probar_carta.py` *(nuevo: la carta con token real y base real)*
 - `frontend/lib/` *(modelo de producto, regla de precio, pantalla de recepción)* y
   `frontend/test/`
 - `README.md` *(cómo aplicar una migración en una base existente)*
@@ -209,7 +210,7 @@ celular, la carta y el pedido se acomodan.
 |---|---|---|---|
 | A — El modelo | ✅ Verificada | 2026-09-23 | **Instalación nueva** en un PostgreSQL 17 descartable: corren `00`, `01` y `02` en orden y sin errores; quedan las 5 columnas nuevas, las **6 restricciones** y **5 tablas**, las mismas cinco entidades. **Repetible:** una segunda ejecución de `02` termina con código 0. **Casos, uno por uno:** se aceptan las 4 líneas válidas (entera de un sabor, media, entera de dos mitades, bebida sin porción) y se **rechazan las 9 imposibles**, cada una por su restricción: media con dos sabores, dos mitades iguales, pizza sin gama, pizza sin precio de media, bebida con gama, imagen con una ruta, imagen con una dirección, precio de media negativo, y borrar un producto que figura **solo como segunda mitad** (`detalle_pedido_mitad_fk`, probado aparte). **Base local existente:** migración aplicada a mano con `psql`, 6 restricciones presentes, backend sano. Producción: en la fase E |
 | B — La carta ficticia y sus ilustraciones | ✅ Verificada | 2026-09-23 | **Carta:** 12 productos (5 tradicionales, 4 premium, 3 bebidas) con los precios de la tabla de la sección 6 para pepperoni, carnívora y hawaiana. **Instalación nueva** en un PostgreSQL 17 descartable: corren `00` a `03` en orden y sin errores, y quedan 5 + 4 + 3 productos. **Repetible:** aplicada dos veces sobre la base local, termina con código 0 y siguen siendo 12, sin duplicados (`ON CONFLICT (nombre)`). **No revive agotados:** con la hawaiana marcada no disponible, recargar la carta la deja no disponible. Todas las filas pasan las restricciones de la fase A. **Ilustraciones:** 12 PNG de 600 × 600 con fondo transparente, entre 6 y 37 KB (unos 330 KB en total), dibujadas por `scripts/dibujar-carta.py` con formas simples y sin imágenes de terceros. Dos ejecuciones dan archivos idénticos byte a byte. La etiqueta de la gaseosa se rediseñó para que no recordara a ninguna marca real |
-| C — La API | ⏳ Pendiente | — | — |
+| C — La API | ✅ Verificada | 2026-09-23 | **`npm test`: 40 de 40** (16 del acceso, que siguen igual tras mover el emisor de prueba a `test/soporte/`, y **24 nuevas** de la carta). Con una base simulada que anota cada consulta se comprueba *qué llega a la base*: sin token (401) o sin rol (403) la base ni se consulta; los filtros viajan como **parámetros** y el texto SQL es **el mismo** con o sin filtros; los **9 filtros inválidos** (categoría inexistente, con mayúsculas, un intento de inyección, repetida, vacía, `disponible=si`, `disponible=1`, un filtro desconocido y uno con corchetes) responden **400 `FILTRO_INVALIDO` sin tocar la base**; base caída, pool agotado y base reiniciándose dan **503**, y un error de SQL da 500 sin su texto. **Contra el esquema real** (`pruebas/api/probar_carta.py`, tokens reales de `recepcion.demo` y `cocina.demo`): los dos roles leen la carta, 12 productos en el orden de la carta, precios numéricos, imágenes con nombre simple, filtros correctos y 400 a `?categoria=pasta`. **Casos reales:** con la hawaiana agotada, `?disponible=false` la devuelve y la carta completa la incluye atenuable; con el contenedor de la base **detenido**, la API responde **503 `BASE_NO_DISPONIBLE`** a los ~5 s (el límite del pool) y se recupera sola al volver la base. **Contrato:** la ruta pasa a recepción **y cocina**, suma el 400 y el 503; Tabla 12 del borrador 2.4 y `BRIEF.md` actualizados |
 | D — La pantalla de recepción | ⏳ Pendiente | — | — |
 | E — En producción | ⏳ Pendiente | — | — |
 | F — Pruebas | ⏳ Pendiente | — | — |

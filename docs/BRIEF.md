@@ -204,7 +204,7 @@ El contrato se publica **versionado**: la versión va en la ruta para que un cam
 incompatible pueda convivir con la versión anterior mientras el cliente migra.
 
 ```
-GET    /api/v1/productos                      Carta disponible
+GET    /api/v1/productos                      La carta, con agotados (recepción y cocina)
 POST   /api/v1/pedidos                        Crea pedido en estado "pendiente"
 GET    /api/v1/pedidos                        Pedidos activos (filtro por estado)
 GET    /api/v1/pedidos/:id                    Pedido con sus líneas
