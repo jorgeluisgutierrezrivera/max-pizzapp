@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-Dibuja las ilustraciones de la carta ficticia en frontend/web/carta/.
+Dibuja las ilustraciones de la carta en frontend/web/carta/: las 15 pizzas de
+Max's Pizzas, con sus ingredientes, y las bebidas.
 
 POR QUÉ UN SCRIPT Y NO IMÁGENES DESCARGADAS
   Las ilustraciones se dibujaron para el proyecto: formas simples (círculos,
   polígonos, trazos) combinadas en capas. Así no hay derechos de terceros de por
   medio, cualquiera puede regenerarlas, y cambiar un color o agregar un producto
-  es editar una línea. Cuando llegue la carta real con sus fotos, este script
-  deja de hacer falta.
+  es editar una línea. Cuando lleguen las fotos reales de cada pizza, este script
+  deja de hacer falta: las fotos reemplazan los archivos con el mismo nombre.
 
 CÓMO SE USA (desde la raíz del repositorio)
   pip install pillow==12.3.0
@@ -143,8 +144,11 @@ def repartir(rng, cantidad, radio, separacion, ocupados):
 R_BORDE = 262       # radio del borde de masa
 R_INGREDIENTES = 205
 
+# El queso criollo con mozzarella de las pizzas españolas se ve más dorado.
+QUESO_CRIOLLO = (246, 196, 86)
 
-def base_pizza(lz, rng):
+
+def base_pizza(lz, rng, queso=QUESO):
     """Sombra, masa, salsa y queso. Devuelve el contorno del queso."""
     capa, d = lz.capa()
     circulo(d, C + 5, C + 11, R_BORDE, (60, 30, 10, 95))
@@ -160,7 +164,7 @@ def base_pizza(lz, rng):
         circulo(d, C + r * math.cos(a), C + r * math.sin(a), rng.uniform(2.5, 6), (196, 128, 60))
     poligono(d, mancha(C, C, R_BORDE - 30, rng, 0.025, 90), SALSA)
     contorno_queso = mancha(C, C, R_BORDE - 40, rng, 0.045, 90)
-    poligono(d, contorno_queso, QUESO)
+    poligono(d, contorno_queso, queso)
     lz.pegar(capa)
 
     # Textura del queso: zonas más claras y otras doradas por el horno.
@@ -198,13 +202,25 @@ def oregano(d, rng, cantidad=70):
         circulo(d, x, y, rng.uniform(1.0, 2.2), OREGANO)
 
 
-def pepperoni(d, x, y, rng, r=31):
-    circulo(d, x, y, r, (150, 40, 25))
-    circulo(d, x, y, r - 3, (192, 62, 38))
-    for _ in range(6):
+# --- Los ingredientes: cada uno se dibuja centrado en (x, y) ------------------
+
+def peperoni(d, x, y, rng, r=23):
+    """Rodajas chicas y oscuras, como las del local."""
+    circulo(d, x, y, r, (118, 30, 22))
+    circulo(d, x, y, r - 2.5, (156, 44, 30))
+    for _ in range(4):
         a, dist = rng.uniform(0, 2 * math.pi), rng.uniform(0, r * 0.6)
-        circulo(d, x + dist * math.cos(a), y + dist * math.sin(a), rng.uniform(1.8, 3.6), (158, 44, 28))
-    arco(d, x, y, r - 7, 200, 250, (232, 125, 95), 2.2)
+        circulo(d, x + dist * math.cos(a), y + dist * math.sin(a), rng.uniform(1.5, 3), (122, 32, 24))
+    arco(d, x, y, r - 6, 200, 250, (212, 108, 84), 2)
+
+
+def salame(d, x, y, rng, r=31):
+    """Rodajas grandes y rojas, salpicadas de grasa clara."""
+    circulo(d, x, y, r, (148, 30, 42))
+    circulo(d, x, y, r - 2.5, (190, 54, 64))
+    for _ in range(16):
+        a, dist = rng.uniform(0, 2 * math.pi), rng.uniform(0, r * 0.8)
+        circulo(d, x + dist * math.cos(a), y + dist * math.sin(a), rng.uniform(1.2, 2.4), (242, 192, 190))
 
 
 def jamon(d, x, y, rng, lado=46):
@@ -231,13 +247,13 @@ def pina(d, x, y, rng, t=29):
           (232, 186, 45), 1.5)
 
 
-def tomate(d, x, y, rng, r=39):
+def tomate(d, x, y, rng, r=33):
     circulo(d, x, y, r, (196, 42, 32))
     circulo(d, x, y, r - 4, (228, 78, 58))
     giro = rng.uniform(0, 2 * math.pi)
     for i in range(5):
         a = giro + i * 2 * math.pi / 5
-        elipse(d, x + r * 0.5 * math.cos(a), y + r * 0.5 * math.sin(a), 7, 7, (246, 172, 132))
+        elipse(d, x + r * 0.5 * math.cos(a), y + r * 0.5 * math.sin(a), 6, 6, (246, 172, 132))
     circulo(d, x, y, r * 0.2, (236, 118, 88))
 
 
@@ -254,82 +270,98 @@ def hoja(d, x, y, rng, largo=30, ancho=13, color=(58, 128, 52)):
     trazo(d, girar([(x - largo * 0.8, y), (x + largo * 0.8, y)], x, y, angulo), (112, 170, 92), 1.4)
 
 
-def aceituna(d, x, y, r=15, verde=True):
-    if verde:
-        circulo(d, x, y, r, (104, 130, 46))
-        circulo(d, x, y, r * 0.45, (200, 70, 55))
-    else:
-        circulo(d, x, y, r, (42, 36, 36))
-        circulo(d, x, y, r * 0.42, QUESO)
+def hojas_de_albahaca(d, rng, cantidad=4):
+    """Hojas grandes por encima de todo, repartidas aparte: con tantos ingredientes
+    abajo, no encontrarían lugar respetando la separación de los demás."""
+    for x, y in repartir(rng, cantidad, R_INGREDIENTES - 50, 110, []):
+        hoja(d, x, y, rng, largo=36, ancho=16)
 
 
-def cebolla(d, x, y, rng, r, color=(238, 228, 238), filo=(176, 136, 178)):
-    if rng.random() < 0.35:
-        desde = rng.uniform(0, 360)
-        arco(d, x, y, r, desde, desde + rng.uniform(150, 260), color, 7)
-        arco(d, x, y, r + 3, desde, desde + rng.uniform(150, 260), filo, 1.3)
-    else:
-        circulo(d, x, y, r, borde=color, ancho=7)
-        circulo(d, x, y, r + 3, borde=filo, ancho=1.3)
-
-
-def salchicha(d, x, y, rng, r=17):
-    poligono(d, mancha(x, y, r, rng, 0.28, 24), (116, 66, 42))
-    poligono(d, mancha(x - 2, y - 2, r * 0.55, rng, 0.3, 18), (152, 96, 62))
-
-
-def tocino(d, x, y, rng, largo=60):
+def aceituna(d, x, y, rng, r=15):
+    """Aceituna verde entera, ovalada y con brillo."""
     angulo = rng.uniform(0, math.pi)
-    puntos = [(x - largo / 2 + largo * i / 16, y + 5 * math.sin(i * 0.9)) for i in range(17)]
-    puntos = girar(puntos, x, y, angulo)
-    trazo(d, puntos, (168, 68, 50), 15)
-    trazo(d, girar([(px, py + 2) for px, py in
-                    [(x - largo / 2 + largo * i / 16, y + 5 * math.sin(i * 0.9)) for i in range(17)]],
-                   x, y, angulo), (240, 196, 176), 4)
+    contorno = [(x + r * 1.25 * math.cos(t), y + r * 0.9 * math.sin(t))
+                for t in [i * 2 * math.pi / 32 for i in range(32)]]
+    poligono(d, girar(contorno, x, y, angulo), (92, 108, 38))
+    interior = [(x + (a - x) * 0.82, y + (b - y) * 0.82) for a, b in girar(contorno, x, y, angulo)]
+    poligono(d, interior, (122, 138, 54))
+    circulo(d, x - r * 0.35, y - r * 0.3, r * 0.28, (182, 196, 112))
 
 
-def pollo(d, x, y, rng, r=24):
-    poligono(d, mancha(x, y, r, rng, 0.26, 26), (178, 118, 64))
-    poligono(d, mancha(x - 1.5, y - 1.5, r * 0.72, rng, 0.26, 22), (222, 172, 112))
+def choclo(d, x, y, rng):
+    """Un grano de choclo: más anaranjado que el queso y con borde, para que se distinga."""
+    elipse(d, x, y, 6.4, 5.4, (196, 128, 8))
+    elipse(d, x, y, 5.3, 4.4, (242, 178, 24))
+    circulo(d, x - 1.6, y - 1.4, 1.8, (255, 226, 120))
 
 
-def llovizna_barbacoa(d, rng):
-    """Hilos de salsa barbacoa en diagonal, cortados en el borde del queso."""
-    inclinacion = math.radians(rng.uniform(20, 35))
-    for k in range(4):
-        base = (k - 1.5) * 92 + rng.uniform(-10, 10)
-        fase = rng.uniform(0, 2 * math.pi)
-        amplitud = rng.uniform(10, 16)
-        crudos = [(i, base + amplitud * math.sin(i * 0.07 + fase)) for i in range(-240, 241, 3)]
-        tramo = []
-        for px, py in girar([(C + a, C + b) for a, b in crudos], C, C, inclinacion):
-            if (px - C) ** 2 + (py - C) ** 2 < (R_INGREDIENTES + 12) ** 2:
-                tramo.append((px, py))
-            elif len(tramo) > 1:
-                trazo(d, tramo, (92, 38, 18), 4.5)
-                tramo = []
-        if len(tramo) > 1:
-            trazo(d, tramo, (92, 38, 18), 4.5)
+def champinon(d, x, y, rng, s=22):
+    """Una lámina de champiñón: el sombrero y el pie, vistos de corte."""
+    angulo = rng.uniform(0, 2 * math.pi)
+    sombrero = [(x + s * math.cos(t), y - s * 0.8 * math.sin(t))
+                for t in [i * math.pi / 24 for i in range(25)]]
+    pie = [(x - s * 0.28, y), (x + s * 0.28, y), (x + s * 0.22, y + s * 0.75), (x - s * 0.22, y + s * 0.75)]
+    poligono(d, girar(sombrero, x, y, angulo), (176, 148, 108))
+    poligono(d, girar([(x + (a - x) * 0.86, y + (b - y) * 0.86) for a, b in sombrero], x, y, angulo),
+             (226, 208, 178))
+    poligono(d, girar(pie, x, y, angulo), (232, 218, 192))
 
 
-def pizza(nombre, ingredientes):
-    """Dibuja una pizza: la base y encima lo que ponga la función ingredientes."""
-    rng = random.Random(zlib.crc32(nombre.encode()))
-    lz = Lienzo()
-    contorno_queso = base_pizza(lz, rng)
-    ingredientes(lz, rng, contorno_queso)
-    cortes(lz, rng)
-    lz.guardar(DESTINO / nombre)
+def carne(d, x, y, rng, r=10):
+    """Carne molida: migas pardas irregulares."""
+    poligono(d, mancha(x, y, r, rng, 0.45, 16), (98, 58, 36))
+    poligono(d, mancha(x - 1.5, y - 1.5, r * 0.55, rng, 0.45, 12), (146, 94, 58))
 
 
-def con_sombra(lz, rng, grupos):
-    """grupos: lista de (función, cantidad, radio de huella, separación)."""
+def chorizo(d, x, y, rng, r=20):
+    """Chorizo ahumado: rodajas pardo rojizas, veteadas."""
+    circulo(d, x, y, r, (112, 40, 26))
+    circulo(d, x, y, r - 2.5, (152, 60, 38))
+    for _ in range(7):
+        a, dist = rng.uniform(0, 2 * math.pi), rng.uniform(0, r * 0.7)
+        circulo(d, x + dist * math.cos(a), y + dist * math.sin(a), rng.uniform(1.4, 3), (204, 122, 90))
+
+
+def parmesano(d, rng, cantidad):
+    """Queso parmesano rallado: hebras cortas y claras por encima de todo."""
+    for x, y in repartir(rng, cantidad, R_INGREDIENTES + 5, 0, []):
+        a = rng.uniform(0, math.pi)
+        largo = rng.uniform(4, 9)
+        trazo(d, [(x - largo * math.cos(a), y - largo * math.sin(a)),
+                  (x + largo * math.cos(a), y + largo * math.sin(a))], (253, 250, 238), 1.7)
+
+
+# --- Cómo se reparten -------------------------------------------------------
+
+def repartir_en(rng, cantidad, separacion, ocupados, sector=None):
+    """Como repartir(), pero opcionalmente dentro de un sector (desde, hasta) en radianes:
+    así se dibujan las pizzas de dos y tres estaciones, un ingrediente por sector."""
+    if sector is None:
+        return repartir(rng, cantidad, R_INGREDIENTES, separacion, ocupados)
+    desde, hasta = sector
+    puntos = []
+    for _ in range(8000):
+        if len(puntos) == cantidad:
+            break
+        angulo = rng.uniform(desde + 0.12, hasta - 0.12)
+        distancia = R_INGREDIENTES * math.sqrt(rng.uniform(0.03, 1))
+        x, y = C + distancia * math.cos(angulo), C + distancia * math.sin(angulo)
+        if all((x - a) ** 2 + (y - b) ** 2 >= separacion ** 2 for a, b in ocupados):
+            puntos.append((x, y))
+            ocupados.append((x, y))
+    return puntos
+
+
+def ingredientes(lz, rng, grupos):
+    """grupos: lista de (función, cantidad, radio de huella, separación[, sector]).
+    Se dibujan en ese orden: los primeros quedan debajo, como el jamón bajo el peperoni."""
     ocupados = []
     colocados = []
-    for funcion, cantidad, radio, separacion in grupos:
-        for x, y in repartir(rng, cantidad, R_INGREDIENTES, separacion, ocupados):
+    for grupo in grupos:
+        funcion, cantidad, radio, separacion = grupo[:4]
+        sector = grupo[4] if len(grupo) > 4 else None
+        for x, y in repartir_en(rng, cantidad, separacion, ocupados, sector):
             colocados.append((funcion, x, y, radio))
-    rng.shuffle(colocados)
     sombras(lz, [(x, y, r) for _, x, y, r in colocados])
     capa, d = lz.capa()
     for funcion, x, y, _ in colocados:
@@ -337,55 +369,68 @@ def con_sombra(lz, rng, grupos):
     return capa, d
 
 
-# --- Las nueve pizzas -------------------------------------------------------
-
-def muzzarella(lz, rng, _):
-    capa, d = con_sombra(lz, rng, [(lambda d, x, y, r: aceituna(d, x, y), 9, 15, 62)])
-    oregano(d, rng, 90)
-    lz.pegar(capa)
-
-
-def napolitana(lz, rng, _):
-    capa, d = con_sombra(lz, rng, [(tomate, 7, 39, 84)])
-    for x, y in repartir(rng, 5, R_INGREDIENTES - 10, 40, []):
-        hoja(d, x, y, rng)
-    for x, y in repartir(rng, 40, R_INGREDIENTES, 0, []):
-        circulo(d, x, y, rng.uniform(1.5, 2.8), (250, 246, 232))
-    oregano(d, rng, 50)
-    lz.pegar(capa)
+def sectores(rng, partes):
+    """Divide la pizza en partes iguales, con un giro al azar."""
+    giro = rng.uniform(0, 2 * math.pi)
+    paso = 2 * math.pi / partes
+    return [(giro + i * paso, giro + (i + 1) * paso) for i in range(partes)]
 
 
-def pepperoni_pizza(lz, rng, _):
-    capa, _d = con_sombra(lz, rng, [(pepperoni, 13, 31, 66)])
-    lz.pegar(capa)
+def pizza(nombre, receta, queso=QUESO):
+    """Dibuja una pizza: la base y encima lo que ponga la receta."""
+    rng = random.Random(zlib.crc32(nombre.encode()))
+    lz = Lienzo()
+    contorno_queso = base_pizza(lz, rng, queso)
+    receta(lz, rng, contorno_queso)
+    cortes(lz, rng)
+    lz.guardar(DESTINO / nombre)
 
 
-def jamon_y_queso(lz, rng, _):
-    capa, d = con_sombra(lz, rng, [(jamon, 10, 28, 70)])
-    oregano(d, rng, 40)
-    lz.pegar(capa)
+# --- Las quince pizzas de la carta ------------------------------------------
+
+def con(grupos, con_oregano=0, extra=None):
+    """Arma una receta a partir de sus grupos de ingredientes."""
+    def receta(lz, rng, _):
+        capa, d = ingredientes(lz, rng, grupos(rng) if callable(grupos) else grupos)
+        if con_oregano:
+            oregano(d, rng, con_oregano)
+        if extra:
+            extra(d, rng)
+        lz.pegar(capa)
+    return receta
 
 
-def fugazza(lz, rng, _):
-    capa, d = lz.capa()
-    ocupados = []
-    for x, y in repartir(rng, 14, R_INGREDIENTES, 50, ocupados):
-        cebolla(d, x, y, rng, rng.uniform(18, 30))
-    oregano(d, rng, 110)
-    lz.pegar(capa)
+def dos_estaciones(rng):
+    """Media pizza de jamón y choclo, media de peperoni."""
+    uno, otro = sectores(rng, 2)
+    return [(jamon, 4, 28, 60, uno), (choclo, 26, 6, 15, uno), (peperoni, 9, 23, 46, otro)]
 
 
-def carnivora(lz, rng, _):
-    capa, _d = con_sombra(lz, rng, [
-        (pepperoni, 5, 31, 62), (jamon, 3, 28, 62),
-        (tocino, 4, 26, 62), (salchicha, 8, 17, 42),
-    ])
-    lz.pegar(capa)
+def tres_estaciones(rng):
+    """Un tercio de peperoni, uno de salame y uno de choclo."""
+    uno, dos, tres = sectores(rng, 3)
+    return [(peperoni, 7, 23, 46, uno), (salame, 4, 31, 62, dos), (choclo, 26, 6, 15, tres)]
 
 
-def hawaiana(lz, rng, _):
-    capa, _d = con_sombra(lz, rng, [(jamon, 6, 28, 66), (pina, 8, 24, 58)])
-    lz.pegar(capa)
+RECETAS = {
+    'napolitana.png': con([(jamon, 6, 28, 70), (tomate, 7, 33, 72)], 50),
+    'salame.png': con([(salame, 11, 31, 62)], 70),
+    'vegetariana.png': con([(aceituna, 12, 15, 44), (choclo, 60, 6, 15)], 50),
+    'clasica.png': con([(jamon, 8, 28, 66), (aceituna, 9, 15, 44)], 60),
+    'choclo.png': con([(jamon, 8, 28, 66), (choclo, 60, 6, 15)], 60),
+    'peperoni.png': con([(jamon, 6, 28, 70), (peperoni, 16, 23, 46)], 60),
+    'dos-estaciones.png': con(dos_estaciones, 50),
+    'tres-estaciones.png': con(tres_estaciones, 50),
+    'champinones.png': con([(jamon, 7, 28, 66), (champinon, 12, 20, 44)], 40),
+    'hawaiana.png': con([(jamon, 6, 28, 66), (pina, 8, 24, 58)]),
+    'carnivora.png': con([(carne, 40, 10, 22), (peperoni, 12, 23, 46)]),
+    'espanola.png': con([(chorizo, 12, 20, 44), (choclo, 50, 6, 15)]),
+    'la-malcriada.png': con(
+        [(carne, 28, 10, 22), (peperoni, 9, 23, 46), (choclo, 28, 6, 15)],
+        extra=lambda d, rng: (parmesano(d, rng, 110), hojas_de_albahaca(d, rng))),
+    'criolla-espanola.png': con([(carne, 30, 10, 22), (chorizo, 9, 20, 44), (choclo, 36, 6, 15)]),
+}
+QUESO_DE = {'espanola.png': QUESO_CRIOLLO, 'criolla-espanola.png': QUESO_CRIOLLO}
 
 
 def cuatro_quesos(lz, rng, contorno_queso):
@@ -405,7 +450,7 @@ def cuatro_quesos(lz, rng, contorno_queso):
         return salida
 
     capa, d = lz.capa()
-    for x, y in en_cuadrante(0, 10):                      # muzzarella: blanca y cremosa
+    for x, y in en_cuadrante(0, 10):                      # mozzarella: blanca y cremosa
         poligono(d, mancha(x, y, rng.uniform(9, 16), rng, 0.3, 20), (255, 252, 240))
     for x, y in en_cuadrante(1, 12):                      # cheddar: naranja
         poligono(d, mancha(x, y, rng.uniform(6, 12), rng, 0.3, 20), (228, 142, 40))
@@ -414,21 +459,13 @@ def cuatro_quesos(lz, rng, contorno_queso):
         largo = rng.uniform(4, 10)
         trazo(d, [(x - largo * math.cos(a), y - largo * math.sin(a)),
                   (x + largo * math.cos(a), y + largo * math.sin(a))], (92, 124, 138), 2.4)
-    for x, y in en_cuadrante(3, 40):                      # parmesano: rallado
+    for x, y in en_cuadrante(3, 40):                      # criollo: rallado claro
         circulo(d, x, y, rng.uniform(1.4, 2.6), (255, 250, 228))
     oregano(d, rng, 35)
     lz.pegar(capa)
 
 
-def pollo_barbacoa(lz, rng, _):
-    capa, d = con_sombra(lz, rng, [(pollo, 10, 24, 60)])
-    for x, y in repartir(rng, 9, R_INGREDIENTES, 30, []):
-        desde = rng.uniform(0, 360)
-        arco(d, x, y, rng.uniform(14, 20), desde, desde + 170, (140, 58, 120), 5)
-    llovizna_barbacoa(d, rng)
-    for x, y in repartir(rng, 26, R_INGREDIENTES, 0, []):
-        hoja(d, x, y, rng, largo=5, ancho=3, color=(76, 140, 60))
-    lz.pegar(capa)
+RECETAS['cuatro-quesos.png'] = cuatro_quesos
 
 
 # ---------------------------------------------------------------------------
@@ -598,15 +635,8 @@ def jugo_natural():
 
 def main():
     DESTINO.mkdir(parents=True, exist_ok=True)
-    pizza("muzzarella.png", muzzarella)
-    pizza("napolitana.png", napolitana)
-    pizza("pepperoni.png", pepperoni_pizza)
-    pizza("jamon-y-queso.png", jamon_y_queso)
-    pizza("fugazza.png", fugazza)
-    pizza("carnivora.png", carnivora)
-    pizza("hawaiana.png", hawaiana)
-    pizza("cuatro-quesos.png", cuatro_quesos)
-    pizza("pollo-barbacoa.png", pollo_barbacoa)
+    for archivo, receta in RECETAS.items():
+        pizza(archivo, receta, QUESO_DE.get(archivo, QUESO))
     gaseosa()
     jugo_natural()
     agua_mineral()

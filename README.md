@@ -116,15 +116,21 @@ codigo/
 Hay una cuenta de demostración por rol: `recepcion.demo` y `cocina.demo`. Sus contraseñas
 **no están en este repositorio**: se asignan en el servidor desde el `.env`.
 
-## La carta de demostración
+## La carta
 
-La carta que trae el sistema es **ficticia**: nueve pizzas (cinco tradicionales y cuatro
-premium) y tres bebidas, con nombres genéricos y precios inventados. Vive en
-`docker/postgres/init/03_carta_ficticia.sql` y se reemplaza por la real sin tocar el esquema.
+La carta vive en `docker/postgres/init/05_carta.sql` y se cambia sin tocar el esquema:
 
-Cada producto tiene una ilustración en `frontend/web/carta/`. Las dibuja
+- **Las 15 pizzas son las del local**, con sus ingredientes, tomadas de su catálogo. Sus
+  **precios están por confirmar** con la dueña.
+- **Las bebidas y los extras son ficticios** hasta tener los reales.
+
+El local vende **solo pizzas enteras**, de un sabor o de dos mitades. Una pizza de dos
+mitades cuesta (precio A + precio B) / 2, al centavo.
+
+Cada producto con imagen tiene un dibujo en `frontend/web/carta/`. Los hace
 `scripts/dibujar-carta.py` con formas simples, sin imágenes de terceros, y el resultado es
-siempre el mismo. La base guarda solo el nombre del archivo, nunca la imagen ni una dirección.
+siempre el mismo. Las fotos reales los reemplazan con solo cambiar los archivos. La base
+guarda solo el nombre del archivo, nunca la imagen ni una dirección.
 
 ## Variables de entorno
 
@@ -319,17 +325,21 @@ git pull
 docker compose --env-file .env -f docker/docker-compose.prod.yml up -d
 ```
 
-**Si el cambio trae una migración nueva** en `docker/postgres/init/` (`02_…sql`, `03_…sql`):
-los scripts de esa carpeta solo corren al **crear** la base, así que en una base que ya
-existe hay que aplicarla una vez, a mano:
+**Si el cambio trae una migración nueva** en `docker/postgres/init/`: los scripts de esa
+carpeta solo corren al **crear** la base, así que en una base que ya existe hay que aplicar
+cada archivo nuevo una vez, a mano, **en orden de número**:
 
 ```bash
-docker exec -i maxpizzapp-bd sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
-  < docker/postgres/init/02_porciones_y_carta.sql
+for f in 02_porciones_y_carta 04_solo_enteras_y_extras 05_carta; do
+  docker exec -i maxpizzapp-bd sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+    < docker/postgres/init/$f.sql
+done
 ```
 
-La carta ficticia (`03_carta_ficticia.sql`) se carga igual. Volver a cargarla actualiza los
-productos por su nombre sin duplicarlos, y no revive uno que cocina marcó agotado.
+El orden importa: la `04` ajusta lo que agregó la `02`, y la carta (`05`) usa lo que agrega
+la `04`. No hay `03`: era una carta ficticia que la real reemplazó. Volver a cargar la carta
+actualiza los productos por su nombre sin duplicarlos, y no revive uno que cocina marcó
+agotado.
 
 Las migraciones están escritas para que aplicarlas dos veces no cambie nada ni falle. No se
 edita nunca una migración que ya se aplicó: el cambio siguiente va en un archivo nuevo.
