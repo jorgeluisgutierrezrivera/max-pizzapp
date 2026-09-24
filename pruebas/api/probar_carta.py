@@ -68,6 +68,8 @@ if __name__ == '__main__':
               [clave_de_orden(p) for p in carta] == sorted(clave_de_orden(p) for p in carta), True)
     comprobar('sin gama ni precio de media: solo pizzas enteras (D-27)',
               all('gama' not in p and 'precioMedia' not in p for p in carta), True)
+    comprobar('toda pizza trae sus ingredientes en la descripcion',
+              all(isinstance(p.get('descripcion'), str) and p['descripcion'].strip() for p in pizzas), True)
     comprobar('los precios llegan como numeros',
               all(isinstance(p['precio'], (int, float)) for p in carta), True)
     comprobar('la imagen es solo un nombre de archivo',
@@ -85,6 +87,11 @@ if __name__ == '__main__':
     estado, cuerpo = pedir('/productos?disponible=false', token)
     comprobar('?disponible=false', estado, 200,
               '%d agotados' % len(cuerpo.get('productos', [])))
+    estado, cuerpo = pedir('/productos?categoria=extra', token)
+    extras = cuerpo.get('productos', [])
+    comprobar('?categoria=extra', estado, 200, '%d extras' % len(extras))
+    comprobar('  solo extras, y hay al menos uno',
+              len(extras) > 0 and all(p['categoria'] == 'extra' for p in extras), True)
     estado, cuerpo = pedir('/productos?categoria=pasta', token)
     comprobar('?categoria=pasta', estado, 400, cuerpo['error']['codigo'])
 

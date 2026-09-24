@@ -8,8 +8,9 @@ const { ErrorApi } = require('../errores');
 // agotado (RF-13). Sin filtros devuelve TODA la carta, agotados incluidos: la pantalla los
 // muestra atenuados, y un producto que desaparece sin aviso confunde mas que uno marcado.
 
-// Los mismos valores que el tipo categoria_producto de la base.
-const CATEGORIAS = ['pizza', 'entrada', 'bebida', 'postre'];
+// Los mismos valores que el tipo categoria_producto de la base. «extra» es un agregado que
+// se vende colgado de una pizza (D-28).
+const CATEGORIAS = ['pizza', 'entrada', 'bebida', 'postre', 'extra'];
 const FILTROS = ['categoria', 'disponible'];
 
 // Una sola consulta, siempre con el mismo texto. Los filtros viajan como parametros y un
@@ -18,7 +19,7 @@ const FILTROS = ['categoria', 'disponible'];
 // demas categorias (los tipos enumerados ordenan por su declaracion), y dentro de cada una
 // por nombre, que es como la vendedora busca lo que le piden (D-30).
 const SQL_CARTA = `
-  SELECT id, nombre, categoria, precio, imagen, disponible
+  SELECT id, nombre, categoria, precio, descripcion, imagen, disponible
     FROM producto
    WHERE ($1::categoria_producto IS NULL OR categoria = $1::categoria_producto)
      AND ($2::boolean IS NULL OR disponible = $2::boolean)
@@ -36,7 +37,7 @@ function leerFiltros(query) {
   }
   const { categoria, disponible } = query;
   if (categoria !== undefined && !(typeof categoria === 'string' && CATEGORIAS.includes(categoria))) {
-    throw filtroInvalido('La categoria debe ser pizza, entrada, bebida o postre.');
+    throw filtroInvalido('La categoria debe ser pizza, entrada, bebida, postre o extra.');
   }
   if (disponible !== undefined && disponible !== 'true' && disponible !== 'false') {
     throw filtroInvalido('El filtro disponible debe ser true o false.');
@@ -50,6 +51,7 @@ function leerFiltros(query) {
 // PostgreSQL devuelve los numeric como texto, para no perder precision. Los precios de la
 // carta tienen dos decimales y caben sin perdida en un numero de JSON: la app los recibe
 // listos para mostrar. La imagen es solo el nombre del archivo; la app sabe donde buscarlo.
+// La descripcion son los ingredientes, que la vendedora ve al elegir; puede faltar.
 // No hay precio de media: en una pizza de dos mitades cada una vale la mitad exacta (D-27).
 function aProducto(fila) {
   return {
@@ -57,6 +59,7 @@ function aProducto(fila) {
     nombre: fila.nombre,
     categoria: fila.categoria,
     precio: Number(fila.precio),
+    descripcion: fila.descripcion,
     imagen: fila.imagen,
     disponible: fila.disponible,
   };

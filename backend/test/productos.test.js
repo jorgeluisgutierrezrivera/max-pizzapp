@@ -11,9 +11,10 @@ const {
 
 // Filas tal como las entrega pg: los numeric llegan como texto.
 const FILAS = [
-  { id: 7, nombre: 'Hawaiana', categoria: 'pizza', precio: '50.00', imagen: 'hawaiana.png', disponible: false },
-  { id: 3, nombre: 'Peperoni', categoria: 'pizza', precio: '50.00', imagen: 'peperoni.png', disponible: true },
-  { id: 10, nombre: 'Gaseosa 2 L', categoria: 'bebida', precio: '18.00', imagen: 'gaseosa.png', disponible: true },
+  { id: 7, nombre: 'Hawaiana', categoria: 'pizza', precio: '50.00', descripcion: 'Doble queso, jamón y piña caramelizada', imagen: 'hawaiana.png', disponible: false },
+  { id: 3, nombre: 'Peperoni', categoria: 'pizza', precio: '50.00', descripcion: 'Doble queso, jamón y peperoni', imagen: 'peperoni.png', disponible: true },
+  { id: 10, nombre: 'Gaseosa 2 L', categoria: 'bebida', precio: '18.00', descripcion: null, imagen: 'gaseosa.png', disponible: true },
+  { id: 20, nombre: 'Extra queso', categoria: 'extra', precio: '8.00', descripcion: null, imagen: null, disponible: true },
 ];
 
 function poolQueAnota(responder = async () => ({ rows: FILAS })) {
@@ -88,9 +89,10 @@ test('productos: la carta completa, con precios numericos y agotados incluidos',
   assert.equal(estado, 200);
   assert.deepEqual(cuerpo, {
     productos: [
-      { id: 7, nombre: 'Hawaiana', categoria: 'pizza', precio: 50, imagen: 'hawaiana.png', disponible: false },
-      { id: 3, nombre: 'Peperoni', categoria: 'pizza', precio: 50, imagen: 'peperoni.png', disponible: true },
-      { id: 10, nombre: 'Gaseosa 2 L', categoria: 'bebida', precio: 18, imagen: 'gaseosa.png', disponible: true },
+      { id: 7, nombre: 'Hawaiana', categoria: 'pizza', precio: 50, descripcion: 'Doble queso, jamón y piña caramelizada', imagen: 'hawaiana.png', disponible: false },
+      { id: 3, nombre: 'Peperoni', categoria: 'pizza', precio: 50, descripcion: 'Doble queso, jamón y peperoni', imagen: 'peperoni.png', disponible: true },
+      { id: 10, nombre: 'Gaseosa 2 L', categoria: 'bebida', precio: 18, descripcion: null, imagen: 'gaseosa.png', disponible: true },
+      { id: 20, nombre: 'Extra queso', categoria: 'extra', precio: 8, descripcion: null, imagen: null, disponible: true },
     ],
   });
 });
@@ -127,6 +129,19 @@ test('filtro disponible: el texto se convierte en booleano', async () => {
   await pedir(`${api.base}/productos?disponible=false`, cocina);
   await pedir(`${api.base}/productos?disponible=true`, cocina);
   assert.deepEqual(pool.consultas.map((c) => c.parametros), [[null, false], [null, true]]);
+});
+
+test('filtro categoria=extra: los extras se piden como cualquier categoria', async () => {
+  const { estado } = await pedir(`${api.base}/productos?categoria=extra`, recepcion);
+  assert.equal(estado, 200);
+  assert.deepEqual(pool.consultas[0].parametros, ['extra', null]);
+});
+
+test('la respuesta no trae gama ni precio de media: solo pizzas enteras (D-27)', async () => {
+  const { cuerpo } = await pedir(`${api.base}/productos`, recepcion);
+  for (const producto of cuerpo.productos) {
+    assert.ok(!('gama' in producto) && !('precioMedia' in producto));
+  }
 });
 
 test('los dos filtros juntos', async () => {
