@@ -359,17 +359,20 @@ carpeta solo corren al **crear** la base, así que en una base que ya existe hay
 cada archivo nuevo una vez, a mano, **en orden de número**:
 
 ```bash
-for f in 02_porciones_y_carta 04_solo_enteras_y_extras 05_carta; do
+for f in 02_porciones_y_carta 04_solo_enteras_y_extras 05_carta 06_pedido_cliente_y_cancelacion; do
   docker exec -i maxpizzapp-bd sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
-    < docker/postgres/init/$f.sql
+    < docker/postgres/init/$f.sql || break
 done
 ```
 
-El orden importa: la `04` ajusta lo que agregó la `02`, y la carta (`05`) usa lo que agrega
-la `04`. Y van **antes** del `up -d --build`: la API nueva ya consulta las columnas que
-ellas agregan. No hay `03`: era una carta ficticia que la real reemplazó. Volver a cargar la carta
-actualiza los productos por su nombre sin duplicarlos, y no revive uno que cocina marcó
-agotado.
+El orden importa: la `04` ajusta lo que agregó la `02`, la carta (`05`) usa lo que agrega
+la `04`, y la `06` suma lo que necesitan los pedidos. Y van **antes** del `up -d --build`:
+la API nueva ya consulta las columnas que ellas agregan. No hay `03`: era una carta
+ficticia que la real reemplazó. Volver a cargar la carta actualiza los productos por su
+nombre sin duplicarlos, y no revive uno que cocina marcó agotado.
+
+La `06` exige que todo pedido tenga cliente. Si encontrara uno sin cliente, se detiene
+**sin cambiar nada**: corre en una sola transacción.
 
 Las migraciones están escritas para que aplicarlas dos veces no cambie nada ni falle. No se
 edita nunca una migración que ya se aplicó: el cambio siguiente va en un archivo nuevo.

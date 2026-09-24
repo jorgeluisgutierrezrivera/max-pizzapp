@@ -144,13 +144,13 @@ da de baja. Cada cambio queda registrado con quién lo hizo y cuándo.
 Cada fase se prueba y se sube por separado.
 
 ### Fase A — La base
-- [ ] `06_pedido_cliente_y_cancelacion.sql`:
+- [x] `06_pedido_cliente_y_cancelacion.sql`:
   - `pedido.para_llevar`, obligatorio, y **todo pedido con cliente** (`cliente_id` obligatorio);
   - el formato del celular y **un celular por cliente**, con un índice único parcial;
   - `historial_estado.motivo`, **obligatorio si el estado es cancelado** y prohibido en los
     demás;
   - repetible.
-- [ ] Probada en una instalación nueva y sobre la base local, con casos válidos e imposibles.
+- [x] Probada en una instalación nueva y sobre la base local, con casos válidos e imposibles.
 
 ### Fase B — Crear el pedido
 - [ ] `POST /api/v1/pedidos`: validación completa, precio del servidor, total comparado,
@@ -307,7 +307,7 @@ totales que la app.
 
 | Fase | Estado | Fecha | Evidencia de la prueba |
 |---|---|---|---|
-| A — La base | ⏳ Pendiente | — | — |
+| A — La base | ✅ Verificada | 2026-09-24 | **Instalación nueva** en un PostgreSQL 17 descartable, con la carpeta de scripts montada como en producción: corren `00`, `01`, `02`, `04`, `05` y `06` en orden y sin errores; quedan **5 tablas** y los 22 productos. **Repetible:** una segunda ejecución de la `06` termina con código 0. **Cómo quedó:** `pedido.para_llevar` y `pedido.cliente_id` obligatorios y sin valor por defecto; `historial_estado.motivo` opcional; las restricciones `cliente_celular_valido`, `historial_estado_motivo_solo_al_cancelar` y `historial_estado_motivo_no_vacio`, y el índice único parcial `cliente_celular_unico`. **Casos, uno por uno:** se aceptan los **6 válidos** (pedido para comer aquí, cliente sin celular, dos clientes sin celular, celular que empieza con 6, cambio de estado sin motivo, cancelación con motivo) y se **rechazan los 12 imposibles**, cada uno por su causa: pedido que no dice si es para llevar, pedido sin cliente, celular de 7 y de 9 dígitos, que empieza con 5, con espacios y con prefijo de país, dos clientes con el mismo celular, cancelación sin motivo, motivo en un cambio que no es cancelación, motivo en blanco y motivo de más de 120 caracteres. **El celular identifica al cliente:** insertar el mismo número con `ON CONFLICT` devuelve el mismo cliente, con el nombre actualizado, y sigue habiendo uno solo. **Sobre una base que ya tiene pedidos:** un pedido anterior queda como "para comer aquí"; y si hubiera un pedido sin cliente, la migración se detiene **sin cambiar nada** (ni siquiera agrega la columna), porque corre en una transacción. **Base local:** migración aplicada, los 19 casos en verde otra vez y la API sana. **Lo que salió:** el README solo listaba hasta la `05` en el paso de actualizar; ahora incluye la `06` y se detiene en la primera que falle |
 | B — Crear el pedido | ⏳ Pendiente | — | — |
 | C — Leer, avanzar y cancelar | ⏳ Pendiente | — | — |
 | D — El aviso en vivo | ⏳ Pendiente | — | — |
