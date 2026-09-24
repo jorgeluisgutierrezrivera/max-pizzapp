@@ -84,9 +84,38 @@ async function leerPedidos(db, ids, { verCelular }) {
   return pedidos.map((p) => aPedido(p, lineasDe.get(p.id), verCelular));
 }
 
+// La cola: los pedidos en esos estados, en orden de llegada. El tope solo importa si alguien
+// pide los entregados o cancelados, que se acumulan; los activos de un local son pocos.
+const SQL_IDS_POR_ESTADO = `
+  SELECT id
+    FROM pedido
+   WHERE estado = ANY($1::estado_pedido[])
+   ORDER BY creado_en, id
+   LIMIT 200`;
+
+async function idsPorEstados(db, estados) {
+  const { rows } = await db.query(SQL_IDS_POR_ESTADO, [estados]);
+  return rows.map((r) => r.id);
+}
+
+// La trazabilidad de un pedido: cada cambio con quien lo hizo, cuando y, si fue una
+// cancelacion, por que.
+const SQL_HISTORIAL = `
+  SELECT estado, usuario_nombre, fecha_hora, motivo
+    FROM historial_estado
+   WHERE pedido_id = $1
+   ORDER BY fecha_hora, id`;
+
+async function leerHistorial(db, id) {
+  const { rows } = await db.query(SQL_HISTORIAL, [id]);
+  return rows.map((f) => ({
+    estado: f.estado, usuario: f.usuario_nombre, fechaHora: f.fecha_hora, motivo: f.motivo,
+  }));
+}
+
 // Quien puede ver el celular del cliente.
 function puedeVerCelular(usuario) {
   return Boolean(usuario && usuario.roles && usuario.roles.includes('recepcion'));
 }
 
-module.exports = { leerPedidos, puedeVerCelular };
+module.exports = { leerPedidos, idsPorEstados, leerHistorial, puedeVerCelular };
