@@ -94,8 +94,8 @@ test.before(async () => { emisor = await levantarEmisor(); });
 test.after(() => emisor.cerrar());
 
 // Levanta la app con una base simulada nueva, envia el cuerpo y devuelve la respuesta y la base.
-async function enviar(cuerpo, { token = recepcion, base = baseSimulada(), crudo = false } = {}) {
-  const api = await levantarApp(crearApp({ pool: base.pool, autenticar: emisor.autenticar }));
+async function enviar(cuerpo, { token = recepcion, base = baseSimulada(), crudo = false, avisos } = {}) {
+  const api = await levantarApp(crearApp({ pool: base.pool, autenticar: emisor.autenticar, avisos }));
   try {
     const cabeceras = { 'content-type': 'application/json' };
     if (token) cabeceras.authorization = `Bearer ${token}`;
@@ -295,6 +295,50 @@ test('si tambien falla el ROLLBACK, la conexion se descarta en vez de volver al 
   const { estado } = await enviar(VENTA, { base });
   assert.equal(estado, 500);
   assert.deepEqual(base.liberaciones, [true]);
+});
+
+// --- el aviso en vivo ---------------------------------------------------------------------
+
+// Anota cada aviso y si, en ese momento, la base ya habia hecho el COMMIT.
+function avisosQueAnotan(base) {
+  const anotados = [];
+  return {
+    anotados,
+    pedidoNuevo: (pedido) => anotados.push({ tipo: 'pedidoNuevo', pedido, despuesDelCommit: base.hubo(/^COMMIT$/) }),
+    estadoCambiado: (aviso) => anotados.push({ tipo: 'estadoCambiado', aviso, despuesDelCommit: base.hubo(/^COMMIT$/) }),
+  };
+}
+
+test('el aviso del pedido nuevo sale una vez, despues del COMMIT, con el pedido completo', async () => {
+  const base = baseSimulada();
+  const avisos = avisosQueAnotan(base);
+  await enviar(VENTA, { base, avisos });
+  assert.equal(avisos.anotados.length, 1);
+  const [aviso] = avisos.anotados;
+  assert.equal(aviso.tipo, 'pedidoNuevo');
+  assert.equal(aviso.despuesDelCommit, true);
+  assert.equal(aviso.pedido.id, 42);
+  assert.equal(aviso.pedido.total, 189);
+});
+
+for (const [nombre, opciones, cuerpo] of [
+  ['una venta mal armada', {}, { ...VENTA, lineas: [] }],
+  ['un precio que cambio', {}, { ...VENTA, totalEsperado: 180 }],
+  ['un fallo a mitad de la transaccion', { fallarEn: /^INSERT INTO detalle_pedido/ }, VENTA],
+]) {
+  test(`con ${nombre} no sale ningun aviso: nadie se entera de un pedido que no existe`, async () => {
+    const base = baseSimulada(opciones);
+    const avisos = avisosQueAnotan(base);
+    await enviar(cuerpo, { base, avisos });
+    assert.deepEqual(avisos.anotados, []);
+  });
+}
+
+test('si el canal falla al avisar, el pedido igual queda guardado y respondido', async () => {
+  const avisos = { pedidoNuevo: () => { throw new Error('canal caido'); }, estadoCambiado() {} };
+  const { estado, cuerpo } = await enviar(VENTA, { avisos });
+  assert.equal(estado, 201);
+  assert.equal(cuerpo.pedido.id, 42);
 });
 
 test('la base no responde al conectar: 503 BASE_NO_DISPONIBLE', async () => {

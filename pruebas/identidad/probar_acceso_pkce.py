@@ -41,6 +41,10 @@ VIGENCIA_ESPERADA = 3600
 
 
 def entorno(clave, por_defecto=None):
+    # Una variable del entorno manda sobre el .env: asi una prueba contra produccion recibe
+    # la contrasena de alla sin escribirla en ningun archivo de esta maquina.
+    if os.environ.get(clave):
+        return os.environ[clave]
     ruta = os.path.join(RAIZ, '.env')
     if os.path.exists(ruta):
         for linea in io.open(ruta, encoding='utf-8'):

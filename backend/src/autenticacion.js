@@ -35,10 +35,9 @@ function crearAutenticador({ emisor, audiencia, jwksUri }) {
   // Cuatro comprobaciones, no una: firma de este realm, emisor esperado, vigencia y
   // audiencia. La audiencia impide que un token de otra aplicacion del mismo Keycloak,
   // con firma perfectamente valida, sirva para entrar aqui.
-  return async function autenticar(req, res, next) {
-    const cabecera = req.get('authorization') || '';
-    const [esquema, token] = cabecera.split(' ');
-    if (esquema !== 'Bearer' || !token) {
+  // Es la misma para la API y para el canal en vivo: un token vale en los dos o en ninguno.
+  async function usuarioDelToken(token) {
+    if (!token) {
       throw new ErrorApi(401, 'TOKEN_AUSENTE', 'Inicia sesion para continuar.');
     }
 
@@ -53,14 +52,22 @@ function crearAutenticador({ emisor, audiencia, jwksUri }) {
     }
 
     const rolesDelToken = (carga.realm_access && carga.realm_access.roles) || [];
-    req.usuario = {
+    return {
       sub: carga.sub,
       nombre: carga.name || carga.preferred_username || '',
       usuario: carga.preferred_username || '',
       roles: rolesDelToken.filter((r) => ROLES_DEL_SISTEMA.includes(r)),
     };
+  }
+
+  async function autenticar(req, res, next) {
+    const cabecera = req.get('authorization') || '';
+    const [esquema, token] = cabecera.split(' ');
+    req.usuario = await usuarioDelToken(esquema === 'Bearer' ? token : null);
     next();
-  };
+  }
+  autenticar.usuarioDelToken = usuarioDelToken;
+  return autenticar;
 }
 
 // Se declara en cada ruta que rol exige. Con token valido pero rol insuficiente: 403.

@@ -3,11 +3,13 @@ const { exigirRol, ROLES_DEL_SISTEMA } = require('./autenticacion');
 const { rutaNoEncontrada, manejadorErrores } = require('./errores');
 const { rutasProductos } = require('./rutas/productos');
 const { rutasPedidos } = require('./rutas/pedidos');
+const { SIN_AVISOS } = require('./tiempo-real');
 
 // La aplicacion se construye a partir de sus dependencias (base y autenticador) para que
 // las pruebas puedan crearla sin una base real ni un Keycloak real.
 // "montarExtra" existe solo para las pruebas: permite colgar rutas antes del 404.
-function crearApp({ pool, autenticar, montarExtra }) {
+// "avisos" es el canal en vivo (tiempo-real.js); sin el, la API funciona igual y no avisa.
+function crearApp({ pool, autenticar, avisos = SIN_AVISOS, montarExtra }) {
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', 'loopback, uniquelocal');
@@ -33,7 +35,7 @@ function crearApp({ pool, autenticar, montarExtra }) {
   });
 
   api.use(rutasProductos({ pool, autenticar }));
-  api.use(rutasPedidos({ pool, autenticar }));
+  api.use(rutasPedidos({ pool, autenticar, avisos }));
 
   if (montarExtra) montarExtra(api, { autenticar, exigirRol });
 

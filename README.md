@@ -63,6 +63,8 @@ Librerías del backend, fijadas sin rangos en `backend/package.json` y con
 | pg | 8.23.0 | Acceso a PostgreSQL con consultas parametrizadas |
 | jsonwebtoken | 9.0.3 | Verificación de la firma y de los datos del token |
 | jwks-rsa | 4.1.0 | Lectura y caché de las claves públicas de Keycloak |
+| socket.io | 4.8.3 | El canal en vivo: avisos de pedido nuevo y de cambio de estado |
+| socket.io-client | 4.8.3 | Solo desarrollo: las pruebas del canal y la medición del aviso |
 
 Paquetes de la app Flutter, fijados sin rangos en `frontend/pubspec.yaml` y con
 `pubspec.lock`:
@@ -74,17 +76,17 @@ Paquetes de la app Flutter, fijados sin rangos en `frontend/pubspec.yaml` y con
 | web | 1.1.1 | Acceso al navegador: redirección, dirección actual y `sessionStorage` |
 | flutter_lints | 6.0.0 | Reglas de análisis estático (solo desarrollo) |
 
-Socket.IO se fija del mismo modo cuando entre su tarjeta.
 
 ## Pruebas
 
 ```bash
-cd backend && npm test            # 178 pruebas: acceso, carta, regla de precio y pedidos, sin base ni Keycloak reales
+cd backend && npm test            # 199 pruebas: acceso, carta, precio, pedidos y canal en vivo, sin base ni Keycloak reales
 cd frontend && flutter test       # pruebas de la app Flutter
 python pruebas/identidad/probar_acceso_pkce.py   # inicio de sesión real con PKCE
 python pruebas/api/probar_salud_y_token.py       # la API con tokens reales del realm
 python pruebas/api/probar_carta.py               # la carta con token real y la base real
 python pruebas/api/probar_pedidos.py             # pedidos: precios, estados, carrera y limpieza, en la base real
+python pruebas/tiempo-real/medir_aviso.py       # cuánto tarda el aviso en vivo en llegar a cocina y a recepción
 ```
 
 Las pruebas de `pruebas/` aceptan `KEYCLOAK_URL` y `API_URL` para ejecutarse contra el

@@ -17,6 +17,9 @@ const { TRANSICIONES, cambiarEstado } = require('../pedidos/estados');
 // No hay DELETE: la baja es la cancelacion, y el pedido cancelado se conserva con su
 // historial (D-33). El servidor vuelve a validar todo lo que la app ya valido, calcula el
 // precio con la regla de D-27 y decide quien puede hacer cada cambio.
+//
+// Cada operacion que cambia algo avisa por el canal en vivo DESPUES del COMMIT: nadie se
+// entera de un pedido que no llego a guardarse, ni de un cambio que se deshizo.
 
 const ESTADOS = ['pendiente', 'en_preparacion', 'listo', 'entregado', 'cancelado'];
 const ACTIVOS = ['pendiente', 'en_preparacion', 'listo'];
@@ -66,7 +69,17 @@ function leerMotivo(cuerpo) {
   return motivo;
 }
 
-function rutasPedidos({ pool, autenticar }) {
+// Un aviso que falla no deshace nada: la operacion ya se guardo y se respondio. Se anota y
+// la pantalla se pone al dia la proxima vez que lea la lista.
+function avisar(accion) {
+  try {
+    accion();
+  } catch (err) {
+    console.error('[canal] no se pudo avisar:', err.message);
+  }
+}
+
+function rutasPedidos({ pool, autenticar, avisos }) {
   const rutas = express.Router();
   const deCualquierRol = [autenticar, exigirRol(...ROLES_DEL_SISTEMA)];
 
@@ -84,7 +97,9 @@ function rutasPedidos({ pool, autenticar }) {
     } catch (err) {
       throw aErrorApi(err);
     }
-    res.status(201).location(`/api/v1/pedidos/${id}`).json({ pedido: await uno(id, req.usuario) });
+    const pedido = await uno(id, req.usuario);
+    res.status(201).location(`/api/v1/pedidos/${id}`).json({ pedido });
+    avisar(() => avisos.pedidoNuevo(pedido));
   });
 
   rutas.get('/pedidos', ...deCualquierRol, async (req, res) => {
@@ -110,15 +125,17 @@ function rutasPedidos({ pool, autenticar }) {
     if (typeof hacia !== 'string' || !Object.hasOwn(TRANSICIONES, hacia)) {
       throw new ErrorApi(400, 'ESTADO_INVALIDO', 'El estado debe ser en_preparacion, listo o entregado.');
     }
-    await cambiarEstado(pool, id, hacia, req.usuario);
+    const { anterior } = await cambiarEstado(pool, id, hacia, req.usuario);
     res.json({ pedido: await uno(id, req.usuario) });
+    avisar(() => avisos.estadoCambiado({ id, anterior, nuevo: hacia }));
   });
 
   rutas.post('/pedidos/:id/cancelacion', autenticar, exigirRol('recepcion'), async (req, res) => {
     const id = leerId(req.params.id);
     const motivo = leerMotivo(req.body);
-    await cambiarEstado(pool, id, 'cancelado', req.usuario, motivo);
+    const { anterior } = await cambiarEstado(pool, id, 'cancelado', req.usuario, motivo);
     res.json({ pedido: await uno(id, req.usuario) });
+    avisar(() => avisos.estadoCambiado({ id, anterior, nuevo: 'cancelado' }));
   });
 
   return rutas;

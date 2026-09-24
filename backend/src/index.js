@@ -1,7 +1,7 @@
 const { Pool } = require('pg');
 const { cargarConfig } = require('./config');
 const { crearAutenticador } = require('./autenticacion');
-const { crearApp } = require('./app');
+const { crearServidor } = require('./servidor');
 
 const config = cargarConfig();
 
@@ -10,9 +10,10 @@ const pool = new Pool({ ...config.bd, max: 10, idleTimeoutMillis: 30000, connect
 // entero caeria por una desconexion que el pool ya sabe recuperar.
 pool.on('error', (err) => console.error('[bd] error en un cliente inactivo:', err.message));
 
-const app = crearApp({ pool, autenticar: crearAutenticador(config.identidad) });
+// La API y el canal en vivo, en el mismo servidor (ver servidor.js: el orden importa).
+const { servidor, canal } = crearServidor({ pool, autenticar: crearAutenticador(config.identidad) });
 
-const servidor = app.listen(config.puerto, () => {
+servidor.listen(config.puerto, () => {
   console.log(`[api] escuchando en el puerto ${config.puerto}`);
   console.log(`[api] emisor esperado: ${config.identidad.emisor}`);
 });
@@ -24,7 +25,7 @@ function apagar(senal) {
   if (apagando) return;
   apagando = true;
   console.log(`[api] ${senal} recibida: cerrando`);
-  servidor.close(() => {
+  canal.cerrar(() => {
     pool.end().finally(() => process.exit(0));
   });
   setTimeout(() => process.exit(1), 10000).unref();

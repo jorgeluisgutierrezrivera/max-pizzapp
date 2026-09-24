@@ -89,8 +89,8 @@ const TOKENS = { recepcion, cocina };
 test.before(async () => { emisor = await levantarEmisor(); });
 test.after(() => emisor.cerrar());
 
-async function llamar(metodo, ruta, { token = recepcion, cuerpo, base = baseSimulada() } = {}) {
-  const api = await levantarApp(crearApp({ pool: base.pool, autenticar: emisor.autenticar }));
+async function llamar(metodo, ruta, { token = recepcion, cuerpo, base = baseSimulada(), avisos } = {}) {
+  const api = await levantarApp(crearApp({ pool: base.pool, autenticar: emisor.autenticar, avisos }));
   try {
     const cabeceras = { 'content-type': 'application/json' };
     if (token) cabeceras.authorization = `Bearer ${token}`;
@@ -288,6 +288,39 @@ for (const [nombre, cuerpo, codigo] of [
 test('PATCH de un pedido que no existe: 404', async () => {
   const { estado } = await llamar('PATCH', '/pedidos/999/estado', { token: cocina, cuerpo: { estado: 'listo' } });
   assert.equal(estado, 404);
+});
+
+// --- el aviso en vivo ---------------------------------------------------------------------
+
+function avisosQueAnotan(base) {
+  const anotados = [];
+  return {
+    anotados,
+    pedidoNuevo() {},
+    estadoCambiado: (aviso) => anotados.push({ ...aviso, despuesDelCommit: base.hubo(/^COMMIT$/) }),
+  };
+}
+
+test('un cambio de estado avisa despues del COMMIT: cual pedido, desde donde y hacia donde', async () => {
+  const base = baseSimulada();
+  const avisos = avisosQueAnotan(base);
+  await llamar('PATCH', '/pedidos/2/estado', { token: cocina, cuerpo: { estado: 'listo' }, base, avisos });
+  assert.deepEqual(avisos.anotados, [{ id: 2, anterior: 'en_preparacion', nuevo: 'listo', despuesDelCommit: true }]);
+});
+
+test('una cancelacion avisa igual que un cambio de estado', async () => {
+  const base = baseSimulada();
+  const avisos = avisosQueAnotan(base);
+  await llamar('POST', '/pedidos/1/cancelacion', { cuerpo: { motivo: 'El cliente se fue' }, base, avisos });
+  assert.deepEqual(avisos.anotados, [{ id: 1, anterior: 'pendiente', nuevo: 'cancelado', despuesDelCommit: true }]);
+});
+
+test('un cambio rechazado no avisa nada', async () => {
+  const base = baseSimulada();
+  const avisos = avisosQueAnotan(base);
+  await llamar('PATCH', '/pedidos/1/estado', { token: cocina, cuerpo: { estado: 'listo' }, base, avisos }); // 409
+  await llamar('PATCH', '/pedidos/3/estado', { token: cocina, cuerpo: { estado: 'entregado' }, base, avisos }); // 403
+  assert.deepEqual(avisos.anotados, []);
 });
 
 test('un cambio de estado: bloqueo, cambio e historial dentro de una transaccion', async () => {
