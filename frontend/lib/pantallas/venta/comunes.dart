@@ -7,20 +7,12 @@ import '../../tema.dart';
 /// la página; las pruebas la reemplazan para no depender de la red.
 typedef ConstructorImagen = Widget Function(String ruta, Widget respaldo, BoxFit ajuste);
 
-Widget imagenDeRed(String ruta, Widget respaldo, BoxFit ajuste) => Image.network(
-      ruta,
-      fit: ajuste,
-      errorBuilder: (context, error, traza) => respaldo,
-    );
+Widget imagenDeRed(String ruta, Widget respaldo, BoxFit ajuste) =>
+    Image.network(ruta, fit: ajuste, errorBuilder: (context, error, traza) => respaldo);
 
 /// La imagen del producto, o un ícono si no tiene o no carga.
 class IlustracionProducto extends StatelessWidget {
-  const IlustracionProducto({
-    super.key,
-    required this.producto,
-    required this.imagen,
-    this.ajuste = BoxFit.contain,
-  });
+  const IlustracionProducto({super.key, required this.producto, required this.imagen, this.ajuste = BoxFit.contain});
 
   final Producto producto;
   final ConstructorImagen imagen;
@@ -42,119 +34,8 @@ class IlustracionProducto extends StatelessWidget {
   }
 }
 
-/// Una de las opciones de una pregunta ("Un solo sabor", "Mitad y mitad"…): grande, para
-/// tocarla con el dedo en el mostrador sin apuntar.
-class OpcionGrande extends StatelessWidget {
-  const OpcionGrande({
-    super.key,
-    required this.icono,
-    required this.titulo,
-    required this.detalle,
-    required this.alTocar,
-    this.vertical = false,
-  });
-
-  final IconData icono;
-  final String titulo;
-  final String detalle;
-  final VoidCallback alTocar;
-
-  /// Como ficha: el ícono arriba y el texto centrado. La usan las opciones puestas en fila.
-  final bool vertical;
-
-  OpcionGrande comoFicha() =>
-      OpcionGrande(key: key, icono: icono, titulo: titulo, detalle: detalle, alTocar: alTocar, vertical: true);
-
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final colores = tema.colorScheme;
-    final circulo = Container(
-      width: vertical ? 72 : 52,
-      height: vertical ? 72 : 52,
-      decoration: const BoxDecoration(color: rojoSuave, shape: BoxShape.circle),
-      child: Icon(icono, size: vertical ? 38 : 28, color: rojoLadrillo),
-    );
-    final textoTitulo = Text(titulo,
-        textAlign: vertical ? TextAlign.center : TextAlign.start,
-        style: tema.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700));
-    final textoDetalle = Text(detalle,
-        textAlign: vertical ? TextAlign.center : TextAlign.start,
-        style: tema.textTheme.bodyMedium?.copyWith(color: colores.onSurfaceVariant));
-    return Material(
-      color: Colors.white,
-      elevation: 1,
-      shadowColor: Colors.black.withValues(alpha: 0.25),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: const BorderSide(color: bordeSuave),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: alTocar,
-        child: vertical
-            ? Padding(
-                padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
-                child: Column(
-                  children: [circulo, const SizedBox(height: 16), textoTitulo, const SizedBox(height: 6), textoDetalle],
-                ),
-              )
-            : Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
-                child: Row(
-                  children: [
-                    circulo,
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [textoTitulo, const SizedBox(height: 2), textoDetalle],
-                      ),
-                    ),
-                    Icon(Icons.chevron_right, color: colores.onSurfaceVariant),
-                  ],
-                ),
-              ),
-      ),
-    );
-  }
-}
-
-/// Desde este ancho, las opciones de una pregunta van en fila, como fichas del mismo alto;
-/// por debajo (el celular), una debajo de otra.
-const anchoOpcionesEnFila = 640.0;
-
-class OpcionesGrandes extends StatelessWidget {
-  const OpcionesGrandes({super.key, required this.opciones});
-  final List<OpcionGrande> opciones;
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, lados) {
-      if (lados.maxWidth < anchoOpcionesEnFila) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final (i, o) in opciones.indexed) ...[if (i > 0) const SizedBox(height: 12), o],
-          ],
-        );
-      }
-      return IntrinsicHeight(
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            for (final (i, o) in opciones.indexed) ...[
-              if (i > 0) const SizedBox(width: 16),
-              Expanded(child: o.comoFicha()),
-            ],
-          ],
-        ),
-      );
-    });
-  }
-}
-
-/// − n +, con botones grandes. El número se muestra; los límites se respetan.
+/// − n +, con botones del tamaño de un dedo. [denso], un poco más chico, para las filas
+/// de bebidas, que van varias en una misma línea.
 class Contador extends StatelessWidget {
   const Contador({
     super.key,
@@ -163,7 +44,7 @@ class Contador extends StatelessWidget {
     required this.maximo,
     required this.alCambiar,
     this.clave = 'contador',
-    this.grande = false,
+    this.denso = false,
   });
 
   final int valor;
@@ -171,37 +52,38 @@ class Contador extends StatelessWidget {
   final int maximo;
   final ValueChanged<int> alCambiar;
   final String clave;
-  final bool grande;
+  final bool denso;
 
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
-    final tamano = grande ? 56.0 : 40.0;
+    final tamano = denso ? 34.0 : 40.0;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         IconButton.outlined(
           key: Key('$clave-menos'),
           tooltip: 'Uno menos',
-          iconSize: grande ? 28 : 20,
+          iconSize: denso ? 18 : 20,
+          padding: EdgeInsets.zero,
           constraints: BoxConstraints.tightFor(width: tamano, height: tamano),
           onPressed: valor > minimo ? () => alCambiar(valor - 1) : null,
           icon: const Icon(Icons.remove),
         ),
         SizedBox(
-          width: grande ? 96 : 40,
+          width: denso ? 30 : 40,
           child: Text(
             '$valor',
             key: Key('$clave-valor'),
             textAlign: TextAlign.center,
-            style: (grande ? tema.textTheme.displaySmall : tema.textTheme.titleMedium)
-                ?.copyWith(fontWeight: FontWeight.w700),
+            style: tema.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
         ),
         IconButton.outlined(
           key: Key('$clave-mas'),
           tooltip: 'Uno más',
-          iconSize: grande ? 28 : 20,
+          iconSize: denso ? 18 : 20,
+          padding: EdgeInsets.zero,
           constraints: BoxConstraints.tightFor(width: tamano, height: tamano),
           onPressed: valor < maximo ? () => alCambiar(valor + 1) : null,
           icon: const Icon(Icons.add),
@@ -211,27 +93,116 @@ class Contador extends StatelessWidget {
   }
 }
 
-/// El título de un paso: la pregunta, grande, y una aclaración opcional debajo.
-class Pregunta extends StatelessWidget {
-  const Pregunta(this.texto, {super.key, this.aclaracion});
+/// Una de dos o más opciones excluyentes ("Para comer aquí", "Para llevar", "Entera"…):
+/// grande para tocarla sin apuntar, y la elegida, en amarillo con borde rojo y una marca.
+class BotonEleccion extends StatelessWidget {
+  const BotonEleccion({
+    super.key,
+    required this.icono,
+    required this.texto,
+    required this.elegido,
+    required this.alTocar,
+    this.detalle,
+  });
 
+  final IconData icono;
   final String texto;
-  final String? aclaracion;
+  final String? detalle;
+  final bool elegido;
+  final VoidCallback alTocar;
 
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(texto, style: tema.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w700)),
-          if (aclaracion != null) ...[
-            const SizedBox(height: 4),
-            Text(aclaracion!, style: tema.textTheme.bodyMedium?.copyWith(color: tema.colorScheme.onSurfaceVariant)),
+    final fila = Row(
+      children: [
+        Icon(icono, color: elegido ? textoSobreAmarillo : rojoLadrillo),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                texto,
+                style: tema.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: elegido ? textoSobreAmarillo : textoPrincipal,
+                ),
+              ),
+              if (detalle != null)
+                Text(
+                  detalle!,
+                  style: tema.textTheme.bodySmall?.copyWith(color: elegido ? textoSobreAmarillo : textoSecundario),
+                ),
+            ],
+          ),
+        ),
+        if (elegido) const Icon(Icons.check_circle, color: rojoLadrillo),
+      ],
+    );
+    return Semantics(
+      button: true,
+      selected: elegido,
+      child: Material(
+        color: elegido ? amarilloSuave : Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: elegido ? rojoLadrillo : bordeSuave, width: elegido ? 2 : 1),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: alTocar,
+          // Centrado en su alto: si la de al lado ocupa dos renglones, esta no queda arriba.
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12), child: fila),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Una sección del formulario: una tarjeta con su título ("1 · Cliente").
+class Seccion extends StatelessWidget {
+  const Seccion({super.key, required this.titulo, required this.hijos, this.accion, this.denso = false});
+
+  final String titulo;
+
+  /// Si alguno es Expanded, la sección llena el alto que le den.
+  final List<Widget> hijos;
+
+  /// Algo a la derecha del título, como un botón.
+  final Widget? accion;
+
+  /// Un poco más ajustada, para una ventana baja.
+  final bool denso;
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: denso ? const EdgeInsets.fromLTRB(16, 10, 16, 12) : const EdgeInsets.fromLTRB(18, 14, 18, 18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    titulo,
+                    style: tema.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800, color: rojoLadrillo),
+                  ),
+                ),
+                ?accion,
+              ],
+            ),
+            SizedBox(height: denso ? 8 : 12),
+            ...hijos,
           ],
-        ],
+        ),
       ),
     );
   }

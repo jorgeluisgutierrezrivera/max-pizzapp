@@ -51,11 +51,7 @@ class EsqueletoRol extends StatelessWidget {
               ),
             ),
           if (angosta)
-            IconButton(
-              tooltip: 'Cerrar sesión',
-              onPressed: alCerrarSesion,
-              icon: const Icon(Icons.logout),
-            )
+            IconButton(tooltip: 'Cerrar sesión', onPressed: alCerrarSesion, icon: const Icon(Icons.logout))
           else
             Padding(
               padding: const EdgeInsets.only(right: 12),

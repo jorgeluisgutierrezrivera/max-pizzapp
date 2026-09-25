@@ -1,15 +1,20 @@
-// La regla de precio (D-27, D-28) y el recorrido de la venta (D-30), sin pantalla. La tabla
-// de la sección 6 del plan 05 es la misma que prueba el servidor en la tarjeta 06.
+// La regla de precio (D-27, D-28) y la venta en un solo formulario (D-36), sin pantalla: el
+// formulario, la pizza que se arma en el modal y la venta directa de bebidas (D-38). La
+// tabla de la sección 6 del plan 05 es la misma que prueba el servidor.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maxpizzapp/carta/producto.dart';
 import 'package:maxpizzapp/carta/venta.dart';
 
 var _id = 0;
-Producto producto(String nombre, String categoria, num precio, {bool disponible = true}) =>
-    Producto.desdeJson({
-      'id': ++_id, 'nombre': nombre, 'categoria': categoria, 'precio': precio,
-      'descripcion': null, 'imagen': null, 'disponible': disponible,
-    });
+Producto producto(String nombre, String categoria, num precio, {bool disponible = true}) => Producto.desdeJson({
+  'id': ++_id,
+  'nombre': nombre,
+  'categoria': categoria,
+  'precio': precio,
+  'descripcion': null,
+  'imagen': null,
+  'disponible': disponible,
+});
 
 final salame = producto('Salame', 'pizza', 45);
 final peperoni = producto('Peperoni', 'pizza', 50);
@@ -20,449 +25,424 @@ final criollaEspanola = producto('Criolla española', 'pizza', 65);
 final agotada = producto('Cuatro quesos', 'pizza', 55, disponible: false);
 final extraQueso = producto('Extra queso', 'extra', 8);
 final extraChoclo = producto('Extra choclo', 'extra', 5);
+final extraAgotado = producto('Extra jamón', 'extra', 8, disponible: false);
 final gaseosa = producto('Gaseosa 2 L', 'bebida', 18);
+final agua = producto('Agua mineral 600 ml', 'bebida', 6);
+final jugoAgotado = producto('Jugo natural 1 L', 'bebida', 15, disponible: false);
 
-final carta = Carta([peperoni, salame, hawaiana, choclo, carnivora, criollaEspanola, agotada,
-    extraQueso, extraChoclo, gaseosa]);
+final carta = Carta([
+  peperoni,
+  salame,
+  hawaiana,
+  choclo,
+  carnivora,
+  criollaEspanola,
+  agotada,
+  extraQueso,
+  extraChoclo,
+  extraAgotado,
+  gaseosa,
+  agua,
+  jugoAgotado,
+]);
 
 int bs(num n) => (n * 100).round();
 
-/// Una pizza completa, de principio a fin, dentro de una tanda ya empezada.
-void definir(RecorridoVenta r, Producto sabor, {Producto? mitad, List<Producto> extras = const []}) {
-  r.elegirTipo(mitades: mitad != null);
-  if (mitad == null) {
-    r.elegirSabor(sabor);
-  } else {
-    r.elegirPrimeraMitad(sabor);
-    r.elegirSegundaMitad(mitad);
-  }
-  r.confirmarExtras(extras);
-}
+PizzaElegida pizza(Producto sabor, {Producto? mitad, List<Producto> extras = const []}) =>
+    PizzaElegida(sabor: sabor, segundaMitad: mitad, extras: extras);
 
-/// De la observación al resumen: para llevar, a nombre de Ana Prueba (D-31, D-34).
-void cerrarVenta(RecorridoVenta r, {bool paraLlevar = true, String nombre = 'Ana Prueba', String celular = ''}) {
-  r
-    ..continuarDeObservacion()
-    ..elegirParaLlevar(paraLlevar)
-    ..escribirNombre(nombre)
-    ..escribirCelular(celular)
-    ..continuarDeCliente();
-}
+/// Un formulario con el cliente completo, listo para sumarle productos.
+FormularioVenta conCliente({bool paraLlevar = true, String nombre = 'Ana Prueba', String celular = ''}) =>
+    FormularioVenta(carta)
+      ..escribirNombre(nombre)
+      ..escribirCelular(celular)
+      ..elegirParaLlevar(paraLlevar);
 
 void main() {
   group('la tabla de la sección 6', () {
+    int total(FormularioVenta f) => f.total;
+
     test('1 Peperoni = 50', () {
-      expect(PizzaElegida(sabor: peperoni).precioUnitario, bs(50));
+      expect(total(conCliente()..agregarPizza(pizza(peperoni), 1)), bs(50));
     });
 
     test('1 mitad Salame, mitad Peperoni = (45 + 50) / 2 = 47,50', () {
-      final p = PizzaElegida(sabor: salame, segundaMitad: peperoni);
-      expect(p.precioUnitario, bs(47.50));
-      expect(formatoBs(p.precioUnitario), 'Bs 47,50');
+      final p = pizza(salame, mitad: peperoni);
+      expect(p.precioUnitario, bs(47.5));
+      expect(p.titulo, 'Mitad Salame / mitad Peperoni');
     });
 
     test('1 mitad Carnívora, mitad Criolla española = (60 + 65) / 2 = 62,50', () {
-      expect(PizzaElegida(sabor: carnivora, segundaMitad: criollaEspanola).precioUnitario, bs(62.50));
+      expect(pizza(carnivora, mitad: criollaEspanola).precioUnitario, bs(62.5));
     });
 
     test('2 mitad Salame, mitad Peperoni = 95', () {
-      expect(GrupoPizzas(PizzaElegida(sabor: salame, segundaMitad: peperoni), 2).subtotal, bs(95));
+      expect(total(conCliente()..agregarPizza(pizza(salame, mitad: peperoni), 2)), bs(95));
     });
 
     test('1 Hawaiana con extra queso = 50 + 8 = 58', () {
-      expect(PizzaElegida(sabor: hawaiana, extras: [extraQueso]).precioUnitario, bs(58));
+      expect(pizza(hawaiana, extras: [extraQueso]).precioUnitario, bs(58));
     });
 
     test('3 Choclo iguales con extra choclo = 3 × (45 + 5) = 150', () {
-      expect(GrupoPizzas(PizzaElegida(sabor: choclo, extras: [extraChoclo]), 3).subtotal, bs(150));
+      expect(total(conCliente()..agregarPizza(pizza(choclo, extras: [extraChoclo]), 3)), bs(150));
     });
 
-    test('solo 2 gaseosas = 36', () {
-      final r = RecorridoVenta(carta)..soloBebidas()..cambiarBebida(gaseosa, 2);
-      expect(r.estado.total, bs(36));
+    test('venta directa de 2 gaseosas = 36', () {
+      expect((VentaDeBebidas(carta)..cambiar(gaseosa, 2)).total, bs(36));
     });
 
     test('mitades del mismo sabor: rechazada', () {
-      expect(() => PizzaElegida(sabor: salame, segundaMitad: salame), throwsA(isA<VentaInvalida>()));
+      expect(() => pizza(salame, mitad: salame), throwsA(isA<VentaInvalida>()));
     });
 
     test('la otra mitad no es una pizza: rechazada', () {
-      expect(() => PizzaElegida(sabor: salame, segundaMitad: gaseosa), throwsA(isA<VentaInvalida>()));
+      expect(() => pizza(salame, mitad: gaseosa), throwsA(isA<VentaInvalida>()));
     });
 
     test('un extra que no es extra: rechazado', () {
-      expect(() => PizzaElegida(sabor: salame, extras: [gaseosa]), throwsA(isA<VentaInvalida>()));
-    });
-
-    test('una venta sin ningún producto está vacía', () {
-      final r = RecorridoVenta(carta)..soloBebidas();
-      expect(r.estado.vacia, isTrue);
+      expect(() => pizza(salame, extras: [gaseosa]), throwsA(isA<VentaInvalida>()));
     });
   });
 
   group('las pizzas son iguales si tienen los mismos sabores y extras', () {
     test('mitad A / mitad B es la misma pizza que mitad B / mitad A', () {
-      expect(PizzaElegida(sabor: salame, segundaMitad: peperoni)
-          .esIgualA(PizzaElegida(sabor: peperoni, segundaMitad: salame)), isTrue);
+      expect(pizza(salame, mitad: peperoni).esIgualA(pizza(peperoni, mitad: salame)), isTrue);
     });
 
     test('con distintos extras, son pizzas distintas', () {
-      expect(PizzaElegida(sabor: salame).esIgualA(PizzaElegida(sabor: salame, extras: [extraQueso])), isFalse);
+      expect(pizza(salame, extras: [extraQueso]).esIgualA(pizza(salame)), isFalse);
     });
 
     test('un extra repetido cuenta una vez', () {
-      expect(PizzaElegida(sabor: salame, extras: [extraQueso, extraQueso]).precioUnitario, bs(53));
+      expect(pizza(salame, extras: [extraQueso, extraQueso]).extras, [extraQueso]);
     });
   });
 
-  group('el recorrido', () {
-    test('una sola pizza no pregunta si son iguales, y termina en bebidas', () {
-      final r = RecorridoVenta(carta)..elegirCantidad(1);
-      expect(r.estado.paso, Paso.tipo);
-      definir(r, peperoni);
-      expect(r.estado.paso, Paso.bebidas);
-      expect(r.estado.grupos.single.cantidad, 1);
+  group('el formulario (D-36)', () {
+    test('empieza vacío y sin "para llevar" elegido: no hay una opción marcada de entrada', () {
+      final f = FormularioVenta(carta);
+      expect(f.vacia, isTrue);
+      expect(f.paraLlevar, isNull);
+      expect(f.total, 0);
     });
 
-    test('20 iguales se definen una sola vez', () {
-      final r = RecorridoVenta(carta)
-        ..elegirCantidad(20)
-        ..elegirIguales(true);
-      definir(r, choclo, extras: [extraChoclo]);
-      expect(r.estado.paso, Paso.bebidas);
-      expect(r.estado.grupos.single.cantidad, 20);
-      expect(r.estado.total, bs(20 * 50));
+    test('la misma pizza agregada dos veces se junta en una línea, en cualquier orden de mitades', () {
+      final f = conCliente()
+        ..agregarPizza(pizza(salame, mitad: peperoni), 2)
+        ..agregarPizza(pizza(peperoni, mitad: salame), 1);
+      expect(f.grupos.single.cantidad, 3);
+      expect(f.total, bs(47.5 * 3));
     });
 
-    test('20 distintas en tres grupos, repitiendo la anterior: 8 Peperoni, 6 Hawaiana, 6 mitad y mitad', () {
-      final r = RecorridoVenta(carta)
-        ..elegirCantidad(20)
-        ..elegirIguales(false);
-      expect(r.puedeRepetirAnterior, isFalse, reason: 'la primera pizza no tiene anterior');
-      definir(r, peperoni);
-      expect(r.estado.paso, Paso.tipo, reason: 'confirmar agrega UNA pizza y pasa a la siguiente');
-      expect(r.estado.pizzaActual, 2);
-      expect(r.puedeRepetirAnterior, isTrue);
-      for (var i = 0; i < 7; i++) {
-        r.repetirAnterior();
-      }
-      expect(r.estado.pendientes, 12);
-      expect(r.estado.pizzaActual, 9);
-      definir(r, hawaiana);
-      for (var i = 0; i < 5; i++) {
-        r.repetirAnterior();
-      }
-      definir(r, salame, mitad: peperoni);
-      for (var i = 0; i < 5; i++) {
-        r.repetirAnterior();
-      }
-      expect(r.estado.paso, Paso.bebidas);
-      expect(r.estado.unidadesDePizza, 20);
-      expect(r.estado.grupos.map((g) => g.cantidad), [8, 6, 6]);
-      expect(r.estado.total, bs(8 * 50 + 6 * 50 + 6 * 47.50));
+    test('20 pizzas distintas en tres líneas: 8 Peperoni, 6 Hawaiana y 6 mitad y mitad', () {
+      final f = conCliente()
+        ..agregarPizza(pizza(peperoni), 8)
+        ..agregarPizza(pizza(hawaiana), 6)
+        ..agregarPizza(pizza(salame, mitad: choclo), 6);
+      expect(f.grupos.map((g) => (g.pizza.titulo, g.cantidad)), [
+        ('Peperoni', 8),
+        ('Hawaiana', 6),
+        ('Mitad Salame / mitad Choclo', 6),
+      ]);
+      expect(f.unidadesDePizza, 20);
+      expect(f.total, bs(8 * 50 + 6 * 50 + 6 * 45));
     });
 
-    test('repetir la anterior copia también sus extras', () {
-      final r = RecorridoVenta(carta)
-        ..elegirCantidad(2)
-        ..elegirIguales(false);
-      definir(r, hawaiana, extras: [extraQueso]);
-      r.repetirAnterior();
-      expect(r.estado.grupos.single.cantidad, 2);
-      expect(r.estado.total, bs(2 * 58));
+    test('− y + cambian la cantidad de una línea, y en cero la línea sale', () {
+      final f = conCliente()
+        ..agregarPizza(pizza(peperoni), 2)
+        ..agregarPizza(pizza(salame), 1)
+        ..cambiarCantidadDeGrupo(0, 5);
+      expect(f.grupos.first.cantidad, 5);
+      f.cambiarCantidadDeGrupo(1, 0);
+      expect(f.grupos.map((g) => g.pizza.sabor), [peperoni]);
     });
 
-    test('volver deshace una pizza repetida', () {
-      final r = RecorridoVenta(carta)
-        ..elegirCantidad(3)
-        ..elegirIguales(false);
-      definir(r, peperoni);
-      r.repetirAnterior();
-      expect(r.estado.unidadesDePizza, 2);
-      r.volver();
-      expect(r.estado.unidadesDePizza, 1);
-      expect(r.estado.pizzaActual, 2);
+    test('corregir una pizza la reemplaza en su lugar, y si quedó igual a otra, se juntan', () {
+      final f = conCliente()
+        ..agregarPizza(pizza(peperoni), 1)
+        ..agregarPizza(pizza(salame), 2)
+        ..agregarPizza(pizza(choclo), 1)
+        ..reemplazarPizza(1, pizza(salame, extras: [extraQueso]), 2);
+      expect(f.grupos.map((g) => g.pizza.titulo), ['Peperoni', 'Salame', 'Choclo']);
+      expect(f.grupos[1].pizza.extras, [extraQueso]);
+      f.reemplazarPizza(2, pizza(peperoni), 3);
+      expect(f.grupos.map((g) => (g.pizza.titulo, g.cantidad)), [('Peperoni', 4), ('Salame', 2)]);
     });
 
-    test('en pizzas iguales o de una sola no se ofrece repetir', () {
-      final iguales = RecorridoVenta(carta)
-        ..elegirCantidad(3)
-        ..elegirIguales(true);
-      expect(iguales.puedeRepetirAnterior, isFalse);
-      expect(iguales.pizzasQueConfirma, 3, reason: 'el botón confirma las tres');
-      final una = RecorridoVenta(carta)..elegirCantidad(1);
-      expect(una.puedeRepetirAnterior, isFalse);
-      expect(() => una.repetirAnterior(), throwsA(isA<VentaInvalida>()));
+    test('quitar una pizza', () {
+      final f = conCliente()
+        ..agregarPizza(pizza(peperoni), 1)
+        ..agregarPizza(pizza(salame), 1)
+        ..quitarPizza(0);
+      expect(f.grupos.single.pizza.sabor, salame);
     });
 
-    test('la misma pizza armada dos veces se junta en una línea', () {
-      final r = RecorridoVenta(carta)
-        ..elegirCantidad(3)
-        ..elegirIguales(false);
-      definir(r, salame, mitad: peperoni);
-      definir(r, peperoni, mitad: salame);
-      r.repetirAnterior();
-      expect(r.estado.grupos, hasLength(1));
-      expect(r.estado.grupos.single.cantidad, 3);
+    test('una línea admite hasta 999 unidades, como la base', () {
+      final f = conCliente()..agregarPizza(pizza(peperoni), 999);
+      expect(() => f.agregarPizza(pizza(peperoni), 1), throwsA(isA<VentaInvalida>()));
+      expect(() => f.cambiarCantidadDeGrupo(0, 1000), throwsA(isA<VentaInvalida>()));
     });
 
-    test('la segunda mitad no ofrece el sabor de la primera', () {
-      final r = RecorridoVenta(carta)
-        ..elegirCantidad(1)
-        ..elegirTipo(mitades: true)
-        ..elegirPrimeraMitad(salame);
-      expect(r.opcionesSegundaMitad, isNot(contains(salame)));
-      expect(() => r.elegirSegundaMitad(salame), throwsA(isA<VentaInvalida>()));
-    });
-
-    test('una pizza agotada no se puede elegir, ni como mitad', () {
-      final r = RecorridoVenta(carta)..elegirCantidad(1)..elegirTipo(mitades: false);
-      expect(() => r.elegirSabor(agotada), throwsA(isA<VentaInvalida>()));
-      r
-        ..volver()
-        ..elegirTipo(mitades: true);
-      expect(() => r.elegirPrimeraMitad(agotada), throwsA(isA<VentaInvalida>()));
-    });
-
-    test('la cantidad va de 1 a 50', () {
-      final r = RecorridoVenta(carta);
-      expect(() => r.elegirCantidad(0), throwsA(isA<VentaInvalida>()));
-      expect(() => r.elegirCantidad(51), throwsA(isA<VentaInvalida>()));
-      r.elegirCantidad(50);
-      expect(r.estado.pendientes, 50);
-    });
-
-    test('solo bebidas salta directo a las bebidas', () {
-      final r = RecorridoVenta(carta)..soloBebidas();
-      expect(r.estado.paso, Paso.bebidas);
-      r
+    test('las bebidas se suman con + y −, y en cero salen', () {
+      final f = conCliente()
         ..cambiarBebida(gaseosa, 2)
-        ..continuarDeBebidas()
-        ..escribirObservacion('  bien frías  ');
-      cerrarVenta(r);
-      expect(r.estado.paso, Paso.resumen);
-      expect(r.estado.observacion, 'bien frías');
-      expect(r.estado.total, bs(36));
+        ..cambiarBebida(agua, 1);
+      expect(f.total, bs(2 * 18 + 6));
+      f.cambiarBebida(gaseosa, 0);
+      expect(f.bebidas.single.bebida, agua);
     });
 
-    test('la observación admite hasta 240 caracteres, como la base', () {
-      final r = RecorridoVenta(carta)..soloBebidas()..continuarDeBebidas();
-      r.escribirObservacion('a' * 240);
-      expect(() => r.escribirObservacion('a' * 241), throwsA(isA<VentaInvalida>()));
-    });
-  });
-
-  group('volver', () {
-    test('deshace exactamente el último paso, incluida una pizza recién agregada', () {
-      final r = RecorridoVenta(carta)..elegirCantidad(1);
-      definir(r, peperoni, extras: [extraQueso]);
-      expect(r.estado.paso, Paso.bebidas);
-      expect(r.estado.grupos, hasLength(1));
-      r.volver();
-      expect(r.estado.paso, Paso.extras);
-      expect(r.estado.grupos, isEmpty, reason: 'la pizza vuelve a estar en armado');
-      r.volver();
-      expect(r.estado.paso, Paso.sabor);
-      r.volver();
-      expect(r.estado.paso, Paso.tipo);
-      r.volver();
-      expect(r.estado.paso, Paso.cantidad);
-      expect(r.puedeVolver, isFalse);
+    test('una bebida agotada no se suma, pero la que ya estaba se puede bajar', () {
+      final f = conCliente();
+      expect(() => f.cambiarBebida(jugoAgotado, 1), throwsA(isA<VentaInvalida>()));
+      expect(() => f.cambiarBebida(peperoni, 1), throwsA(isA<VentaInvalida>()));
     });
 
-    test('tocar + diez veces en bebidas no son diez pasos atrás', () {
-      final r = RecorridoVenta(carta)..soloBebidas();
-      for (var i = 1; i <= 10; i++) {
-        r.cambiarBebida(gaseosa, i);
-      }
-      r.volver();
-      expect(r.estado.paso, Paso.cantidad);
+    test('el nombre admite hasta 120 caracteres y la observación hasta 240, como la base', () {
+      final f = FormularioVenta(carta);
+      expect(() => f.escribirNombre('a' * 121), throwsA(isA<VentaInvalida>()));
+      expect(() => f.escribirObservacion('a' * 241), throwsA(isA<VentaInvalida>()));
+      f.escribirObservacion('a' * 240);
+      expect(f.observacion.length, 240);
     });
 
-    test('en el resumen no se vuelve: se edita', () {
-      final r = RecorridoVenta(carta)..soloBebidas()..cambiarBebida(gaseosa, 1)..continuarDeBebidas();
-      cerrarVenta(r);
-      expect(r.puedeVolver, isFalse);
-    });
-  });
-
-  group('el resumen', () {
-    RecorridoVenta hastaElResumen() {
-      final r = RecorridoVenta(carta)..elegirCantidad(2)..elegirIguales(true);
-      definir(r, peperoni);
-      r
+    test('limpiar deja el formulario en blanco, sin "para llevar" elegido', () {
+      final f = conCliente(celular: '70000001')
+        ..agregarPizza(pizza(peperoni), 1)
         ..cambiarBebida(gaseosa, 1)
-        ..continuarDeBebidas();
-      cerrarVenta(r);
-      return r;
-    }
-
-    test('se cambia la cantidad de un grupo, y en cero se quita', () {
-      final r = hastaElResumen();
-      r.cambiarCantidadDeGrupo(0, 3);
-      expect(r.estado.total, bs(3 * 50 + 18));
-      r.cambiarCantidadDeGrupo(0, 0);
-      expect(r.estado.grupos, isEmpty);
-      expect(r.estado.total, bs(18));
+        ..escribirObservacion('sin cebolla')
+        ..limpiar();
+      expect(f.vacia, isTrue);
+      expect(f.paraLlevar, isNull);
+      expect(f.nombre, '');
+      expect(f.celular, '');
+      expect(f.total, 0);
     });
 
-    test('agregar más pizzas suma a la misma venta, y volver regresa al resumen', () {
-      final r = hastaElResumen()..agregarMasPizzas();
-      expect(r.estado.paso, Paso.cantidad);
-      r.volver();
-      expect(r.estado.paso, Paso.resumen);
-      r
-        ..agregarMasPizzas()
-        ..elegirCantidad(1);
-      definir(r, salame, mitad: peperoni);
-      r
-        ..continuarDeBebidas()
-        ..continuarDeObservacion();
-      // El cliente ya estaba: vuelve directo al resumen, sin preguntarlo otra vez.
-      expect(r.estado.paso, Paso.resumen);
-      expect(r.estado.nombreCliente, 'Ana Prueba');
-      expect(r.estado.unidadesDePizza, 3);
-      expect(r.estado.total, bs(2 * 50 + 47.50 + 18));
-    });
-
-    test('cancelar deja la venta en blanco', () {
-      final r = hastaElResumen()..cancelar();
-      expect(r.estado.vacia, isTrue);
-      expect(r.estado.paso, Paso.cantidad);
-      expect(r.empezada, isFalse);
+    test('avisa a quien escucha en cada cambio', () {
+      final f = FormularioVenta(carta);
+      var avisos = 0;
+      f.addListener(() => avisos++);
+      f
+        ..escribirNombre('Ana')
+        ..elegirParaLlevar(false)
+        ..agregarPizza(pizza(peperoni), 1)
+        ..cambiarBebida(gaseosa, 1)
+        ..escribirObservacion('x');
+      expect(avisos, 5);
     });
   });
 
-  group('para llevar y el cliente (D-31, D-34)', () {
-    RecorridoVenta hastaLaObservacion() => RecorridoVenta(carta)
-      ..soloBebidas()
-      ..cambiarBebida(gaseosa, 1)
-      ..continuarDeBebidas();
-
-    test('después de la observación: para llevar, el cliente y recién el resumen', () {
-      final r = hastaLaObservacion()..continuarDeObservacion();
-      expect(r.estado.paso, Paso.llevar);
-      r.elegirParaLlevar(false);
-      expect(r.estado.paso, Paso.cliente);
-      expect(r.estado.paraLlevar, isFalse);
-      r
-        ..escribirNombre('  Ana Prueba ')
-        ..escribirCelular(' 70000001 ')
-        ..continuarDeCliente();
-      expect(r.estado.paso, Paso.resumen);
-      expect(r.estado.nombreCliente, 'Ana Prueba');
-      expect(r.estado.celular, '70000001');
+  group('lo que falta para confirmar (las mismas reglas que el servidor)', () {
+    test('vacío: el nombre, para llevar o no, y una pizza, en el orden del formulario', () {
+      expect(FormularioVenta(carta).problemas, [
+        'Escribe el nombre del cliente.',
+        'Elige si es para comer aquí o para llevar.',
+        'Agrega al menos una pizza.',
+      ]);
     });
 
-    test('el nombre es obligatorio', () {
-      final r = hastaLaObservacion()..continuarDeObservacion()..elegirParaLlevar(true);
-      expect(r.problemaDelCliente, 'Escribe el nombre del cliente.');
-      expect(r.continuarDeCliente, throwsA(isA<VentaInvalida>()));
-      r.escribirNombre('   ');
-      expect(r.continuarDeCliente, throwsA(isA<VentaInvalida>()));
-      expect(r.estado.paso, Paso.cliente);
+    test('completo: nada', () {
+      expect((conCliente()..agregarPizza(pizza(peperoni), 1)).problemas, isEmpty);
+    });
+
+    test('un nombre de puros espacios no cuenta', () {
+      final f = conCliente(nombre: '   ')..agregarPizza(pizza(peperoni), 1);
+      expect(f.problemas, ['Escribe el nombre del cliente.']);
     });
 
     test('el celular es opcional, pero si se escribe tiene que ser boliviano', () {
-      final r = hastaLaObservacion()..continuarDeObservacion()..elegirParaLlevar(true)..escribirNombre('Ana Prueba');
-      for (final malo in ['7000001', '700000011', '50000001', '7000 001']) {
-        r.escribirCelular(malo);
-        expect(r.problemaDelCliente, 'El celular tiene 8 dígitos y empieza con 6 o 7.', reason: malo);
+      for (final malo in ['7000001', '50000001', '700000011']) {
+        final f = conCliente(celular: malo)..agregarPizza(pizza(peperoni), 1);
+        expect(f.problemas, ['El celular tiene 8 dígitos y empieza con 6 o 7.'], reason: malo);
       }
-      for (final bueno in ['', '70000001', '60000002']) {
-        r.escribirCelular(bueno);
-        expect(r.problemaDelCliente, isNull, reason: bueno);
+      for (final bueno in ['', '70000001', '60000001']) {
+        expect((conCliente(celular: bueno)..agregarPizza(pizza(peperoni), 1)).problemas, isEmpty, reason: bueno);
       }
     });
 
-    test('el nombre admite hasta 120 caracteres, como la base', () {
-      final r = hastaLaObservacion()..continuarDeObservacion()..elegirParaLlevar(true);
-      r.escribirNombre('a' * 120);
-      expect(() => r.escribirNombre('a' * 121), throwsA(isA<VentaInvalida>()));
-    });
-
-    test('volver desde el cliente regresa a para llevar, y de ahí a la observación', () {
-      final r = hastaLaObservacion()..continuarDeObservacion()..elegirParaLlevar(true);
-      r.volver();
-      expect(r.estado.paso, Paso.llevar);
-      r.volver();
-      expect(r.estado.paso, Paso.observacion);
-    });
-
-    test('desde el resumen se cambia el cliente con lo ya escrito', () {
-      final r = hastaLaObservacion();
-      cerrarVenta(r, celular: '70000001');
-      r.cambiarCliente();
-      expect(r.estado.paso, Paso.llevar);
-      r.elegirParaLlevar(false);
-      expect(r.estado.nombreCliente, 'Ana Prueba', reason: 'no se vuelve a escribir');
-      r.continuarDeCliente();
-      expect(r.estado.paso, Paso.resumen);
-      expect(r.estado.paraLlevar, isFalse);
-    });
-
-    test('cambiar la observación desde el resumen vuelve directo al resumen', () {
-      final r = hastaLaObservacion();
-      cerrarVenta(r);
-      r
-        ..cambiarObservacion()
-        ..escribirObservacion('sin hielo')
-        ..continuarDeObservacion();
-      expect(r.estado.paso, Paso.resumen);
-      expect(r.estado.observacion, 'sin hielo');
+    test('solo bebidas no es un pedido: se venden con "Vender bebidas" (D-38)', () {
+      final f = conCliente()..cambiarBebida(gaseosa, 2);
+      expect(f.problemas, ['Agrega al menos una pizza. Las bebidas solas se venden con «Vender bebidas».']);
+      expect(f.aPedido, throwsA(isA<VentaInvalida>()));
     });
   });
 
   group('el pedido que se envía (POST /api/v1/pedidos)', () {
     test('las pizzas con su segunda mitad y sus extras, las bebidas y el total en bolivianos', () {
-      final r = RecorridoVenta(carta)..elegirCantidad(3)..elegirIguales(false);
-      definir(r, salame, mitad: peperoni); // 47,50
-      r.repetirAnterior(); // 47,50
-      definir(r, hawaiana, extras: [extraChoclo, extraQueso]); // 63
-      r
-        ..cambiarBebida(gaseosa, 2) // 36
-        ..continuarDeBebidas()
-        ..escribirObservacion(' sin cebolla ');
-      cerrarVenta(r, celular: '70000001');
-      expect(r.estado.aPedido(), {
+      final f = conCliente(celular: ' 70000001 ', nombre: '  Ana Prueba ')
+        ..agregarPizza(pizza(salame, mitad: peperoni), 2)
+        ..agregarPizza(pizza(hawaiana, extras: [extraQueso]), 1)
+        ..cambiarBebida(gaseosa, 2)
+        ..escribirObservacion('  sin cebolla ');
+      expect(f.aPedido(), {
         'paraLlevar': true,
         'cliente': {'nombre': 'Ana Prueba', 'celular': '70000001'},
         'observacion': 'sin cebolla',
         'lineas': [
           {'productoId': salame.id, 'mitadId': peperoni.id, 'cantidad': 2},
-          {'productoId': hawaiana.id, 'cantidad': 1, 'extras': [extraQueso.id, extraChoclo.id]..sort()},
+          {
+            'productoId': hawaiana.id,
+            'cantidad': 1,
+            'extras': [extraQueso.id],
+          },
           {'productoId': gaseosa.id, 'cantidad': 2},
         ],
-        'totalEsperado': 194.0,
+        'totalEsperado': 189,
       });
     });
 
     test('sin celular ni observación viajan como nulos; el total conserva los centavos', () {
-      final r = RecorridoVenta(carta)..elegirCantidad(1);
-      definir(r, salame, mitad: peperoni);
-      r.continuarDeBebidas();
-      cerrarVenta(r, paraLlevar: false);
-      final pedido = r.estado.aPedido();
+      final f = conCliente(paraLlevar: false)..agregarPizza(pizza(salame, mitad: peperoni), 1);
+      final pedido = f.aPedido();
+      expect(pedido['paraLlevar'], false);
       expect(pedido['cliente'], {'nombre': 'Ana Prueba', 'celular': null});
       expect(pedido['observacion'], isNull);
-      expect(pedido['paraLlevar'], isFalse);
       expect(pedido['totalEsperado'], 47.5);
+    });
+  });
+
+  group('la pizza del modal (ArmadoDePizza)', () {
+    test('empieza entera y sin sabor: falta elegirlo y no hay precio', () {
+      final a = ArmadoDePizza(carta);
+      expect(a.mitades, isFalse);
+      expect(a.falta, 'Elige el sabor');
+      expect(a.pizza, isNull);
+      expect(a.subtotal, isNull);
+    });
+
+    test('entera: el sabor tocado es el sabor, y tocar otro lo cambia', () {
+      final a = ArmadoDePizza(carta)..tocarSabor(salame);
+      expect(a.pizza!.titulo, 'Salame');
+      a.tocarSabor(peperoni);
+      expect(a.pizza!.titulo, 'Peperoni');
+      expect(a.lugarDe(peperoni), 1);
+      expect(a.lugarDe(salame), isNull);
+    });
+
+    test('mitad y mitad: el primero que se toca es la primera mitad y el segundo, la segunda', () {
+      final a = ArmadoDePizza(carta)..elegirMitades(true);
+      expect(a.falta, 'Elige los dos sabores');
+      a.tocarSabor(salame);
+      expect(a.falta, 'Elige la segunda mitad');
+      a.tocarSabor(peperoni);
+      expect(a.falta, isNull);
+      expect(a.pizza!.titulo, 'Mitad Salame / mitad Peperoni');
+      expect((a.lugarDe(salame), a.lugarDe(peperoni)), (1, 2));
+      expect(a.subtotal, bs(47.5));
+    });
+
+    test('tocar una mitad elegida la quita; la segunda pasa a ser la primera', () {
+      final a = ArmadoDePizza(carta)
+        ..elegirMitades(true)
+        ..tocarSabor(salame)
+        ..tocarSabor(peperoni)
+        ..tocarSabor(salame);
+      expect((a.primera, a.segunda), (peperoni, null));
+      a.tocarSabor(peperoni);
+      expect((a.primera, a.segunda), (null, null));
+    });
+
+    test('con las dos mitades elegidas, un tercer sabor reemplaza a la segunda', () {
+      final a = ArmadoDePizza(carta)
+        ..elegirMitades(true)
+        ..tocarSabor(salame)
+        ..tocarSabor(peperoni)
+        ..tocarSabor(choclo);
+      expect(a.pizza!.titulo, 'Mitad Salame / mitad Choclo');
+    });
+
+    test('pasar de mitad y mitad a entera se queda con el primer sabor', () {
+      final a = ArmadoDePizza(carta)
+        ..elegirMitades(true)
+        ..tocarSabor(salame)
+        ..tocarSabor(peperoni)
+        ..elegirMitades(false);
+      expect(a.pizza!.titulo, 'Salame');
+      a.elegirMitades(true);
+      expect(a.falta, 'Elige la segunda mitad', reason: 'la segunda no vuelve sola');
+    });
+
+    test('los extras se marcan y se desmarcan, y el precio es el de todas las que se agregan', () {
+      final a = ArmadoDePizza(carta)
+        ..tocarSabor(hawaiana)
+        ..alternarExtra(extraQueso)
+        ..alternarExtra(extraChoclo)
+        ..alternarExtra(extraChoclo)
+        ..cambiarCantidad(3);
+      expect(a.pizza!.extras, [extraQueso]);
+      expect(a.subtotal, bs(3 * 58));
+    });
+
+    test('una pizza o un extra agotados no se eligen', () {
+      final a = ArmadoDePizza(carta);
+      expect(() => a.tocarSabor(agotada), throwsA(isA<VentaInvalida>()));
+      expect(() => a.tocarSabor(gaseosa), throwsA(isA<VentaInvalida>()));
+      expect(() => a.alternarExtra(extraAgotado), throwsA(isA<VentaInvalida>()));
+    });
+
+    test('la cantidad va de 1 a 50: solo ataja un error de tipeo', () {
+      final a = ArmadoDePizza(carta);
+      expect(() => a.cambiarCantidad(0), throwsA(isA<VentaInvalida>()));
+      expect(() => a.cambiarCantidad(51), throwsA(isA<VentaInvalida>()));
+      a.cambiarCantidad(50);
+      expect(a.cantidad, 50);
+    });
+
+    test('para corregir, empieza con la pizza de la línea y su cantidad', () {
+      final a = ArmadoDePizza(
+        carta,
+        desde: pizza(salame, mitad: choclo, extras: [extraQueso]),
+        cantidad: 4,
+      );
+      expect(a.mitades, isTrue);
+      expect((a.primera, a.segunda), (salame, choclo));
+      expect(a.extras, {extraQueso});
+      expect(a.cantidad, 4);
+    });
+  });
+
+  group('la venta directa de bebidas (D-38)', () {
+    test('sin cliente, sin "para llevar" y sin observación', () {
+      final v = VentaDeBebidas(carta)
+        ..cambiar(gaseosa, 2)
+        ..cambiar(agua, 1);
+      expect(v.aVentaDirecta(), {
+        'ventaDirecta': true,
+        'lineas': [
+          {'productoId': gaseosa.id, 'cantidad': 2},
+          {'productoId': agua.id, 'cantidad': 1},
+        ],
+        'totalEsperado': 42,
+      });
+    });
+
+    test('vacía no se puede cobrar', () {
+      expect(VentaDeBebidas(carta).aVentaDirecta, throwsA(isA<VentaInvalida>()));
+    });
+
+    test('solo bebidas: ni pizzas ni agotadas', () {
+      final v = VentaDeBebidas(carta);
+      expect(() => v.cambiar(peperoni, 1), throwsA(isA<VentaInvalida>()));
+      expect(() => v.cambiar(jugoAgotado, 1), throwsA(isA<VentaInvalida>()));
     });
   });
 
   group('la carta', () {
     test('separa pizzas, extras y bebidas, en orden alfabético sin mirar tildes', () {
-      expect(carta.pizzas.map((p) => p.nombre),
-          ['Carnívora', 'Choclo', 'Criolla española', 'Cuatro quesos', 'Hawaiana', 'Peperoni', 'Salame']);
-      expect(carta.extras.map((p) => p.nombre), ['Extra choclo', 'Extra queso']);
-      expect(carta.bebidas.single, gaseosa);
-    });
-
-    test('sin extras disponibles, el paso de extras no aparece', () {
-      final r = RecorridoVenta(Carta([peperoni, gaseosa]))..elegirCantidad(1)..elegirTipo(mitades: false)..elegirSabor(peperoni);
-      expect(r.estado.paso, Paso.bebidas);
-      r.volver();
-      expect(r.estado.paso, Paso.sabor);
+      expect(carta.pizzas.map((p) => p.nombre), [
+        'Carnívora',
+        'Choclo',
+        'Criolla española',
+        'Cuatro quesos',
+        'Hawaiana',
+        'Peperoni',
+        'Salame',
+      ]);
+      expect(carta.extras.map((p) => p.nombre), ['Extra choclo', 'Extra jamón', 'Extra queso']);
+      expect(carta.bebidas.map((p) => p.nombre), ['Agua mineral 600 ml', 'Gaseosa 2 L', 'Jugo natural 1 L']);
     });
 
     test('una categoría desconocida se rechaza al leer la carta', () {
@@ -470,8 +450,15 @@ void main() {
     });
 
     test('la imagen solo se busca con un nombre simple, junto a la app', () {
-      Producto con(String? imagen) => Producto.desdeJson({'id': 1, 'nombre': 'x', 'categoria': 'bebida',
-          'precio': 1, 'descripcion': null, 'imagen': imagen, 'disponible': true});
+      Producto con(String? imagen) => Producto.desdeJson({
+        'id': 1,
+        'nombre': 'x',
+        'categoria': 'bebida',
+        'precio': 1,
+        'descripcion': null,
+        'imagen': imagen,
+        'disponible': true,
+      });
       expect(rutaDeImagen(con('gaseosa.png')), 'carta/gaseosa.png');
       expect(rutaDeImagen(con(null)), isNull);
       expect(rutaDeImagen(con('https://otro.sitio/x.png')), isNull);

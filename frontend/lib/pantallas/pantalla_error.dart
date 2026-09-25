@@ -2,12 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Un error que se muestra, no se traga: el mensaje, reintentar y, si hay sesion, salir.
 class PantallaError extends StatelessWidget {
-  const PantallaError({
-    super.key,
-    required this.mensaje,
-    required this.alReintentar,
-    this.alCerrarSesion,
-  });
+  const PantallaError({super.key, required this.mensaje, required this.alReintentar, this.alCerrarSesion});
 
   final String mensaje;
   final VoidCallback alReintentar;

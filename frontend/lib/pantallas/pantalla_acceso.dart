@@ -29,46 +29,48 @@ class PantallaAcceso extends StatelessWidget {
   Widget build(BuildContext context) {
     final acceso = _Acceso(alIniciarSesion: alIniciarSesion, mensaje: mensaje);
     return Scaffold(
-      body: LayoutBuilder(builder: (context, lados) {
-        if (lados.maxWidth >= anchoDividido) {
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Expanded(flex: 11, child: _Portada()),
-              Expanded(
-                flex: 9,
-                child: SafeArea(
-                  child: Center(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
-                      child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 400), child: acceso),
+      body: LayoutBuilder(
+        builder: (context, lados) {
+          if (lados.maxWidth >= anchoDividido) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Expanded(flex: 11, child: _Portada()),
+                Expanded(
+                  flex: 9,
+                  child: SafeArea(
+                    child: Center(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
+                        child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 400), child: acceso),
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
-          );
-        }
-        // En el celular: la foto arriba y el acceso debajo, con el logo montado sobre el
-        // borde de la foto.
-        return SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 230, child: _Portada(compacta: true)),
-              Transform.translate(
-                offset: const Offset(0, -44),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Center(
-                    child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 420), child: acceso),
+              ],
+            );
+          }
+          // En el celular: la foto arriba y el acceso debajo, con el logo montado sobre el
+          // borde de la foto.
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 230, child: _Portada(compacta: true)),
+                Transform.translate(
+                  offset: const Offset(0, -44),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Center(
+                      child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 420), child: acceso),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        );
-      }),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -110,21 +112,29 @@ class _Portada extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text("Max's Pizzas",
-                  style: (compacta ? tema.textTheme.headlineMedium : tema.textTheme.displayMedium)
-                      ?.copyWith(color: blanco, fontWeight: FontWeight.w800)),
+              Text(
+                "Max's Pizzas",
+                style: (compacta ? tema.textTheme.headlineMedium : tema.textTheme.displayMedium)?.copyWith(
+                  color: blanco,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
               if (!compacta) ...[
                 const SizedBox(height: 8),
-                Text('Pizzería de Tarija. Pizzas enteras, de un sabor o mitad y mitad.',
-                    style: tema.textTheme.titleMedium?.copyWith(color: suave)),
+                Text(
+                  'Pizzería de Tarija. Pizzas enteras, de un sabor o mitad y mitad.',
+                  style: tema.textTheme.titleMedium?.copyWith(color: suave),
+                ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
                     const Icon(Icons.place_outlined, size: 18, color: suave),
                     const SizedBox(width: 6),
                     Flexible(
-                      child: Text('Villa Fátima · Villa Avaroa · Tabladita',
-                          style: tema.textTheme.bodyMedium?.copyWith(color: suave)),
+                      child: Text(
+                        'Villa Fátima · Villa Avaroa · Tabladita',
+                        style: tema.textTheme.bodyMedium?.copyWith(color: suave),
+                      ),
                     ),
                   ],
                 ),
@@ -169,10 +179,15 @@ class _Acceso extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         Text.rich(
-          const TextSpan(children: [
-            TextSpan(text: 'Max '),
-            TextSpan(text: 'Pizzapp', style: TextStyle(color: rojoLadrillo)),
-          ]),
+          const TextSpan(
+            children: [
+              TextSpan(text: 'Max '),
+              TextSpan(
+                text: 'Pizzapp',
+                style: TextStyle(color: rojoLadrillo),
+              ),
+            ],
+          ),
           textAlign: TextAlign.center,
           style: tema.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
         ),
@@ -183,10 +198,7 @@ class _Acceso extends StatelessWidget {
           style: tema.textTheme.bodyLarge?.copyWith(color: colores.onSurfaceVariant),
         ),
         const SizedBox(height: 28),
-        if (mensaje != null) ...[
-          _Aviso(texto: mensaje!),
-          const SizedBox(height: 16),
-        ],
+        if (mensaje != null) ...[_Aviso(texto: mensaje!), const SizedBox(height: 16)],
         FilledButton.icon(
           onPressed: alIniciarSesion,
           icon: const Icon(Icons.login),
@@ -199,8 +211,10 @@ class _Acceso extends StatelessWidget {
             Icon(Icons.lock_outline, size: 16, color: colores.onSurfaceVariant),
             const SizedBox(width: 6),
             Flexible(
-              child: Text("Acceso para el personal de Max's Pizzas",
-                  style: tema.textTheme.bodySmall?.copyWith(color: colores.onSurfaceVariant)),
+              child: Text(
+                "Acceso para el personal de Max's Pizzas",
+                style: tema.textTheme.bodySmall?.copyWith(color: colores.onSurfaceVariant),
+              ),
             ),
           ],
         ),
@@ -257,10 +271,7 @@ class _Aviso extends StatelessWidget {
     final colores = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colores.errorContainer,
-        borderRadius: BorderRadius.circular(10),
-      ),
+      decoration: BoxDecoration(color: colores.errorContainer, borderRadius: BorderRadius.circular(10)),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

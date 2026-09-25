@@ -3,77 +3,67 @@ import 'package:flutter/material.dart';
 import '../../carta/producto.dart';
 import '../../tema.dart';
 
-/// Después de "Terminar venta": el pedido quedó guardado. Dice su número, a nombre de quién
-/// va y cuánto se cobra, y deja lista una venta nueva con un toque.
+/// Cuánto queda a la vista el aviso de la venta guardada antes de cerrarse solo.
+const duracionDelAviso = Duration(seconds: 6);
+
+/// Después de confirmar: la venta quedó guardada. Un aviso flotante dice el número que se
+/// canta, a nombre de quién va y cuánto se cobra (D-35, D-36), y se cierra solo a los pocos
+/// segundos, o antes con la X. No ocupa lugar en el formulario, que ya quedó limpio para el
+/// siguiente cliente.
 ///
 /// El número y el total son los del SERVIDOR, no la vista previa: son los que quedaron
 /// guardados.
-class PedidoEnviado extends StatelessWidget {
-  const PedidoEnviado({super.key, required this.pedido, required this.alNuevaVenta});
+SnackBar avisoDeVentaGuardada(Map<String, dynamic> pedido, {required bool ancha}) {
+  final total = formatoBs(((pedido['total'] as num) * 100).round());
+  final cliente = pedido['cliente'] as Map<String, dynamic>?;
 
-  /// El pedido como lo devuelve POST /api/v1/pedidos.
-  final Map<String, dynamic> pedido;
-  final VoidCallback alNuevaVenta;
+  // La venta directa de bebidas no lleva nombre ni número: se entregó en el momento (D-38).
+  final String titulo;
+  final String detalle;
+  if (cliente == null) {
+    titulo = 'Venta de bebidas registrada · $total';
+    detalle = 'Entregada en el mostrador.';
+  } else {
+    final numero = pedido['numero'] ?? pedido['id'];
+    titulo = 'Pedido $numero de ${cliente['nombre']} enviado a cocina';
+    detalle = '${pedido['paraLlevar'] == true ? 'Para llevar' : 'Para comer aquí'} · $total';
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    final tema = Theme.of(context);
-    final numero = pedido['id'];
-    final cliente = (pedido['cliente'] as Map<String, dynamic>)['nombre'] as String;
-    final paraLlevar = pedido['paraLlevar'] == true;
-    // Un pedido de solo bebidas nace listo: no pasa por cocina (D-32).
-    final soloBebidas = pedido['estado'] == 'listo';
-    final total = ((pedido['total'] as num) * 100).round();
-
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 480),
+  return SnackBar(
+    key: const Key('aviso-enviado'),
+    behavior: SnackBarBehavior.floating,
+    width: ancha ? 520 : null,
+    duration: duracionDelAviso,
+    backgroundColor: amarilloSuave,
+    showCloseIcon: true,
+    closeIconColor: textoSobreAmarillo,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(14),
+      side: const BorderSide(color: rojoLadrillo),
+    ),
+    content: Row(
+      children: [
+        const CircleAvatar(
+          radius: 16,
+          backgroundColor: rojoLadrillo,
+          child: Icon(Icons.check, color: Colors.white, size: 20),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
-                child: Container(
-                  width: 88,
-                  height: 88,
-                  decoration: const BoxDecoration(color: rojoLadrillo, shape: BoxShape.circle),
-                  child: const Icon(Icons.check, size: 52, color: Colors.white),
-                ),
-              ),
-              const SizedBox(height: 20),
               Text(
-                soloBebidas ? 'Pedido #$numero listo para entregar' : 'Pedido #$numero enviado a cocina',
+                titulo,
                 key: const Key('pedido-enviado'),
-                textAlign: TextAlign.center,
-                style: tema.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+                style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: textoSobreAmarillo),
               ),
-              const SizedBox(height: 8),
-              Text(
-                '$cliente · ${paraLlevar ? 'Para llevar' : 'Para comer aquí'}',
-                textAlign: TextAlign.center,
-                style: tema.textTheme.titleMedium,
-              ),
-              if (soloBebidas) ...[
-                const SizedBox(height: 4),
-                Text('Es solo de bebidas: no pasa por cocina.',
-                    textAlign: TextAlign.center,
-                    style: tema.textTheme.bodyMedium?.copyWith(color: tema.colorScheme.onSurfaceVariant)),
-              ],
-              const SizedBox(height: 16),
-              Center(child: EtiquetaPrecio(formatoBs(total), grande: true, key: const Key('total-enviado'))),
-              const SizedBox(height: 32),
-              FilledButton.icon(
-                autofocus: true,
-                onPressed: alNuevaVenta,
-                icon: const Icon(Icons.add),
-                label: const Text('Nueva venta'),
-              ),
+              Text(detalle, style: const TextStyle(color: textoSobreAmarillo)),
             ],
           ),
         ),
-      ),
-    );
-  }
+      ],
+    ),
+  );
 }

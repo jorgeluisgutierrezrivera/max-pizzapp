@@ -15,7 +15,7 @@ class VentaInvalida implements Exception {
 @immutable
 class PizzaElegida {
   PizzaElegida({required this.sabor, this.segundaMitad, Iterable<Producto> extras = const []})
-      : extras = List.unmodifiable(extras.toSet().toList()..sort((a, b) => a.id.compareTo(b.id))) {
+    : extras = List.unmodifiable(extras.toSet().toList()..sort((a, b) => a.id.compareTo(b.id))) {
     for (final p in [sabor, ?segundaMitad]) {
       if (!p.esPizza) throw VentaInvalida('${p.nombre} no es una pizza.');
       if (!p.disponible) throw VentaInvalida('${p.nombre} está agotada.');
@@ -37,20 +37,25 @@ class PizzaElegida {
   bool get esMitadYMitad => segundaMitad != null;
 
   /// La pizza sin extras (D-27): su precio, o (A + B) / 2 si es de dos mitades.
-  int get precioBase =>
-      segundaMitad == null ? sabor.precio : precioDeDosMitades(sabor, segundaMitad!);
+  int get precioBase => segundaMitad == null ? sabor.precio : precioDeDosMitades(sabor, segundaMitad!);
 
   /// Cada extra suma su precio, uno solo para cualquier pizza (D-28).
   int get precioUnitario => precioBase + extras.fold(0, (s, e) => s + e.precio);
 
   /// Peperoni · Mitad Salame / mitad Peperoni
-  String get titulo =>
-      segundaMitad == null ? sabor.nombre : 'Mitad ${sabor.nombre} / mitad ${segundaMitad!.nombre}';
+  String get titulo => segundaMitad == null ? sabor.nombre : 'Mitad ${sabor.nombre} / mitad ${segundaMitad!.nombre}';
 
   /// Mitad A y mitad B es la misma pizza que mitad B y mitad A, con los mismos extras.
   bool esIgualA(PizzaElegida otra) =>
-      setEquals({sabor, ?segundaMitad}, {otra.sabor, ?otra.segundaMitad}) &&
-      listEquals(extras, otra.extras);
+      setEquals({sabor, ?segundaMitad}, {otra.sabor, ?otra.segundaMitad}) && listEquals(extras, otra.extras);
+
+  /// La línea de POST /api/v1/pedidos: cada extra va dentro de su pizza.
+  Map<String, dynamic> aLinea(int cantidad) => {
+    'productoId': sabor.id,
+    if (segundaMitad != null) 'mitadId': segundaMitad!.id,
+    'cantidad': cantidad,
+    if (extras.isNotEmpty) 'extras': [for (final e in extras) e.id],
+  };
 }
 
 @immutable
@@ -69,473 +74,325 @@ class LineaBebida {
   int get subtotal => bebida.precio * cantidad;
 }
 
-/// Los pasos del recorrido (D-30). Uno por pantalla. "llevar" y "cliente" llegan con la
-/// tarjeta 06: el pedido dice si es para llevar (D-34) y a nombre de quién va (D-31).
-enum Paso {
-  cantidad, iguales, tipo, sabor, primeraMitad, segundaMitad, extras, bebidas, observacion,
-  llevar, cliente, resumen,
-}
-
 /// Celular boliviano: 8 dígitos que empiezan con 6 o 7. La misma regla que el servidor y la
 /// base (D-31).
 final celularValido = RegExp(r'^[67][0-9]{7}$');
 
-/// La pizza que se está definiendo, a medio camino.
-@immutable
-class PizzaEnCurso {
-  const PizzaEnCurso({this.mitades = false, this.sabor, this.segundaMitad});
-  final bool mitades;
-  final Producto? sabor;
-  final Producto? segundaMitad;
-}
+/// El mismo límite que la base para una línea (detalle_pedido_cantidad_valida).
+const maximoPorLinea = 999;
 
-/// Todo el estado de una venta, INMUTABLE: cada paso crea uno nuevo. Así "Volver" es
-/// simplemente recuperar el anterior, sin deshacer nada a mano.
-@immutable
-class EstadoVenta {
-  const EstadoVenta({
-    this.paso = Paso.cantidad,
-    this.grupos = const [],
-    this.bebidas = const [],
-    this.observacion = '',
-    this.cantidadDelTramo = 0,
-    this.pendientes = 0,
-    this.iguales = false,
-    this.enCurso = const PizzaEnCurso(),
-    this.ultimaPizza,
-    this.paraLlevar,
-    this.nombreCliente = '',
-    this.celular = '',
-  });
+/// Las bebidas de una venta, con sus cantidades. Las usan el formulario y la venta directa.
+class _Bebidas {
+  List<LineaBebida> lineas = const [];
 
-  final Paso paso;
-  final List<GrupoPizzas> grupos;
-  final List<LineaBebida> bebidas;
-  final String observacion;
+  int cantidadDe(Producto bebida) => lineas.where((b) => b.bebida == bebida).firstOrNull?.cantidad ?? 0;
 
-  /// Cuántas pizzas pidió el cliente en esta tanda, y cuántas faltan definir.
-  final int cantidadDelTramo;
-  final int pendientes;
-
-  /// Si las pizzas de la tanda son todas iguales: se definen una sola vez.
-  final bool iguales;
-  final PizzaEnCurso enCurso;
-
-  /// La última pizza confirmada en esta tanda: la que ofrece "Igual a la pizza anterior".
-  final PizzaElegida? ultimaPizza;
-
-  /// Nulo mientras no se preguntó (D-34).
-  final bool? paraLlevar;
-  final String nombreCliente;
-  final String celular;
-
-  /// Si ya se sabe a nombre de quién va y si es para llevar: al volver del resumen a cambiar
-  /// algo, no se vuelve a preguntar.
-  bool get clienteCompleto => paraLlevar != null && nombreCliente.trim().isNotEmpty;
-
-  int get unidadesDePizza => grupos.fold(0, (s, g) => s + g.cantidad);
-  int get unidadesDeBebida => bebidas.fold(0, (s, b) => s + b.cantidad);
-  int get total =>
-      grupos.fold(0, (s, g) => s + g.subtotal) + bebidas.fold(0, (s, b) => s + b.subtotal);
-  bool get vacia => grupos.isEmpty && bebidas.isEmpty;
-
-  /// Cuál pizza de la tanda se está definiendo (1, 2, 3…), cuando son distintas.
-  int get pizzaActual => cantidadDelTramo - pendientes + 1;
-
-  EstadoVenta con({
-    Paso? paso,
-    List<GrupoPizzas>? grupos,
-    List<LineaBebida>? bebidas,
-    String? observacion,
-    int? cantidadDelTramo,
-    int? pendientes,
-    bool? iguales,
-    PizzaEnCurso? enCurso,
-    PizzaElegida? ultimaPizza,
-    bool sinUltimaPizza = false,
-    bool? paraLlevar,
-    String? nombreCliente,
-    String? celular,
-  }) =>
-      EstadoVenta(
-        paso: paso ?? this.paso,
-        grupos: grupos ?? this.grupos,
-        bebidas: bebidas ?? this.bebidas,
-        observacion: observacion ?? this.observacion,
-        cantidadDelTramo: cantidadDelTramo ?? this.cantidadDelTramo,
-        pendientes: pendientes ?? this.pendientes,
-        iguales: iguales ?? this.iguales,
-        enCurso: enCurso ?? this.enCurso,
-        ultimaPizza: sinUltimaPizza ? null : (ultimaPizza ?? this.ultimaPizza),
-        paraLlevar: paraLlevar ?? this.paraLlevar,
-        nombreCliente: nombreCliente ?? this.nombreCliente,
-        celular: celular ?? this.celular,
-      );
-
-  /// El cuerpo de POST /api/v1/pedidos. Las pizzas iguales ya vienen juntas en un grupo; cada
-  /// extra va dentro de su pizza. El total es el que se mostró, en bolivianos: el servidor
-  /// lo compara con el suyo y, si no coinciden, no guarda nada (409 PRECIO_CAMBIADO).
-  Map<String, dynamic> aPedido() => {
-        'paraLlevar': paraLlevar,
-        'cliente': {
-          'nombre': nombreCliente.trim(),
-          'celular': celular.trim().isEmpty ? null : celular.trim(),
-        },
-        'observacion': observacion.trim().isEmpty ? null : observacion.trim(),
-        'lineas': [
-          for (final g in grupos)
-            {
-              'productoId': g.pizza.sabor.id,
-              if (g.pizza.segundaMitad != null) 'mitadId': g.pizza.segundaMitad!.id,
-              'cantidad': g.cantidad,
-              if (g.pizza.extras.isNotEmpty) 'extras': [for (final e in g.pizza.extras) e.id],
-            },
-          for (final b in bebidas) {'productoId': b.bebida.id, 'cantidad': b.cantidad},
-        ],
-        'totalEsperado': total / 100,
-      };
-}
-
-/// El recorrido guiado de una venta: una pregunta por pantalla, siempre hacia adelante,
-/// con "Volver" en cada paso (D-30).
-///
-/// Es lógica pura, sin pantalla: las pruebas recorren una venta completa llamando a estos
-/// métodos, y la pantalla solo muestra el paso y llama al que corresponde.
-class RecorridoVenta extends ChangeNotifier {
-  RecorridoVenta(this.carta);
-
-  final Carta carta;
-
-  /// Techo de una tanda: solo ataja un error de tipeo (200 en vez de 20).
-  static const maximoPorTanda = 50;
-
-  /// El mismo límite que la base para una línea (detalle_pedido_cantidad_valida).
-  static const maximoPorLinea = 999;
-  static const largoObservacion = 240;
-  static const largoNombre = 120;
-
-  EstadoVenta _estado = const EstadoVenta();
-  final List<EstadoVenta> _anteriores = [];
-
-  EstadoVenta get estado => _estado;
-
-  /// En el resumen no se "vuelve": desde ahí se edita con sus propios botones.
-  bool get puedeVolver => _anteriores.isNotEmpty && _estado.paso != Paso.resumen;
-
-  /// Hay algo que perder si se cancela.
-  bool get empezada => !_estado.vacia || _estado.paso != Paso.cantidad;
-
-  void _ir(EstadoVenta nuevo) {
-    _anteriores.add(_estado);
-    _estado = nuevo;
-    notifyListeners();
-  }
-
-  /// Cambia algo del paso actual sin crear un paso nuevo: las cantidades de bebidas, la
-  /// observación, las ediciones del resumen. Tocar "+" diez veces no son diez pasos atrás.
-  void _cambiarAqui(EstadoVenta nuevo) {
-    _estado = nuevo;
-    notifyListeners();
-  }
-
-  void volver() {
-    if (!puedeVolver) return;
-    _estado = _anteriores.removeLast();
-    notifyListeners();
-  }
-
-  /// Empieza de cero: la venta en curso se descarta.
-  void cancelar() {
-    _anteriores.clear();
-    _estado = const EstadoVenta();
-    notifyListeners();
-  }
-
-  // --- 1. Cuántas pizzas -------------------------------------------------------
-
-  void elegirCantidad(int cantidad) {
-    _exigirPaso(Paso.cantidad);
-    if (cantidad < 1 || cantidad > maximoPorTanda) {
-      throw const VentaInvalida('La cantidad va de 1 a $maximoPorTanda pizzas.');
-    }
-    // Con una sola pizza no hay nada que preguntar: es "todas iguales".
-    _ir(_estado.con(
-      paso: cantidad == 1 ? Paso.tipo : Paso.iguales,
-      cantidadDelTramo: cantidad,
-      pendientes: cantidad,
-      iguales: cantidad == 1,
-      enCurso: const PizzaEnCurso(),
-      sinUltimaPizza: true,
-    ));
-  }
-
-  /// Una venta puede ser solo de bebidas (D-27).
-  void soloBebidas() {
-    _exigirPaso(Paso.cantidad);
-    _ir(_estado.con(paso: Paso.bebidas, cantidadDelTramo: 0, pendientes: 0));
-  }
-
-  // --- 2. ¿Todas iguales? --------------------------------------------------------
-
-  void elegirIguales(bool iguales) {
-    _exigirPaso(Paso.iguales);
-    _ir(_estado.con(paso: Paso.tipo, iguales: iguales));
-  }
-
-  // --- 3. ¿Un sabor o mitad y mitad? --------------------------------------------
-
-  void elegirTipo({required bool mitades}) {
-    _exigirPaso(Paso.tipo);
-    _ir(_estado.con(
-      paso: mitades ? Paso.primeraMitad : Paso.sabor,
-      enCurso: PizzaEnCurso(mitades: mitades),
-    ));
-  }
-
-  // --- 4. El sabor o las dos mitades --------------------------------------------
-
-  void elegirSabor(Producto sabor) {
-    _exigirPaso(Paso.sabor);
-    _exigirPizzaDisponible(sabor);
-    _alTerminarSabores(PizzaEnCurso(sabor: sabor));
-  }
-
-  void elegirPrimeraMitad(Producto sabor) {
-    _exigirPaso(Paso.primeraMitad);
-    _exigirPizzaDisponible(sabor);
-    _ir(_estado.con(paso: Paso.segundaMitad, enCurso: PizzaEnCurso(mitades: true, sabor: sabor)));
-  }
-
-  /// Los sabores que se ofrecen como segunda mitad: todos menos el de la primera.
-  List<Producto> get opcionesSegundaMitad =>
-      carta.pizzas.where((p) => p != _estado.enCurso.sabor).toList();
-
-  void elegirSegundaMitad(Producto sabor) {
-    _exigirPaso(Paso.segundaMitad);
-    _exigirPizzaDisponible(sabor);
-    if (sabor == _estado.enCurso.sabor) {
-      throw const VentaInvalida('La segunda mitad tiene que ser de otro sabor.');
-    }
-    _alTerminarSabores(PizzaEnCurso(mitades: true, sabor: _estado.enCurso.sabor, segundaMitad: sabor));
-  }
-
-  /// Si la carta no tiene extras disponibles, el paso de extras no se muestra.
-  void _alTerminarSabores(PizzaEnCurso enCurso) {
-    if (carta.extras.any((e) => e.disponible)) {
-      _ir(_estado.con(paso: Paso.extras, enCurso: enCurso));
-    } else {
-      _ir(_estado.con(enCurso: enCurso));
-      _definirPizza(const []);
-    }
-  }
-
-  /// La pizza que se está armando, con los extras elegidos: para mostrar su precio.
-  PizzaElegida pizzaConExtras(Iterable<Producto> extras) {
-    final enCurso = _estado.enCurso;
-    return PizzaElegida(sabor: enCurso.sabor!, segundaMitad: enCurso.segundaMitad, extras: extras);
-  }
-
-  // --- 5. Extras y confirmación ----------------------------------------------------
-
-  /// Cuántas pizzas confirma el botón del paso de extras: todas las de la tanda si son
-  /// iguales, una si son distintas.
-  int get pizzasQueConfirma => _estado.iguales ? _estado.pendientes : 1;
-
-  /// "Confirmar pizza 2": la pizza queda en la venta con los extras elegidos.
-  void confirmarExtras(Iterable<Producto> extras) {
-    _exigirPaso(Paso.extras);
-    _definirPizza(extras);
-  }
-
-  /// La pizza quedó definida. Si todas son iguales, vale por las que faltan; si son
-  /// distintas, vale por una, y la siguiente empieza con la opción de repetirla.
-  void _definirPizza(Iterable<Producto> extras) {
-    _agregarGrupo(pizzaConExtras(extras), pizzasQueConfirma, desdeAqui: _estado.paso != Paso.extras);
-  }
-
-  // --- 6. Igual a la pizza anterior -------------------------------------------------
-
-  /// Desde la segunda pizza de una tanda de pizzas distintas, la primera pregunta ofrece
-  /// repetir la anterior con un toque.
-  bool get puedeRepetirAnterior =>
-      _estado.paso == Paso.tipo && !_estado.iguales && _estado.pizzaActual > 1 && _estado.ultimaPizza != null;
-
-  void repetirAnterior() {
-    _exigirPaso(Paso.tipo);
-    if (!puedeRepetirAnterior) throw const VentaInvalida('No hay una pizza anterior para repetir.');
-    _agregarGrupo(_estado.ultimaPizza!, 1, desdeAqui: false);
-  }
-
-  void _agregarGrupo(PizzaElegida pizza, int cantidad, {required bool desdeAqui}) {
-    final grupos = [..._estado.grupos];
-    final i = grupos.indexWhere((g) => g.pizza.esIgualA(pizza));
-    if (i >= 0) {
-      final suma = grupos[i].cantidad + cantidad;
-      if (suma > maximoPorLinea) throw const VentaInvalida('Una pizza admite hasta $maximoPorLinea unidades.');
-      grupos[i] = GrupoPizzas(grupos[i].pizza, suma);
-    } else {
-      grupos.add(GrupoPizzas(pizza, cantidad));
-    }
-    final faltan = _estado.pendientes - cantidad;
-    final nuevo = _estado.con(
-      paso: faltan > 0 ? Paso.tipo : Paso.bebidas,
-      grupos: grupos,
-      pendientes: faltan,
-      enCurso: const PizzaEnCurso(),
-      ultimaPizza: pizza,
-    );
-    if (desdeAqui) {
-      _cambiarAqui(nuevo);
-    } else {
-      _ir(nuevo);
-    }
-  }
-
-  // --- 7. Bebidas ----------------------------------------------------------------
-
-  int cantidadDeBebida(Producto bebida) =>
-      _estado.bebidas.where((b) => b.bebida == bebida).firstOrNull?.cantidad ?? 0;
-
-  void cambiarBebida(Producto bebida, int cantidad) {
-    if (_estado.paso != Paso.bebidas && _estado.paso != Paso.resumen) {
-      throw const VentaInvalida('Las bebidas se eligen en su paso o en el resumen.');
-    }
+  void cambiar(Producto bebida, int cantidad) {
     if (!bebida.esBebida) throw VentaInvalida('${bebida.nombre} no es una bebida.');
-    if (cantidad > 0 && !bebida.disponible) throw VentaInvalida('${bebida.nombre} está agotada.');
+    if (cantidad > cantidadDe(bebida) && !bebida.disponible) throw VentaInvalida('${bebida.nombre} está agotada.');
     if (cantidad < 0 || cantidad > maximoPorLinea) {
       throw const VentaInvalida('Una bebida admite hasta $maximoPorLinea unidades.');
     }
-    final bebidas = [..._estado.bebidas];
-    final i = bebidas.indexWhere((b) => b.bebida == bebida);
+    final nuevas = [...lineas];
+    final i = nuevas.indexWhere((b) => b.bebida == bebida);
     if (cantidad == 0) {
-      if (i >= 0) bebidas.removeAt(i);
+      if (i >= 0) nuevas.removeAt(i);
     } else if (i >= 0) {
-      bebidas[i] = LineaBebida(bebida, cantidad);
+      nuevas[i] = LineaBebida(bebida, cantidad);
     } else {
-      bebidas.add(LineaBebida(bebida, cantidad));
+      nuevas.add(LineaBebida(bebida, cantidad));
     }
-    _cambiarAqui(_estado.con(bebidas: bebidas));
+    lineas = List.unmodifiable(nuevas);
   }
 
-  void continuarDeBebidas() {
-    _exigirPaso(Paso.bebidas);
-    _ir(_estado.con(paso: Paso.observacion));
-  }
+  int get total => lineas.fold(0, (s, b) => s + b.subtotal);
+  List<Map<String, dynamic>> aLineas() => [
+    for (final b in lineas) {'productoId': b.bebida.id, 'cantidad': b.cantidad},
+  ];
+}
 
-  // --- 8. Observación ----------------------------------------------------------
+/// La venta en un solo formulario (D-36), en el orden en que se atiende en el mostrador:
+/// el cliente, si es para llevar o para comer aquí, las pizzas, las bebidas y la
+/// observación. Todo se puede corregir en el lugar hasta confirmar.
+///
+/// Es lógica pura, sin pantalla: las pruebas arman una venta completa llamando a estos
+/// métodos, y la pantalla solo muestra el estado y llama al que corresponde.
+class FormularioVenta extends ChangeNotifier {
+  FormularioVenta(this.carta);
 
-  void escribirObservacion(String texto) {
-    _exigirPaso(Paso.observacion);
-    if (texto.length > largoObservacion) {
-      throw const VentaInvalida('La observación admite hasta $largoObservacion caracteres.');
-    }
-    _cambiarAqui(_estado.con(observacion: texto));
-  }
+  final Carta carta;
 
-  /// Sigue a "¿para llevar?". Si ya se sabe a nombre de quién va (se volvió desde el
-  /// resumen a cambiar algo), vuelve directo al resumen.
-  void continuarDeObservacion() {
-    _exigirPaso(Paso.observacion);
-    final limpio = _estado.con(observacion: _estado.observacion.trim());
-    if (limpio.clienteCompleto) {
-      _alResumen(limpio);
-    } else {
-      _ir(limpio.con(paso: Paso.llevar));
-    }
-  }
+  static const largoObservacion = 240;
+  static const largoNombre = 120;
 
-  // --- 9. ¿Para llevar o para comer aquí? (D-34) -----------------------------------
+  String _nombre = '';
+  String _celular = '';
+  bool? _paraLlevar;
+  String _observacion = '';
+  List<GrupoPizzas> _grupos = const [];
+  final _bebidas = _Bebidas();
 
-  void elegirParaLlevar(bool paraLlevar) {
-    _exigirPaso(Paso.llevar);
-    _ir(_estado.con(paso: Paso.cliente, paraLlevar: paraLlevar));
-  }
+  String get nombre => _nombre;
+  String get celular => _celular;
 
-  // --- 10. ¿A nombre de quién? (D-31) -------------------------------------------------
+  /// Nulo mientras no se eligió: no hay una opción marcada de entrada (D-36).
+  bool? get paraLlevar => _paraLlevar;
+  String get observacion => _observacion;
+  List<GrupoPizzas> get grupos => _grupos;
+  List<LineaBebida> get bebidas => _bebidas.lineas;
+
+  int get unidadesDePizza => _grupos.fold(0, (s, g) => s + g.cantidad);
+  int get total => _grupos.fold(0, (s, g) => s + g.subtotal) + _bebidas.total;
+
+  /// No hay nada escrito ni elegido: cancelarla no pierde nada.
+  bool get vacia =>
+      _grupos.isEmpty &&
+      _bebidas.lineas.isEmpty &&
+      _nombre.trim().isEmpty &&
+      _celular.isEmpty &&
+      _paraLlevar == null &&
+      _observacion.trim().isEmpty;
+
+  // --- El cliente -------------------------------------------------------------------
 
   void escribirNombre(String nombre) {
-    _exigirPaso(Paso.cliente);
-    if (nombre.length > largoNombre) {
-      throw const VentaInvalida('El nombre admite hasta $largoNombre caracteres.');
-    }
-    _cambiarAqui(_estado.con(nombreCliente: nombre));
+    if (nombre.length > largoNombre) throw const VentaInvalida('El nombre admite hasta $largoNombre caracteres.');
+    _nombre = nombre;
+    notifyListeners();
   }
 
   void escribirCelular(String celular) {
-    _exigirPaso(Paso.cliente);
-    _cambiarAqui(_estado.con(celular: celular));
+    _celular = celular;
+    notifyListeners();
   }
 
-  /// El nombre es obligatorio; el celular, opcional, pero si se escribe tiene que ser uno
-  /// boliviano. Devuelve el problema, o null si no hay.
-  String? get problemaDelCliente {
-    if (_estado.nombreCliente.trim().isEmpty) return 'Escribe el nombre del cliente.';
-    final celular = _estado.celular.trim();
-    if (celular.isNotEmpty && !celularValido.hasMatch(celular)) {
-      return 'El celular tiene 8 dígitos y empieza con 6 o 7.';
+  void elegirParaLlevar(bool paraLlevar) {
+    _paraLlevar = paraLlevar;
+    notifyListeners();
+  }
+
+  void escribirObservacion(String texto) {
+    if (texto.length > largoObservacion) {
+      throw const VentaInvalida('La observación admite hasta $largoObservacion caracteres.');
     }
-    return null;
+    _observacion = texto;
+    notifyListeners();
   }
 
-  void continuarDeCliente() {
-    _exigirPaso(Paso.cliente);
-    final problema = problemaDelCliente;
-    if (problema != null) throw VentaInvalida(problema);
-    _alResumen(_estado.con(nombreCliente: _estado.nombreCliente.trim(), celular: _estado.celular.trim()));
+  // --- Las pizzas -------------------------------------------------------------------
+
+  /// La pizza del modal, con su cantidad. Si ya hay una igual, se suma a esa línea.
+  void agregarPizza(PizzaElegida pizza, int cantidad) {
+    _grupos = _conPizza(_grupos, pizza, cantidad);
+    notifyListeners();
   }
 
-  /// Pasa al resumen. Desde ahí ya no se "vuelve": se edita con sus botones.
-  void _alResumen(EstadoVenta estado) {
-    _ir(estado.con(paso: Paso.resumen));
-    _anteriores.clear();
+  /// La pizza de una línea, corregida en el modal. Si quedó igual a otra, se juntan.
+  void reemplazarPizza(int indice, PizzaElegida pizza, int cantidad) {
+    final sin = [..._grupos]..removeAt(indice);
+    _grupos = _conPizza(sin, pizza, cantidad, en: indice);
+    notifyListeners();
   }
 
-  // --- 11. Resumen ---------------------------------------------------------------
-
+  /// − y + de una línea. En cero, la línea sale.
   void cambiarCantidadDeGrupo(int indice, int cantidad) {
-    _exigirPaso(Paso.resumen);
     if (cantidad > maximoPorLinea) throw const VentaInvalida('Una pizza admite hasta $maximoPorLinea unidades.');
-    final grupos = [..._estado.grupos];
+    final grupos = [..._grupos];
     if (cantidad <= 0) {
       grupos.removeAt(indice);
     } else {
       grupos[indice] = GrupoPizzas(grupos[indice].pizza, cantidad);
     }
-    _cambiarAqui(_estado.con(grupos: grupos));
+    _grupos = List.unmodifiable(grupos);
+    notifyListeners();
   }
 
-  /// El cliente cambió de idea: vuelve a preguntar cuántas, y suma a la misma venta.
-  void agregarMasPizzas() {
-    _exigirPaso(Paso.resumen);
-    _ir(_estado.con(paso: Paso.cantidad));
-  }
+  void quitarPizza(int indice) => cambiarCantidadDeGrupo(indice, 0);
 
-  void cambiarBebidas() {
-    _exigirPaso(Paso.resumen);
-    _ir(_estado.con(paso: Paso.bebidas));
-  }
-
-  void cambiarObservacion() {
-    _exigirPaso(Paso.resumen);
-    _ir(_estado.con(paso: Paso.observacion));
-  }
-
-  /// Vuelve a preguntar si es para llevar y a nombre de quién, con lo ya escrito.
-  void cambiarCliente() {
-    _exigirPaso(Paso.resumen);
-    _ir(_estado.con(paso: Paso.llevar));
-  }
-
-  // --- Validaciones --------------------------------------------------------------
-
-  void _exigirPaso(Paso paso) {
-    if (_estado.paso != paso) {
-      throw VentaInvalida('Este paso no corresponde ahora (${_estado.paso.name}).');
+  static List<GrupoPizzas> _conPizza(List<GrupoPizzas> grupos, PizzaElegida pizza, int cantidad, {int? en}) {
+    if (cantidad < 1 || cantidad > maximoPorLinea) {
+      throw const VentaInvalida('La cantidad va de 1 a $maximoPorLinea.');
     }
+    final nuevos = [...grupos];
+    final i = nuevos.indexWhere((g) => g.pizza.esIgualA(pizza));
+    if (i >= 0) {
+      final suma = nuevos[i].cantidad + cantidad;
+      if (suma > maximoPorLinea) throw const VentaInvalida('Una pizza admite hasta $maximoPorLinea unidades.');
+      nuevos[i] = GrupoPizzas(nuevos[i].pizza, suma);
+    } else {
+      nuevos.insert(en ?? nuevos.length, GrupoPizzas(pizza, cantidad));
+    }
+    return List.unmodifiable(nuevos);
   }
 
-  void _exigirPizzaDisponible(Producto p) {
-    if (!p.esPizza) throw VentaInvalida('${p.nombre} no es una pizza.');
-    if (!p.disponible) throw VentaInvalida('${p.nombre} está agotada.');
+  // --- Las bebidas ------------------------------------------------------------------
+
+  int cantidadDeBebida(Producto bebida) => _bebidas.cantidadDe(bebida);
+
+  void cambiarBebida(Producto bebida, int cantidad) {
+    _bebidas.cambiar(bebida, cantidad);
+    notifyListeners();
+  }
+
+  // --- Confirmar --------------------------------------------------------------------
+
+  /// Lo que falta para confirmar, en el orden del formulario. Vacía si se puede enviar.
+  /// Las mismas reglas que el servidor: nombre obligatorio, celular boliviano si se
+  /// escribe, para llevar o no, y al menos una pizza (D-31, D-34, D-38).
+  List<String> get problemas => [
+    if (_nombre.trim().isEmpty) 'Escribe el nombre del cliente.',
+    if (_celular.trim().isNotEmpty && !celularValido.hasMatch(_celular.trim()))
+      'El celular tiene 8 dígitos y empieza con 6 o 7.',
+    if (_paraLlevar == null) 'Elige si es para comer aquí o para llevar.',
+    if (_grupos.isEmpty)
+      _bebidas.lineas.isEmpty
+          ? 'Agrega al menos una pizza.'
+          : 'Agrega al menos una pizza. Las bebidas solas se venden con «Vender bebidas».',
+  ];
+
+  /// El cuerpo de POST /api/v1/pedidos. El total es el que se mostró, en bolivianos: el
+  /// servidor lo compara con el suyo y, si no coinciden, no guarda nada (409 PRECIO_CAMBIADO).
+  Map<String, dynamic> aPedido() {
+    final pendiente = problemas;
+    if (pendiente.isNotEmpty) throw VentaInvalida(pendiente.first);
+    return {
+      'paraLlevar': _paraLlevar,
+      'cliente': {'nombre': _nombre.trim(), 'celular': _celular.trim().isEmpty ? null : _celular.trim()},
+      'observacion': _observacion.trim().isEmpty ? null : _observacion.trim(),
+      'lineas': [for (final g in _grupos) g.pizza.aLinea(g.cantidad), ..._bebidas.aLineas()],
+      'totalEsperado': total / 100,
+    };
+  }
+
+  /// Empieza de cero: después de enviar, o si se cancela la venta.
+  void limpiar() {
+    _nombre = '';
+    _celular = '';
+    _paraLlevar = null;
+    _observacion = '';
+    _grupos = const [];
+    _bebidas.lineas = const [];
+    notifyListeners();
+  }
+}
+
+/// La pizza que se arma en el modal (D-36): entera o mitad y mitad, sus sabores, sus extras
+/// y cuántas. Mientras falte un sabor, no hay pizza.
+class ArmadoDePizza extends ChangeNotifier {
+  ArmadoDePizza(this.carta, {PizzaElegida? desde, int cantidad = 1})
+    : _mitades = desde?.esMitadYMitad ?? false,
+      _primera = desde?.sabor,
+      _segunda = desde?.segundaMitad,
+      _extras = {...?desde?.extras},
+      _cantidad = cantidad < 1 ? 1 : cantidad;
+
+  final Carta carta;
+
+  /// Techo del modal: solo ataja un error de tipeo (200 en vez de 20).
+  static const maximoPorVez = 50;
+
+  bool _mitades;
+  Producto? _primera;
+  Producto? _segunda;
+  final Set<Producto> _extras;
+  int _cantidad;
+
+  bool get mitades => _mitades;
+  Producto? get primera => _primera;
+  Producto? get segunda => _segunda;
+  Set<Producto> get extras => Set.unmodifiable(_extras);
+  int get cantidad => _cantidad;
+
+  /// Entera o mitad y mitad. Al pasar a entera, se queda el primer sabor elegido.
+  void elegirMitades(bool mitades) {
+    _mitades = mitades;
+    if (!mitades) _segunda = null;
+    notifyListeners();
+  }
+
+  /// Entera: el sabor tocado es el sabor. Mitad y mitad: el primero que se toca es la
+  /// primera mitad y el segundo, la segunda; tocar uno elegido lo quita, y con las dos
+  /// elegidas, un tercero reemplaza a la segunda.
+  void tocarSabor(Producto sabor) {
+    if (!sabor.esPizza) throw VentaInvalida('${sabor.nombre} no es una pizza.');
+    if (!sabor.disponible) throw VentaInvalida('${sabor.nombre} está agotada.');
+    if (!_mitades) {
+      _primera = sabor;
+    } else if (sabor == _primera) {
+      _primera = _segunda;
+      _segunda = null;
+    } else if (sabor == _segunda) {
+      _segunda = null;
+    } else if (_primera == null) {
+      _primera = sabor;
+    } else {
+      _segunda = sabor;
+    }
+    notifyListeners();
+  }
+
+  /// 1 o 2 si el sabor es una de las mitades; 1 si es el sabor de una entera; si no, nulo.
+  int? lugarDe(Producto sabor) {
+    if (sabor == _primera) return 1;
+    if (sabor == _segunda) return 2;
+    return null;
+  }
+
+  void alternarExtra(Producto extra) {
+    if (!extra.esExtra) throw VentaInvalida('${extra.nombre} no es un extra.');
+    if (!_extras.remove(extra)) {
+      if (!extra.disponible) throw VentaInvalida('${extra.nombre} está agotado.');
+      _extras.add(extra);
+    }
+    notifyListeners();
+  }
+
+  void cambiarCantidad(int cantidad) {
+    if (cantidad < 1 || cantidad > maximoPorVez) {
+      throw const VentaInvalida('La cantidad va de 1 a $maximoPorVez.');
+    }
+    _cantidad = cantidad;
+    notifyListeners();
+  }
+
+  /// Qué falta elegir, o nulo si la pizza está completa.
+  String? get falta {
+    if (_primera == null) return _mitades ? 'Elige los dos sabores' : 'Elige el sabor';
+    if (_mitades && _segunda == null) return 'Elige la segunda mitad';
+    return null;
+  }
+
+  PizzaElegida? get pizza =>
+      falta != null ? null : PizzaElegida(sabor: _primera!, segundaMitad: _mitades ? _segunda : null, extras: _extras);
+
+  /// El precio de todas las que se agregan: el único precio del modal.
+  int? get subtotal {
+    final p = pizza;
+    return p == null ? null : p.precioUnitario * _cantidad;
+  }
+}
+
+/// La venta directa de bebidas (D-38): sin nombre ni preguntas, se entrega en el momento.
+class VentaDeBebidas extends ChangeNotifier {
+  VentaDeBebidas(this.carta);
+
+  final Carta carta;
+  final _bebidas = _Bebidas();
+
+  List<LineaBebida> get lineas => _bebidas.lineas;
+  int get total => _bebidas.total;
+  bool get vacia => _bebidas.lineas.isEmpty;
+  int cantidadDe(Producto bebida) => _bebidas.cantidadDe(bebida);
+
+  void cambiar(Producto bebida, int cantidad) {
+    _bebidas.cambiar(bebida, cantidad);
+    notifyListeners();
+  }
+
+  /// El cuerpo de POST /api/v1/pedidos para una venta directa: sin cliente, sin "para
+  /// llevar" y sin observación; el servidor la guarda entregada.
+  Map<String, dynamic> aVentaDirecta() {
+    if (vacia) throw const VentaInvalida('Elige al menos una bebida.');
+    return {'ventaDirecta': true, 'lineas': _bebidas.aLineas(), 'totalEsperado': total / 100};
   }
 }

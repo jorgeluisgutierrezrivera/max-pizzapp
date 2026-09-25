@@ -120,9 +120,11 @@ class _PantallaCocinaState extends State<PantallaCocina> {
       _cola = [...cola, pedido]..sort(_porLlegada);
       _nuevos.add(pedido.id);
     });
-    _marcas.add(Timer(const Duration(minutes: 1), () {
-      if (mounted) setState(() => _nuevos.remove(pedido.id));
-    }));
+    _marcas.add(
+      Timer(const Duration(minutes: 1), () {
+        if (mounted) setState(() => _nuevos.remove(pedido.id));
+      }),
+    );
   }
 
   void _alCambiarEstado(Map<String, dynamic> aviso) {
@@ -214,8 +216,7 @@ class _PantallaCocinaState extends State<PantallaCocina> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _Estado(cantidad: cola.length, conectado: _conectado),
-        if (_aviso != null)
-          _AvisoCocina(texto: _aviso!, alCerrar: () => setState(() => _aviso = null)),
+        if (_aviso != null) _AvisoCocina(texto: _aviso!, alCerrar: () => setState(() => _aviso = null)),
         Expanded(
           child: cola.isEmpty
               ? const _Centro(
@@ -267,9 +268,11 @@ class _Estado extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 6),
-          Text(conectado ? 'En vivo' : 'Conectando…',
-              key: const Key('estado-canal'),
-              style: tema.textTheme.bodyMedium?.copyWith(color: tema.colorScheme.onSurfaceVariant)),
+          Text(
+            conectado ? 'En vivo' : 'Conectando…',
+            key: const Key('estado-canal'),
+            style: tema.textTheme.bodyMedium?.copyWith(color: tema.colorScheme.onSurfaceVariant),
+          ),
         ],
       ),
     );
@@ -295,34 +298,36 @@ class _Tablero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(builder: (context, lados) {
-      const margen = 16.0;
-      const separacion = 16.0;
-      final util = lados.maxWidth - 2 * margen;
-      final columnas = (util / 360).floor().clamp(1, 6);
-      final ancho = (util - separacion * (columnas - 1)) / columnas;
-      return SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.fromLTRB(margen, 8, margen, 24),
-        child: Wrap(
-          spacing: separacion,
-          runSpacing: separacion,
-          children: [
-            for (final pedido in cola)
-              SizedBox(
-                width: ancho,
-                child: TarjetaDeCocina(
-                  pedido: pedido,
-                  ahora: ahora,
-                  nuevo: nuevos.contains(pedido.id),
-                  enCamino: enCamino.contains(pedido.id),
-                  alAvanzar: () => alAvanzar(pedido),
+    return LayoutBuilder(
+      builder: (context, lados) {
+        const margen = 16.0;
+        const separacion = 16.0;
+        final util = lados.maxWidth - 2 * margen;
+        final columnas = (util / 360).floor().clamp(1, 6);
+        final ancho = (util - separacion * (columnas - 1)) / columnas;
+        return SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(margen, 8, margen, 24),
+          child: Wrap(
+            spacing: separacion,
+            runSpacing: separacion,
+            children: [
+              for (final pedido in cola)
+                SizedBox(
+                  width: ancho,
+                  child: TarjetaDeCocina(
+                    pedido: pedido,
+                    ahora: ahora,
+                    nuevo: nuevos.contains(pedido.id),
+                    enCamino: enCamino.contains(pedido.id),
+                    alAvanzar: () => alAvanzar(pedido),
+                  ),
                 ),
-              ),
-          ],
-        ),
-      );
-    });
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -364,20 +369,26 @@ class TarjetaDeCocina extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('#${pedido.id}',
-                    style: tema.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, color: rojoLadrillo)),
+                Text(
+                  '#${pedido.id}',
+                  style: tema.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, color: rojoLadrillo),
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(pedido.cliente,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: tema.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                      Text(haceCuanto(pedido.creadoEn, ahora),
-                          key: Key('hace-${pedido.id}'),
-                          style: tema.textTheme.bodySmall?.copyWith(color: colores.onSurfaceVariant)),
+                      Text(
+                        pedido.cliente,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: tema.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      Text(
+                        haceCuanto(pedido.creadoEn, ahora),
+                        key: Key('hace-${pedido.id}'),
+                        style: tema.textTheme.bodySmall?.copyWith(color: colores.onSurfaceVariant),
+                      ),
                     ],
                   ),
                 ),
@@ -419,8 +430,10 @@ class TarjetaDeCocina extends StatelessWidget {
                     const Icon(Icons.sticky_note_2_outlined, size: 18, color: textoSobreAmarillo),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(pedido.observacion!,
-                          style: const TextStyle(color: textoSobreAmarillo, fontWeight: FontWeight.w700)),
+                      child: Text(
+                        pedido.observacion!,
+                        style: const TextStyle(color: textoSobreAmarillo, fontWeight: FontWeight.w700),
+                      ),
                     ),
                   ],
                 ),
@@ -461,10 +474,15 @@ class _LineaDeCocina extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text.rich(
-            TextSpan(children: [
-              TextSpan(text: '${linea.cantidad} × ', style: const TextStyle(color: rojoLadrillo)),
-              TextSpan(text: linea.titulo),
-            ]),
+            TextSpan(
+              children: [
+                TextSpan(
+                  text: '${linea.cantidad} × ',
+                  style: const TextStyle(color: rojoLadrillo),
+                ),
+                TextSpan(text: linea.titulo),
+              ],
+            ),
             style: tema.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
           for (final extra in linea.extras)
@@ -494,7 +512,10 @@ class _Chip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (icono != null) ...[Icon(icono, size: 16, color: letra), const SizedBox(width: 4)],
-          Text(texto, style: TextStyle(color: letra, fontWeight: FontWeight.w700, fontSize: 13)),
+          Text(
+            texto,
+            style: TextStyle(color: letra, fontWeight: FontWeight.w700, fontSize: 13),
+          ),
         ],
       ),
     );
@@ -523,9 +544,11 @@ class _AvisoCocina extends StatelessWidget {
               Icon(Icons.info_outline, color: colores.onErrorContainer),
               const SizedBox(width: 10),
               Expanded(
-                child: Text(texto,
-                    key: const Key('aviso-cocina'),
-                    style: TextStyle(color: colores.onErrorContainer, fontWeight: FontWeight.w700)),
+                child: Text(
+                  texto,
+                  key: const Key('aviso-cocina'),
+                  style: TextStyle(color: colores.onErrorContainer, fontWeight: FontWeight.w700),
+                ),
               ),
               IconButton(tooltip: 'Cerrar aviso', onPressed: alCerrar, icon: const Icon(Icons.close)),
             ],

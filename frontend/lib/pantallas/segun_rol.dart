@@ -59,8 +59,8 @@ class _PantallaSegunRolState extends State<PantallaSegunRol> {
   // Cuerpo con llaves a proposito: con "=>", el callback devolveria el Future de la
   // asignacion y setState lo rechaza.
   void _reintentar() => setState(() {
-        _usuario = widget.cargarUsuario();
-      });
+    _usuario = widget.cargarUsuario();
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -81,25 +81,26 @@ class _PantallaSegunRolState extends State<PantallaSegunRol> {
         final usuario = estado.requireData;
         return switch (usuario.rol) {
           Rol.recepcion => PantallaRecepcion(
-              usuario: usuario,
-              alCerrarSesion: widget.alCerrarSesion,
-              cargarCarta: widget.cargarCarta,
-              enviarPedido: widget.enviarPedido,
-            ),
+            usuario: usuario,
+            alCerrarSesion: widget.alCerrarSesion,
+            cargarCarta: widget.cargarCarta,
+            enviarPedido: widget.enviarPedido,
+          ),
           Rol.cocina => PantallaCocina(
-              usuario: usuario,
-              alCerrarSesion: widget.alCerrarSesion,
-              cargarCola: widget.cargarCola,
-              cambiarEstado: widget.cambiarEstado,
-              crearCanal: widget.crearCanal,
-              timbre: widget.timbre ?? TimbreMudo(),
-            ),
+            usuario: usuario,
+            alCerrarSesion: widget.alCerrarSesion,
+            cargarCola: widget.cargarCola,
+            cambiarEstado: widget.cambiarEstado,
+            crearCanal: widget.crearCanal,
+            timbre: widget.timbre ?? TimbreMudo(),
+          ),
           null => PantallaError(
-              mensaje: 'Tu cuenta no tiene un rol de este sistema. Pide que te asignen '
-                  'recepción o cocina.',
-              alReintentar: _reintentar,
-              alCerrarSesion: widget.alCerrarSesion,
-            ),
+            mensaje:
+                'Tu cuenta no tiene un rol de este sistema. Pide que te asignen '
+                'recepción o cocina.',
+            alReintentar: _reintentar,
+            alCerrarSesion: widget.alCerrarSesion,
+          ),
         };
       },
     );
