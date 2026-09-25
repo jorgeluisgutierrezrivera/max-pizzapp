@@ -80,13 +80,13 @@ Paquetes de la app Flutter, fijados sin rangos en `frontend/pubspec.yaml` y con
 ## Pruebas
 
 ```bash
-cd backend && npm test            # 259 pruebas: acceso, carta, precio, pedidos, lo agregado y canal en vivo, sin base ni Keycloak reales
+cd backend && npm test            # 267 pruebas: acceso, carta, precio, pedidos, lo agregado y canal en vivo, sin base ni Keycloak reales
 cd frontend && flutter test       # pruebas de la app Flutter
 python pruebas/identidad/probar_acceso_pkce.py   # inicio de sesión real con PKCE
 python pruebas/api/probar_salud_y_token.py       # la API con tokens reales del realm
 python pruebas/api/probar_carta.py               # la carta con token real y la base real
 python pruebas/api/probar_pedidos.py             # pedidos: precios, número del día, venta directa, agregar, tres carreras y limpieza, en la base real
-python pruebas/tiempo-real/medir_aviso.py       # cuánto tarda el aviso en vivo en llegar a cocina y a recepción
+python pruebas/tiempo-real/medir_aviso.py       # cuánto tarda el aviso en vivo: la venta y lo agregado en cocina, el cambio de estado en recepción
 ```
 
 Las pruebas de `pruebas/` aceptan `KEYCLOAK_URL` y `API_URL` para ejecutarse contra el
@@ -362,15 +362,16 @@ carpeta solo corren al **crear** la base, así que en una base que ya existe hay
 cada archivo nuevo una vez, a mano, **en orden de número**:
 
 ```bash
-for f in 02_porciones_y_carta 04_solo_enteras_y_extras 05_carta 06_pedido_cliente_y_cancelacion 07_numero_agregados_y_venta_directa; do
+for f in 02_porciones_y_carta 04_solo_enteras_y_extras 05_carta 06_pedido_cliente_y_cancelacion 07_numero_agregados_y_venta_directa 08_pizzas_solo_enteras; do
   docker exec -i maxpizzapp-bd sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
     < docker/postgres/init/$f.sql || break
 done
 ```
 
 El orden importa: la `04` ajusta lo que agregó la `02`, la carta (`05`) usa lo que agrega
-la `04`, la `06` suma lo que necesitan los pedidos y la `07` el número del día, lo que se
-agrega a un pedido y la venta directa de bebidas. Y van **antes** del `up -d --build`:
+la `04`, la `06` suma lo que necesitan los pedidos, la `07` el número del día, lo que se
+agrega a un pedido y la venta directa de bebidas, y la `08` marca las pizzas que se venden
+solo enteras. Y van **antes** del `up -d --build`:
 la API nueva ya consulta las columnas que ellas agregan. No hay `03`: era una carta
 ficticia que la real reemplazó. Volver a cargar la carta actualiza los productos por su
 nombre sin duplicarlos, y no revive uno que cocina marcó agotado.

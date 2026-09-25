@@ -10,18 +10,20 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { io: conectar } = require('socket.io-client');
 const { crearServidor } = require('../src/servidor');
+const { SIN_AVISOS } = require('../src/tiempo-real');
 const { firmar, ajena, deRecepcion, deCocina, sinRol, levantarEmisor } = require('./soporte/emisor');
 
 let emisor;
 let servidor;
 let canal;
+let avisos;
 let url;
 const abiertos = [];
 
 test.before(async () => {
   emisor = await levantarEmisor();
   const pool = { query: async () => ({ rows: [] }) };
-  ({ servidor, canal } = crearServidor({ pool, autenticar: emisor.autenticar }));
+  ({ servidor, canal, avisos } = crearServidor({ pool, autenticar: emisor.autenticar }));
   await new Promise((listo) => servidor.listen(0, '127.0.0.1', listo));
   url = `http://127.0.0.1:${servidor.address().port}`;
 });
@@ -155,6 +157,28 @@ test('un cambio de estado les llega a los dos roles, con desde, hacia y cuando',
     assert.ok(!Number.isNaN(Date.parse(aviso.fechaHora)));
   }
 });
+
+// --- por donde avisa la API -----------------------------------------------------------------
+// Las rutas no llaman al canal: llaman a los avisos que les pasa crearServidor. Las pruebas de
+// arriba iban directo al canal y no vieron que faltaba el de lo agregado (D-37): recepcion
+// agregaba una pizza y cocina no se enteraba. Estas avisan por el mismo camino que la API.
+
+test('la API tiene un aviso por cada uno del canal, los mismos de SIN_AVISOS', () => {
+  assert.deepEqual(Object.keys(avisos).sort(), Object.keys(SIN_AVISOS).sort());
+});
+
+for (const [aviso, evento, datos] of [
+  ['pedidoNuevo', 'pedido:nuevo', { ...PEDIDO, id: 47 }],
+  ['pedidoActualizado', 'pedido:actualizado', { ...PEDIDO, id: 48, estado: 'en_preparacion', version: 2 }],
+  ['estadoCambiado', 'pedido:estado', { id: 49, anterior: 'pendiente', nuevo: 'en_preparacion' }],
+]) {
+  test(`${aviso}, avisado como lo avisa la API, le llega a cocina como ${evento}`, async () => {
+    const { socket } = await entrar(firmar(deCocina));
+    const llegada = esperar(socket, evento);
+    avisos[aviso](datos);
+    assert.equal((await llegada)?.id, datos.id);
+  });
+}
 
 test('el aviso llega en mucho menos de 2 segundos', async () => {
   const { socket } = await entrar(firmar(deCocina));

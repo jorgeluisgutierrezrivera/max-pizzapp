@@ -23,6 +23,11 @@ class PizzaElegida {
     if (segundaMitad == sabor) {
       throw const VentaInvalida('Dos mitades del mismo sabor son una pizza de ese sabor.');
     }
+    if (segundaMitad != null) {
+      for (final p in [sabor, segundaMitad!]) {
+        if (p.soloEntera) throw VentaInvalida('${p.nombre} se vende solo entera, no por mitades.');
+      }
+    }
     for (final e in this.extras) {
       if (!e.esExtra) throw VentaInvalida('${e.nombre} no es un extra.');
       if (!e.disponible) throw VentaInvalida('${e.nombre} está agotado.');
@@ -303,12 +308,17 @@ class ArmadoDePizza extends ChangeNotifier {
   Set<Producto> get extras => Set.unmodifiable(_extras);
   int get cantidad => _cantidad;
 
-  /// Entera o mitad y mitad. Al pasar a entera, se queda el primer sabor elegido.
+  /// Entera o mitad y mitad. Al pasar a entera, se queda el primer sabor elegido; al pasar a
+  /// mitad y mitad, se suelta si es una pizza que se vende solo entera (D-39).
   void elegirMitades(bool mitades) {
     _mitades = mitades;
     if (!mitades) _segunda = null;
+    if (mitades && (_primera?.soloEntera ?? false)) _primera = null;
     notifyListeners();
   }
+
+  /// Si el sabor se puede tocar ahora: una pizza solo entera no sirve de mitad (D-39).
+  bool sePuedeElegir(Producto sabor) => sabor.disponible && !(_mitades && sabor.soloEntera);
 
   /// Entera: el sabor tocado es el sabor. Mitad y mitad: el primero que se toca es la
   /// primera mitad y el segundo, la segunda; tocar uno elegido lo quita, y con las dos
@@ -316,6 +326,9 @@ class ArmadoDePizza extends ChangeNotifier {
   void tocarSabor(Producto sabor) {
     if (!sabor.esPizza) throw VentaInvalida('${sabor.nombre} no es una pizza.');
     if (!sabor.disponible) throw VentaInvalida('${sabor.nombre} está agotada.');
+    if (_mitades && sabor.soloEntera) {
+      throw VentaInvalida('${sabor.nombre} se vende solo entera, no por mitades.');
+    }
     if (!_mitades) {
       _primera = sabor;
     } else if (sabor == _primera) {
@@ -394,5 +407,60 @@ class VentaDeBebidas extends ChangeNotifier {
   Map<String, dynamic> aVentaDirecta() {
     if (vacia) throw const VentaInvalida('Elige al menos una bebida.');
     return {'ventaDirecta': true, 'lineas': _bebidas.aLineas(), 'totalEsperado': total / 100};
+  }
+}
+
+/// Lo que se agrega a un pedido ya enviado (D-37): la soda que el cliente pide después de la
+/// pizza, sin hacer otro pedido. Las pizzas, solo mientras cocina no lo terminó; las bebidas,
+/// hasta que se entregue. El servidor vuelve a decidirlo con el estado de ese momento.
+class AgregadoAPedido extends ChangeNotifier {
+  AgregadoAPedido(this.carta, {required this.permitePizzas});
+
+  final Carta carta;
+  final bool permitePizzas;
+
+  List<GrupoPizzas> _grupos = const [];
+  final _bebidas = _Bebidas();
+
+  List<GrupoPizzas> get grupos => _grupos;
+  List<LineaBebida> get bebidas => _bebidas.lineas;
+  int get total => _grupos.fold(0, (s, g) => s + g.subtotal) + _bebidas.total;
+  bool get vacio => _grupos.isEmpty && _bebidas.lineas.isEmpty;
+
+  void agregarPizza(PizzaElegida pizza, int cantidad) {
+    if (!permitePizzas) {
+      throw const VentaInvalida('El pedido ya está listo: las pizzas nuevas van en otro pedido.');
+    }
+    _grupos = FormularioVenta._conPizza(_grupos, pizza, cantidad);
+    notifyListeners();
+  }
+
+  void cambiarCantidadDeGrupo(int indice, int cantidad) {
+    final grupos = [..._grupos];
+    if (cantidad <= 0) {
+      grupos.removeAt(indice);
+    } else {
+      if (cantidad > maximoPorLinea) throw const VentaInvalida('Una pizza admite hasta $maximoPorLinea unidades.');
+      grupos[indice] = GrupoPizzas(grupos[indice].pizza, cantidad);
+    }
+    _grupos = List.unmodifiable(grupos);
+    notifyListeners();
+  }
+
+  int cantidadDeBebida(Producto bebida) => _bebidas.cantidadDe(bebida);
+
+  void cambiarBebida(Producto bebida, int cantidad) {
+    _bebidas.cambiar(bebida, cantidad);
+    notifyListeners();
+  }
+
+  /// El cuerpo de POST /api/v1/pedidos/:id/lineas. El total es el de lo agregado, en
+  /// bolivianos: el servidor lo compara con el suyo.
+  Map<String, dynamic> aCuerpo() {
+    if (vacio) throw const VentaInvalida('Elige al menos un producto para agregar.');
+    return {
+      'lineas': [for (final g in _grupos) g.pizza.aLinea(g.cantidad), ..._bebidas.aLineas()],
+      'totalEsperado': total / 100,
+    };
   }
 }

@@ -235,6 +235,12 @@ function calcularLineas(venta, productos) {
       if (mitad.categoria !== 'pizza') {
         throw new VentaInvalida(`${donde}: la otra mitad tiene que ser una pizza.`);
       }
+      // Las especialidades armadas por sectores se venden solo enteras (D-39).
+      for (const p of [principal, mitad]) {
+        if (p.solo_entera) {
+          throw new VentaInvalida(`${donde}: ${p.nombre} se vende solo entera, no por mitades.`);
+        }
+      }
       unitario = precioDeDosMitades(principal.precio, mitad.precio);
     }
 

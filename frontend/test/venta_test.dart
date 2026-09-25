@@ -21,7 +21,16 @@ final peperoni = producto('Peperoni', 'pizza', 50);
 final hawaiana = producto('Hawaiana', 'pizza', 50);
 final choclo = producto('Choclo', 'pizza', 45);
 final carnivora = producto('Carnívora', 'pizza', 60);
-final criollaEspanola = producto('Criolla española', 'pizza', 65);
+final criollaEspanola = Producto.desdeJson({
+  'id': ++_id,
+  'nombre': 'Criolla española',
+  'categoria': 'pizza',
+  'precio': 65,
+  'descripcion': null,
+  'imagen': null,
+  'disponible': true,
+  'soloEntera': true,
+});
 final agotada = producto('Cuatro quesos', 'pizza', 55, disponible: false);
 final extraQueso = producto('Extra queso', 'extra', 8);
 final extraChoclo = producto('Extra choclo', 'extra', 5);
@@ -72,8 +81,16 @@ void main() {
       expect(p.titulo, 'Mitad Salame / mitad Peperoni');
     });
 
-    test('1 mitad Carnívora, mitad Criolla española = (60 + 65) / 2 = 62,50', () {
-      expect(pizza(carnivora, mitad: criollaEspanola).precioUnitario, bs(62.5));
+    // La tabla del plan 05 usaba Carnívora con Criolla española (62,50); la Criolla se vende
+    // solo entera (D-39), y la mitad y mitad que termina en 50 centavos se prueba con Salame y Hawaiana.
+    test('1 mitad Salame, mitad Hawaiana = (45 + 50) / 2 = 47,50', () {
+      expect(pizza(salame, mitad: hawaiana).precioUnitario, bs(47.5));
+    });
+
+    test('Criolla española se vende solo entera: ni como mitad ni con otra mitad (D-39)', () {
+      expect(() => pizza(carnivora, mitad: criollaEspanola), throwsA(isA<VentaInvalida>()));
+      expect(() => pizza(criollaEspanola, mitad: carnivora), throwsA(isA<VentaInvalida>()));
+      expect(pizza(criollaEspanola).precioUnitario, bs(65));
     });
 
     test('2 mitad Salame, mitad Peperoni = 95', () {
@@ -352,6 +369,17 @@ void main() {
         ..tocarSabor(peperoni)
         ..tocarSabor(choclo);
       expect(a.pizza!.titulo, 'Mitad Salame / mitad Choclo');
+    });
+
+    test('en mitad y mitad, una pizza solo entera no se elige; y al pasar a mitades se suelta (D-39)', () {
+      final a = ArmadoDePizza(carta)..elegirMitades(true);
+      expect(a.sePuedeElegir(criollaEspanola), isFalse);
+      expect(() => a.tocarSabor(criollaEspanola), throwsA(isA<VentaInvalida>()));
+      final entera = ArmadoDePizza(carta)..tocarSabor(criollaEspanola);
+      expect(entera.pizza!.titulo, 'Criolla española');
+      entera.elegirMitades(true);
+      expect(entera.primera, isNull);
+      expect(entera.falta, 'Elige los dos sabores');
     });
 
     test('pasar de mitad y mitad a entera se queda con el primer sabor', () {

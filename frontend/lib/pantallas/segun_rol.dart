@@ -12,9 +12,10 @@ import 'pantalla_recepcion.dart';
 import 'timbre.dart';
 
 Future<List<Pedido>> _colaVacia() async => const [];
-Future<Pedido> _sinCambios(int id, EstadoPedido hacia) =>
+Future<Pedido> _sinApi(Pedido pedido, [Object? _]) =>
     Future.error(const ErrorApi(0, 'SIN_API', 'Esta pantalla no tiene cómo cambiar pedidos.'));
 CanalEnVivo _sinCanal() => const CanalApagado();
+void _sinTelefono(String numero) {}
 
 /// Pregunta al servidor quien es la persona y muestra la pantalla de su rol.
 ///
@@ -29,19 +30,31 @@ class PantallaSegunRol extends StatefulWidget {
     required this.alCerrarSesion,
     this.enviarPedido,
     this.cargarCola = _colaVacia,
-    this.cambiarEstado = _sinCambios,
+    this.cargarPedidos = _colaVacia,
+    this.cambiarEstado = _sinApi,
+    this.cancelarPedido = _sinApi,
+    this.agregarAlPedido = _sinApi,
     this.crearCanal = _sinCanal,
     this.timbre,
+    this.llamar = _sinTelefono,
   });
 
   final Future<Usuario> Function() cargarUsuario;
   final Future<Carta> Function() cargarCarta;
   final VoidCallback alCerrarSesion;
   final Future<Map<String, dynamic>> Function(Map<String, dynamic> pedido)? enviarPedido;
+
+  /// La cola de cocina: pendientes y en preparación.
   final Future<List<Pedido>> Function() cargarCola;
-  final Future<Pedido> Function(int id, EstadoPedido hacia) cambiarEstado;
+
+  /// Los pedidos de recepción: los activos, listos incluidos.
+  final Future<List<Pedido>> Function() cargarPedidos;
+  final Future<Pedido> Function(Pedido pedido, EstadoPedido hacia) cambiarEstado;
+  final Future<Pedido> Function(Pedido pedido, String motivo) cancelarPedido;
+  final Future<Pedido> Function(Pedido pedido, Map<String, dynamic> cuerpo) agregarAlPedido;
   final CanalEnVivo Function() crearCanal;
   final Timbre? timbre;
+  final void Function(String numero) llamar;
 
   @override
   State<PantallaSegunRol> createState() => _PantallaSegunRolState();
@@ -85,6 +98,13 @@ class _PantallaSegunRolState extends State<PantallaSegunRol> {
             alCerrarSesion: widget.alCerrarSesion,
             cargarCarta: widget.cargarCarta,
             enviarPedido: widget.enviarPedido,
+            cargarPedidos: widget.cargarPedidos,
+            cambiarEstado: widget.cambiarEstado,
+            cancelarPedido: widget.cancelarPedido,
+            agregarAlPedido: widget.agregarAlPedido,
+            crearCanal: widget.crearCanal,
+            timbre: widget.timbre,
+            llamar: widget.llamar,
           ),
           Rol.cocina => PantallaCocina(
             usuario: usuario,

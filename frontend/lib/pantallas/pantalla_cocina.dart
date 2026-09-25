@@ -7,6 +7,7 @@ import '../api/cliente_api.dart';
 import '../api/usuario.dart';
 import '../pedidos/pedido.dart';
 import '../tema.dart';
+import 'boton_de_sonido.dart';
 import 'esqueleto_rol.dart';
 import 'timbre.dart';
 
@@ -18,6 +19,10 @@ import 'timbre.dart';
 ///
 /// La lista la da la API; el canal en vivo solo avisa. Si la conexión se corta y vuelve, la
 /// lista se vuelve a leer: mientras estuvo cortada pudo perderse algún aviso.
+///
+/// Cada pedido se canta con su número del día (D-35). Lo que recepción agrega a un pedido
+/// en cocina aparece marcado y suena (D-37); y al avanzar un pedido se manda la versión que
+/// se tiene a la vista, para que nadie lo marque listo sin haber visto lo último.
 class PantallaCocina extends StatefulWidget {
   const PantallaCocina({
     super.key,
@@ -36,8 +41,9 @@ class PantallaCocina extends StatefulWidget {
   /// GET /api/v1/pedidos?estado=pendiente,en_preparacion
   final Future<List<Pedido>> Function() cargarCola;
 
-  /// PATCH /api/v1/pedidos/:id/estado. Devuelve el pedido como quedó.
-  final Future<Pedido> Function(int id, EstadoPedido hacia) cambiarEstado;
+  /// PATCH /api/v1/pedidos/:id/estado, con la versión del pedido que se ve. Devuelve el
+  /// pedido como quedó.
+  final Future<Pedido> Function(Pedido pedido, EstadoPedido hacia) cambiarEstado;
   final CanalEnVivo Function() crearCanal;
   final Timbre timbre;
   final DateTime Function() reloj;
@@ -62,6 +68,9 @@ class _PantallaCocinaState extends State<PantallaCocina> {
   /// Los recién llegados por el canal: llevan la marca "Nuevo" un rato.
   final Set<int> _nuevos = {};
 
+  /// A los que recepción les acaba de agregar algo: llevan la marca "Se agregó" un rato.
+  final Set<int> _conAgregado = {};
+
   /// Lo último que pasó y conviene decir: una cancelación, un cambio que otro hizo antes.
   String? _aviso;
 
@@ -71,6 +80,7 @@ class _PantallaCocinaState extends State<PantallaCocina> {
     _suscripciones
       ..add(_canal.pedidosNuevos.listen(_alLlegarPedido))
       ..add(_canal.cambiosDeEstado.listen(_alCambiarEstado))
+      ..add(_canal.pedidosActualizados.listen(_alActualizarPedido))
       ..add(_canal.conexion.listen(_alCambiarConexion));
     _canal.conectar();
     _cargar();
@@ -127,6 +137,26 @@ class _PantallaCocinaState extends State<PantallaCocina> {
     );
   }
 
+  /// Recepción le agregó algo a un pedido (D-37): la tarjeta se reemplaza, se marca y suena,
+  /// porque puede haber una pizza más que preparar.
+  void _alActualizarPedido(Map<String, dynamic> json) {
+    final pedido = Pedido.desdeJson(json);
+    final cola = _cola;
+    if (cola == null) return;
+    final i = cola.indexWhere((p) => p.id == pedido.id);
+    if (i < 0 || !pedido.estado.enCocina) return;
+    widget.timbre.sonar();
+    setState(() {
+      _cola = [...cola]..[i] = pedido;
+      _conAgregado.add(pedido.id);
+    });
+    _marcas.add(
+      Timer(const Duration(minutes: 1), () {
+        if (mounted) setState(() => _conAgregado.remove(pedido.id));
+      }),
+    );
+  }
+
   void _alCambiarEstado(Map<String, dynamic> aviso) {
     final cola = _cola;
     if (cola == null) return;
@@ -141,7 +171,7 @@ class _PantallaCocinaState extends State<PantallaCocina> {
         _cola = [...cola]..removeAt(i);
         // Que se cancele un pedido en preparación es algo que cocina tiene que saber ya.
         if (nuevo == EstadoPedido.cancelado) {
-          _aviso = 'Recepción canceló el pedido #$id de ${cola[i].cliente}.';
+          _aviso = 'Recepción canceló el ${cola[i].etiqueta} de ${cola[i].cliente}.';
         }
       }
     });
@@ -159,7 +189,7 @@ class _PantallaCocinaState extends State<PantallaCocina> {
       _aviso = null;
     });
     try {
-      final quedo = await widget.cambiarEstado(pedido.id, hacia);
+      final quedo = await widget.cambiarEstado(pedido, hacia);
       if (!mounted) return;
       setState(() {
         final cola = [...?_cola];
@@ -175,9 +205,14 @@ class _PantallaCocinaState extends State<PantallaCocina> {
       });
     } on ErrorApi catch (error) {
       if (!mounted) return;
-      if (error.estado == 409 || error.estado == 404) {
+      if (error.codigo == 'PEDIDO_CAMBIADO') {
+        // Recepción le agregó algo que esta pantalla todavía no mostraba: se relee y se
+        // avisa, para revisarlo antes de marcarlo listo.
+        setState(() => _aviso = 'Al ${pedido.etiqueta} se le agregó algo. Revísalo antes de marcarlo listo.');
+        await _cargar();
+      } else if (error.estado == 409 || error.estado == 404) {
         // Otro dispositivo lo cambió antes, o recepción lo canceló: se relee la cola.
-        setState(() => _aviso = 'El pedido #${pedido.id} ya había cambiado. La cola se actualizó.');
+        setState(() => _aviso = 'El ${pedido.etiqueta} ya había cambiado. La cola se actualizó.');
         await _cargar();
       } else {
         setState(() => _aviso = error.mensaje);
@@ -230,6 +265,7 @@ class _PantallaCocinaState extends State<PantallaCocina> {
                     ahora: widget.reloj(),
                     enCamino: _enCamino,
                     nuevos: _nuevos,
+                    conAgregado: _conAgregado,
                     alAvanzar: _avanzar,
                   ),
                 ),
@@ -287,6 +323,7 @@ class _Tablero extends StatelessWidget {
     required this.ahora,
     required this.enCamino,
     required this.nuevos,
+    required this.conAgregado,
     required this.alAvanzar,
   });
 
@@ -294,6 +331,7 @@ class _Tablero extends StatelessWidget {
   final DateTime ahora;
   final Set<int> enCamino;
   final Set<int> nuevos;
+  final Set<int> conAgregado;
   final void Function(Pedido) alAvanzar;
 
   @override
@@ -319,6 +357,7 @@ class _Tablero extends StatelessWidget {
                     pedido: pedido,
                     ahora: ahora,
                     nuevo: nuevos.contains(pedido.id),
+                    conAgregado: conAgregado.contains(pedido.id),
                     enCamino: enCamino.contains(pedido.id),
                     alAvanzar: () => alAvanzar(pedido),
                   ),
@@ -340,11 +379,13 @@ class TarjetaDeCocina extends StatelessWidget {
     required this.nuevo,
     required this.enCamino,
     required this.alAvanzar,
+    this.conAgregado = false,
   });
 
   final Pedido pedido;
   final DateTime ahora;
   final bool nuevo;
+  final bool conAgregado;
   final bool enCamino;
   final VoidCallback alAvanzar;
 
@@ -370,8 +411,9 @@ class TarjetaDeCocina extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '#${pedido.id}',
-                  style: tema.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800, color: rojoLadrillo),
+                  pedido.numero == null ? '#${pedido.id}' : '${pedido.numero}',
+                  key: Key('numero-${pedido.id}'),
+                  style: tema.textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w900, color: rojoLadrillo),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
@@ -393,6 +435,8 @@ class TarjetaDeCocina extends StatelessWidget {
                   ),
                 ),
                 if (nuevo) const _Chip(texto: 'Nuevo', fondo: amarilloSuave, letra: textoSobreAmarillo),
+                if (conAgregado && !nuevo)
+                  const _Chip(texto: 'Se agregó algo', fondo: amarilloSuave, letra: textoSobreAmarillo),
               ],
             ),
             const SizedBox(height: 8),
@@ -415,7 +459,12 @@ class TarjetaDeCocina extends StatelessWidget {
             if (pedido.otros.isNotEmpty) ...[
               const SizedBox(height: 6),
               Text(
-                pedido.otros.map((l) => '${l.cantidad} × ${l.titulo}').join(' · '),
+                pedido.otros
+                    .map(
+                      (l) =>
+                          '${l.cantidad} × ${l.titulo}${l.agregada ? ' (agregada ${horaCorta(l.agregadoEn!)})' : ''}',
+                    )
+                    .join(' · '),
                 style: tema.textTheme.bodyMedium?.copyWith(color: colores.onSurfaceVariant),
               ),
             ],
@@ -473,6 +522,18 @@ class _LineaDeCocina extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Lo que recepción agregó después (D-37) va marcado con su hora: el cocinero puede
+          // haber leído la tarjeta antes.
+          if (linea.agregada)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: _Chip(
+                texto: 'Agregada ${horaCorta(linea.agregadoEn!)}',
+                icono: Icons.add_circle_outline,
+                fondo: amarilloSuave,
+                letra: textoSobreAmarillo,
+              ),
+            ),
           Text.rich(
             TextSpan(
               children: [
@@ -594,42 +655,5 @@ class _Centro extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-/// En la barra: "Activar sonido" hasta que la persona lo toca; después, el ícono de que
-/// suena. El navegador no deja sonar una página que nadie tocó.
-class BotonDeSonido extends StatefulWidget {
-  const BotonDeSonido({super.key, required this.timbre});
-  final Timbre timbre;
-
-  @override
-  State<BotonDeSonido> createState() => _BotonDeSonidoState();
-}
-
-class _BotonDeSonidoState extends State<BotonDeSonido> {
-  Future<void> _habilitar() async {
-    await widget.timbre.habilitar();
-    if (mounted) setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (widget.timbre.habilitado) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 8),
-        child: Tooltip(message: 'Sonido activado', child: Icon(Icons.volume_up)),
-      );
-    }
-    // Con texto solo si sobra lugar; si no, el ícono con su descripción.
-    final conTexto = MediaQuery.sizeOf(context).width >= 1000;
-    return !conTexto
-        ? IconButton(tooltip: 'Activar sonido', onPressed: _habilitar, icon: const Icon(Icons.volume_off))
-        : TextButton.icon(
-            style: TextButton.styleFrom(foregroundColor: Colors.white),
-            onPressed: _habilitar,
-            icon: const Icon(Icons.volume_off),
-            label: const Text('Activar sonido'),
-          );
   }
 }

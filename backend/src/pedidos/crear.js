@@ -9,7 +9,7 @@ const { idsDeProductos, calcularVenta, aBolivianos } = require('../precio');
 // FOR SHARE: mientras dura la transaccion, nadie puede cambiar el precio ni la
 // disponibilidad de estos productos. El precio que se calcula es el que se guarda.
 const SQL_PRODUCTOS = `
-  SELECT id, nombre, categoria, precio, disponible
+  SELECT id, nombre, categoria, precio, disponible, solo_entera
     FROM producto
    WHERE id = ANY($1::int[])
      FOR SHARE`;

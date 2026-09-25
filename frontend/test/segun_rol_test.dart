@@ -11,12 +11,12 @@ Usuario usuarioCon(List<String> roles, {String nombre = 'Persona de prueba'}) =>
     Usuario.desdeJson({'sub': 'x', 'nombre': nombre, 'usuario': 'cuenta', 'roles': roles});
 
 Widget app(Future<Usuario> Function() cargar, {VoidCallback? alCerrar}) => MaterialApp(
-      home: PantallaSegunRol(
-        cargarUsuario: cargar,
-        cargarCarta: () async => Carta(const []),
-        alCerrarSesion: alCerrar ?? () {},
-      ),
-    );
+  home: PantallaSegunRol(
+    cargarUsuario: cargar,
+    cargarCarta: () async => Carta(const []),
+    alCerrarSesion: alCerrar ?? () {},
+  ),
+);
 
 void main() {
   testWidgets('mientras el servidor responde, muestra que esta verificando', (t) async {
@@ -28,8 +28,9 @@ void main() {
   });
 
   testWidgets('recepcion va a la pantalla de recepcion, con su nombre', (t) async {
-    // En una pantalla de escritorio: en una tableta, la barra le cede el nombre a los botones.
-    t.view.physicalSize = const Size(1280, 800);
+    // En una pantalla de escritorio grande: en una tableta, o con las pestañas de recepción en
+    // la barra, el nombre les cede el lugar.
+    t.view.physicalSize = const Size(1440, 800);
     t.view.devicePixelRatio = 1;
     addTearDown(t.view.reset);
     await t.pumpWidget(app(() async => usuarioCon(['recepcion'], nombre: 'Ana Prueba')));
@@ -48,13 +49,15 @@ void main() {
 
   testWidgets('el error de la API se muestra con su mensaje y se puede reintentar', (t) async {
     var intentos = 0;
-    await t.pumpWidget(app(() async {
-      intentos++;
-      if (intentos == 1) {
-        throw const ErrorApi(0, 'SIN_CONEXION', 'No hay conexión con el servidor.');
-      }
-      return usuarioCon(['cocina']);
-    }));
+    await t.pumpWidget(
+      app(() async {
+        intentos++;
+        if (intentos == 1) {
+          throw const ErrorApi(0, 'SIN_CONEXION', 'No hay conexión con el servidor.');
+        }
+        return usuarioCon(['cocina']);
+      }),
+    );
     await t.pumpAndSettle();
     expect(find.text('No hay conexión con el servidor.'), findsOneWidget);
 

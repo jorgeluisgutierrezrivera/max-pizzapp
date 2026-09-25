@@ -15,16 +15,19 @@ enum EstadoPedido {
   String get nombreApi => this == enPreparacion ? 'en_preparacion' : name;
 
   static EstadoPedido desdeApi(String texto) => switch (texto) {
-        'pendiente' => pendiente,
-        'en_preparacion' => enPreparacion,
-        'listo' => listo,
-        'entregado' => entregado,
-        'cancelado' => cancelado,
-        _ => throw FormatException('Estado de pedido desconocido: $texto'),
-      };
+    'pendiente' => pendiente,
+    'en_preparacion' => enPreparacion,
+    'listo' => listo,
+    'entregado' => entregado,
+    'cancelado' => cancelado,
+    _ => throw FormatException('Estado de pedido desconocido: $texto'),
+  };
 
   /// Los que todavía están en cocina.
   bool get enCocina => this == pendiente || this == enPreparacion;
+
+  /// Los que recepción todavía tiene que atender: en cocina o listos para entregar.
+  bool get activo => enCocina || this == listo;
 }
 
 /// Un extra de una pizza: "+ Extra queso".
@@ -45,6 +48,7 @@ class LineaDePedido {
     required this.cantidad,
     this.mitad,
     this.extras = const [],
+    this.agregadoEn,
   });
 
   final String producto;
@@ -53,7 +57,11 @@ class LineaDePedido {
   final int cantidad;
   final List<ExtraDePedido> extras;
 
+  /// Cuándo se agregó, si llegó después de enviar el pedido (D-37). Nulo en lo del principio.
+  final DateTime? agregadoEn;
+
   bool get esPizza => categoria == 'pizza';
+  bool get agregada => agregadoEn != null;
 
   /// "Mitad Salame / mitad Peperoni", como la muestra la venta.
   String get titulo => mitad == null ? producto : 'Mitad $producto / mitad $mitad';
@@ -66,6 +74,7 @@ class LineaDePedido {
       categoria: producto['categoria'] as String? ?? 'pizza',
       mitad: mitad?['nombre'] as String?,
       cantidad: j['cantidad'] as int,
+      agregadoEn: j['agregadoEn'] == null ? null : DateTime.parse(j['agregadoEn'] as String),
       extras: [
         for (final e in (j['extras'] as List<dynamic>? ?? const []))
           ExtraDePedido(
@@ -83,6 +92,8 @@ class LineaDePedido {
 class Pedido {
   const Pedido({
     required this.id,
+    this.numero,
+    this.version = 0,
     required this.estado,
     required this.paraLlevar,
     required this.cliente,
@@ -94,6 +105,13 @@ class Pedido {
   });
 
   final int id;
+
+  /// El número del día, el que se canta en el mostrador (D-35).
+  final int? numero;
+
+  /// Cuántas líneas tiene guardadas. Se manda al avanzarlo: si alguien le agregó algo
+  /// después, el servidor responde 409 PEDIDO_CAMBIADO (D-37).
+  final int version;
   final EstadoPedido estado;
   final bool paraLlevar;
   final String cliente;
@@ -105,29 +123,38 @@ class Pedido {
   final DateTime creadoEn;
   final List<LineaDePedido> lineas;
 
+  /// "Pedido 12". Sin número del día (un pedido anterior a D-35), el identificador.
+  String get etiqueta => numero == null ? 'Pedido #$id' : 'Pedido $numero';
+
   List<LineaDePedido> get pizzas => lineas.where((l) => l.esPizza).toList();
   List<LineaDePedido> get otros => lineas.where((l) => !l.esPizza).toList();
 
   Pedido conEstado(EstadoPedido nuevo) => Pedido(
-        id: id,
-        estado: nuevo,
-        paraLlevar: paraLlevar,
-        cliente: cliente,
-        celular: celular,
-        observacion: observacion,
-        total: total,
-        creadoEn: creadoEn,
-        lineas: lineas,
-      );
+    id: id,
+    numero: numero,
+    version: version,
+    estado: nuevo,
+    paraLlevar: paraLlevar,
+    cliente: cliente,
+    celular: celular,
+    observacion: observacion,
+    total: total,
+    creadoEn: creadoEn,
+    lineas: lineas,
+  );
 
   factory Pedido.desdeJson(Map<String, dynamic> j) {
-    final cliente = j['cliente'] as Map<String, dynamic>;
+    // La venta directa de bebidas no tiene cliente ni "para llevar" (D-38); no entra en las
+    // listas activas, pero se lee igual.
+    final cliente = j['cliente'] as Map<String, dynamic>?;
     return Pedido(
       id: j['id'] as int,
+      numero: j['numero'] as int?,
+      version: j['version'] as int? ?? 0,
       estado: EstadoPedido.desdeApi(j['estado'] as String),
-      paraLlevar: j['paraLlevar'] as bool,
-      cliente: cliente['nombre'] as String,
-      celular: cliente['celular'] as String?,
+      paraLlevar: j['paraLlevar'] as bool? ?? false,
+      cliente: cliente?['nombre'] as String? ?? '',
+      celular: cliente?['celular'] as String?,
       observacion: j['observacion'] as String?,
       total: ((j['total'] as num) * 100).round(),
       creadoEn: DateTime.parse(j['creadoEn'] as String),
@@ -137,6 +164,12 @@ class Pedido {
       ],
     );
   }
+}
+
+/// "21:41", en la hora del dispositivo: la del local.
+String horaCorta(DateTime momento) {
+  final local = momento.toLocal();
+  return '${local.hour.toString().padLeft(2, '0')}:${local.minute.toString().padLeft(2, '0')}';
 }
 
 /// "hace 3 min", para ver de un vistazo qué pedido lleva más tiempo esperando.

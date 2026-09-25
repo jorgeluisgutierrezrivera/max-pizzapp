@@ -19,7 +19,7 @@ const FILTROS = ['categoria', 'disponible'];
 // demas categorias (los tipos enumerados ordenan por su declaracion), y dentro de cada una
 // por nombre, que es como la vendedora busca lo que le piden (D-30).
 const SQL_CARTA = `
-  SELECT id, nombre, categoria, precio, descripcion, imagen, disponible
+  SELECT id, nombre, categoria, precio, descripcion, imagen, disponible, solo_entera
     FROM producto
    WHERE ($1::categoria_producto IS NULL OR categoria = $1::categoria_producto)
      AND ($2::boolean IS NULL OR disponible = $2::boolean)
@@ -53,6 +53,7 @@ function leerFiltros(query) {
 // listos para mostrar. La imagen es solo el nombre del archivo; la app sabe donde buscarlo.
 // La descripcion son los ingredientes, que la vendedora ve al elegir; puede faltar.
 // No hay precio de media: en una pizza de dos mitades cada una vale la mitad exacta (D-27).
+// soloEntera marca las pizzas que ya combinan sabores y no se venden por mitades (D-39).
 function aProducto(fila) {
   return {
     id: fila.id,
@@ -62,6 +63,7 @@ function aProducto(fila) {
     descripcion: fila.descripcion,
     imagen: fila.imagen,
     disponible: fila.disponible,
+    soloEntera: fila.solo_entera,
   };
 }
 

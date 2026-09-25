@@ -13,10 +13,12 @@ const CARTA = new Map([
   [1, { nombre: 'Salame', categoria: 'pizza', precio: '45.00', disponible: true }],
   [2, { nombre: 'Peperoni', categoria: 'pizza', precio: '50.00', disponible: true }],
   [3, { nombre: 'Carnívora', categoria: 'pizza', precio: '60.00', disponible: true }],
-  [4, { nombre: 'Criolla española', categoria: 'pizza', precio: '65.00', disponible: true }],
+  [4, { nombre: 'Criolla española', categoria: 'pizza', precio: '65.00', disponible: true, solo_entera: true }],
+  [9, { nombre: 'Cuatro quesos', categoria: 'pizza', precio: '55.00', disponible: true }],
   [5, { nombre: 'Hawaiana', categoria: 'pizza', precio: '50.00', disponible: true }],
   [6, { nombre: 'Choclo', categoria: 'pizza', precio: '45.00', disponible: true }],
   [7, { nombre: 'Napolitana', categoria: 'pizza', precio: '40.00', disponible: false }],
+  [8, { nombre: 'Dos estaciones', categoria: 'pizza', precio: '50.00', disponible: true, solo_entera: true }],
   [10, { nombre: 'Gaseosa 2 L', categoria: 'bebida', precio: '18.00', disponible: true }],
   [20, { nombre: 'Extra queso', categoria: 'extra', precio: '8.00', disponible: true }],
   [21, { nombre: 'Extra choclo', categoria: 'extra', precio: '5.00', disponible: true }],
@@ -48,7 +50,9 @@ function directa(lineas, cambios = {}) {
 const TABLA = [
   ['1 Peperoni', [{ productoId: 2, cantidad: 1 }], 5000],
   ['1 mitad Salame, mitad Peperoni', [{ productoId: 1, mitadId: 2, cantidad: 1 }], 4750],
-  ['1 mitad Carnívora, mitad Criolla española', [{ productoId: 3, mitadId: 4, cantidad: 1 }], 6250],
+  // La tabla del plan 05 usaba Carnívora con Criolla española (62,50); la Criolla se vende solo
+  // entera (D-39), y la mitad y mitad que termina en 50 centavos se prueba con Cuatro quesos.
+  ['1 mitad Carnívora, mitad Cuatro quesos', [{ productoId: 3, mitadId: 9, cantidad: 1 }], 5750],
   ['2 mitad Salame, mitad Peperoni', [{ productoId: 1, mitadId: 2, cantidad: 2 }], 9500],
   ['1 Hawaiana con extra queso', [{ productoId: 5, cantidad: 1, extras: [20] }], 5800],
   ['3 Choclo, cada una con extra choclo', [{ productoId: 6, cantidad: 3, extras: [21] }], 15000],
@@ -150,6 +154,13 @@ rechazaConCarta('algo que no es un extra puesto como extra', [{ productoId: 1, c
 rechazaConCarta('un producto que no existe', [{ productoId: 999, cantidad: 1 }], VentaInvalida, /no existe/);
 rechazaConCarta('una pizza agotada', [{ productoId: 7, cantidad: 1 }], ProductoNoDisponible, /Napolitana/);
 rechazaConCarta('una mitad agotada', [{ productoId: 1, mitadId: 7, cantidad: 1 }], ProductoNoDisponible, /Napolitana/);
+rechazaConCarta('una pizza solo entera como segunda mitad (D-39)', [{ productoId: 1, mitadId: 8, cantidad: 1 }], VentaInvalida, /Dos estaciones se vende solo entera/);
+rechazaConCarta('Carnívora con Criolla española: la Criolla se vende solo entera (D-39)', [{ productoId: 3, mitadId: 4, cantidad: 1 }], VentaInvalida, /Criolla española se vende solo entera/);
+rechazaConCarta('una pizza solo entera como primera mitad (D-39)', [{ productoId: 8, mitadId: 2, cantidad: 1 }], VentaInvalida, /Dos estaciones se vende solo entera/);
+
+test('una pizza solo entera se vende entera, a su precio (D-39)', () => {
+  assert.equal(calcular([{ productoId: 8, cantidad: 2 }]).total, 10000);
+});
 
 // --- rechazos de forma: no hace falta la carta -----------------------------------------
 

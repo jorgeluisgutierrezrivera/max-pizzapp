@@ -18,7 +18,7 @@ const anchoMaximoDeVenta = 1280.0;
 /// Desde este alto, en la computadora, el formulario ocupa la pantalla entera sin
 /// desplazarse: el cliente arriba, las bebidas abajo y las pizzas en el medio, estirándose.
 /// Si se agregan tantas pizzas que no caben, se desplaza solo la lista de pizzas.
-const altoParaLlenar = 470.0;
+const altoParaLlenar = 520.0;
 
 /// Por debajo de este alto, los campos y las tarjetas se ajustan un poco para caber.
 const altoComodo = 640.0;

@@ -3,7 +3,8 @@
 
 Obtiene los tokens de recepcion.demo y cocina.demo en Keycloak y lanza medir-aviso.js, que
 crea pedidos, mide del envio de la venta al aviso en cocina (el "menos de 2 segundos" del
-E2) y del cambio de estado al aviso en recepcion, y al final cancela lo que creo.
+E2), del cambio de estado al aviso en recepcion y de lo agregado al aviso en cocina, y al
+final cancela lo que creo.
 
 Uso, con el entorno levantado (necesita Node y el backend con sus dependencias instaladas):
 

@@ -3,8 +3,8 @@ import 'dart:convert';
 
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
-/// El canal en vivo con la API (D-04, D-21): avisa de los pedidos nuevos y de los cambios de
-/// estado, sin recargar.
+/// El canal en vivo con la API (D-04, D-21): avisa de los pedidos nuevos, de los cambios de
+/// estado y de lo que se agrega a un pedido, sin recargar.
 ///
 /// El canal AVISA; la fuente es la API. Si la conexión se corta y vuelve, la pantalla vuelve
 /// a leer su lista: mientras estuvo cortada pudo perderse algún aviso.
@@ -14,6 +14,9 @@ abstract class CanalEnVivo {
 
   /// Cada cambio de estado: { id, anterior, nuevo, fechaHora }.
   Stream<Map<String, dynamic>> get cambiosDeEstado;
+
+  /// Cada pedido al que se le agregó algo (D-37), completo, como lo devuelve la API.
+  Stream<Map<String, dynamic>> get pedidosActualizados;
 
   /// true al conectarse (también al reconectarse); false al perder la conexión.
   Stream<bool> get conexion;
@@ -39,12 +42,15 @@ class CanalSocketIo implements CanalEnVivo {
   bool _conectado = false;
   final _nuevos = StreamController<Map<String, dynamic>>.broadcast();
   final _cambios = StreamController<Map<String, dynamic>>.broadcast();
+  final _actualizados = StreamController<Map<String, dynamic>>.broadcast();
   final _conexion = StreamController<bool>.broadcast();
 
   @override
   Stream<Map<String, dynamic>> get pedidosNuevos => _nuevos.stream;
   @override
   Stream<Map<String, dynamic>> get cambiosDeEstado => _cambios.stream;
+  @override
+  Stream<Map<String, dynamic>> get pedidosActualizados => _actualizados.stream;
   @override
   Stream<bool> get conexion => _conexion.stream;
   @override
@@ -80,6 +86,7 @@ class CanalSocketIo implements CanalEnVivo {
     socket.onConnectError((_) => _cambiarConexion(false));
     socket.on('pedido:nuevo', (datos) => _nuevos.add(_comoJson(datos)));
     socket.on('pedido:estado', (datos) => _cambios.add(_comoJson(datos)));
+    socket.on('pedido:actualizado', (datos) => _actualizados.add(_comoJson(datos)));
     socket.connect();
     _socket = socket;
   }
@@ -99,6 +106,8 @@ class CanalApagado implements CanalEnVivo {
   Stream<Map<String, dynamic>> get pedidosNuevos => const Stream.empty();
   @override
   Stream<Map<String, dynamic>> get cambiosDeEstado => const Stream.empty();
+  @override
+  Stream<Map<String, dynamic>> get pedidosActualizados => const Stream.empty();
   @override
   Stream<bool> get conexion => const Stream.empty();
   @override

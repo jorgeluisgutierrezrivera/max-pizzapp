@@ -11,10 +11,11 @@ const {
 
 // Filas tal como las entrega pg: los numeric llegan como texto.
 const FILAS = [
-  { id: 7, nombre: 'Hawaiana', categoria: 'pizza', precio: '50.00', descripcion: 'Doble queso, jamón y piña caramelizada', imagen: 'hawaiana.png', disponible: false },
-  { id: 3, nombre: 'Peperoni', categoria: 'pizza', precio: '50.00', descripcion: 'Doble queso, jamón y peperoni', imagen: 'peperoni.png', disponible: true },
-  { id: 10, nombre: 'Gaseosa 2 L', categoria: 'bebida', precio: '18.00', descripcion: null, imagen: 'gaseosa.png', disponible: true },
-  { id: 20, nombre: 'Extra queso', categoria: 'extra', precio: '8.00', descripcion: null, imagen: null, disponible: true },
+  { id: 7, nombre: 'Hawaiana', categoria: 'pizza', precio: '50.00', descripcion: 'Doble queso, jamón y piña caramelizada', imagen: 'hawaiana.png', disponible: false, solo_entera: false },
+  { id: 3, nombre: 'Peperoni', categoria: 'pizza', precio: '50.00', descripcion: 'Doble queso, jamón y peperoni', imagen: 'peperoni.png', disponible: true, solo_entera: false },
+  { id: 4, nombre: 'Tres estaciones', categoria: 'pizza', precio: '50.00', descripcion: 'Doble queso, peperoni, salame y choclo', imagen: 'tres-estaciones.webp', disponible: true, solo_entera: true },
+  { id: 10, nombre: 'Gaseosa 2 L', categoria: 'bebida', precio: '18.00', descripcion: null, imagen: 'gaseosa.png', disponible: true, solo_entera: false },
+  { id: 20, nombre: 'Extra queso', categoria: 'extra', precio: '8.00', descripcion: null, imagen: null, disponible: true, solo_entera: false },
 ];
 
 function poolQueAnota(responder = async () => ({ rows: FILAS })) {
@@ -84,15 +85,16 @@ test('productos: recepcion y cocina pueden leer la carta', async () => {
 
 // --- el listado --------------------------------------------------------------
 
-test('productos: la carta completa, con precios numericos y agotados incluidos', async () => {
+test('productos: la carta completa, con precios numericos, agotados incluidos y las pizzas solo enteras marcadas (D-39)', async () => {
   const { estado, cuerpo } = await pedir(`${api.base}/productos`, recepcion);
   assert.equal(estado, 200);
   assert.deepEqual(cuerpo, {
     productos: [
-      { id: 7, nombre: 'Hawaiana', categoria: 'pizza', precio: 50, descripcion: 'Doble queso, jamón y piña caramelizada', imagen: 'hawaiana.png', disponible: false },
-      { id: 3, nombre: 'Peperoni', categoria: 'pizza', precio: 50, descripcion: 'Doble queso, jamón y peperoni', imagen: 'peperoni.png', disponible: true },
-      { id: 10, nombre: 'Gaseosa 2 L', categoria: 'bebida', precio: 18, descripcion: null, imagen: 'gaseosa.png', disponible: true },
-      { id: 20, nombre: 'Extra queso', categoria: 'extra', precio: 8, descripcion: null, imagen: null, disponible: true },
+      { id: 7, nombre: 'Hawaiana', categoria: 'pizza', precio: 50, descripcion: 'Doble queso, jamón y piña caramelizada', imagen: 'hawaiana.png', disponible: false, soloEntera: false },
+      { id: 3, nombre: 'Peperoni', categoria: 'pizza', precio: 50, descripcion: 'Doble queso, jamón y peperoni', imagen: 'peperoni.png', disponible: true, soloEntera: false },
+      { id: 4, nombre: 'Tres estaciones', categoria: 'pizza', precio: 50, descripcion: 'Doble queso, peperoni, salame y choclo', imagen: 'tres-estaciones.webp', disponible: true, soloEntera: true },
+      { id: 10, nombre: 'Gaseosa 2 L', categoria: 'bebida', precio: 18, descripcion: null, imagen: 'gaseosa.png', disponible: true, soloEntera: false },
+      { id: 20, nombre: 'Extra queso', categoria: 'extra', precio: 8, descripcion: null, imagen: null, disponible: true, soloEntera: false },
     ],
   });
 });

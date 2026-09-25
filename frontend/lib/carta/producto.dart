@@ -15,6 +15,7 @@ class Producto {
     required this.descripcion,
     required this.imagen,
     required this.disponible,
+    this.soloEntera = false,
   });
 
   factory Producto.desdeJson(Map<String, dynamic> json) {
@@ -31,6 +32,7 @@ class Producto {
       descripcion: json['descripcion'] as String?,
       imagen: json['imagen'] as String?,
       disponible: json['disponible'] as bool,
+      soloEntera: json['soloEntera'] as bool? ?? false,
     );
   }
 
@@ -47,6 +49,10 @@ class Producto {
   /// Solo el nombre del archivo de la imagen (peperoni.png).
   final String? imagen;
   final bool disponible;
+
+  /// Una pizza que ya combina sabores (Dos estaciones, Tres estaciones, Criolla española): se
+  /// vende solo entera, nunca como mitad de otra (D-39).
+  final bool soloEntera;
 
   bool get esPizza => categoria == Categoria.pizza;
   bool get esBebida => categoria == Categoria.bebida;
@@ -72,9 +78,9 @@ int precioDeDosMitades(Producto a, Producto b) => (a.precio + b.precio + 1) ~/ 2
 /// orden alfabético (D-30).
 class Carta {
   Carta(Iterable<Producto> productos)
-      : pizzas = _ordenados(productos.where((p) => p.esPizza)),
-        extras = _ordenados(productos.where((p) => p.esExtra)),
-        bebidas = _ordenados(productos.where((p) => p.esBebida));
+    : pizzas = _ordenados(productos.where((p) => p.esPizza)),
+      extras = _ordenados(productos.where((p) => p.esExtra)),
+      bebidas = _ordenados(productos.where((p) => p.esBebida));
 
   final List<Producto> pizzas;
   final List<Producto> extras;

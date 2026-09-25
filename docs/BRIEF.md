@@ -121,7 +121,7 @@ El **esquema de la BD es la fuente de verdad**: vive en `docker/postgres/init/*.
 
 | Entidad | Campos principales |
 |---|---|
-| **Producto** | id (PK), nombre, categoria, precio, disponible |
+| **Producto** | id (PK), nombre, categoria, precio, disponible, solo_entera (las pizzas que ya combinan sabores y no se venden por mitades) |
 | **Cliente** | id (PK), nombre, celular *(extensible a nit/razon_social en el futuro)* |
 | **Pedido** | id (PK), numero_del_dia, cliente_id (FK; vacío solo en la venta directa de bebidas), para_llevar, creado_por (sub KC), estado, observacion, total, creado_en, dia |
 | **DetallePedido** | id (PK), pedido_id (FK), producto_id (FK), producto_mitad_id, linea_de_id, cantidad, precio_unitario, subtotal, agregado_en/por (si llegó después de enviar el pedido) |

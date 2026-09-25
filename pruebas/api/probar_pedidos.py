@@ -87,11 +87,16 @@ if __name__ == '__main__':
     # Los ids salen de la carta real: la prueba no supone numeros.
     _, cuerpo = pedir('/productos', recepcion)
     id_de = {p['nombre']: p['id'] for p in cuerpo['productos']}
-    for nombre in ('Salame', 'Peperoni', 'Carnívora', 'Criolla española', 'Hawaiana', 'Choclo',
-                   'Gaseosa 2 L', 'Extra queso', 'Extra choclo'):
+    for nombre in ('Salame', 'Peperoni', 'Carnívora', 'Cuatro quesos', 'Criolla española', 'Hawaiana', 'Choclo',
+                   'Dos estaciones', 'Tres estaciones', 'Gaseosa 2 L', 'Extra queso', 'Extra choclo'):
         if nombre not in id_de:
             print('Falta en la carta:', nombre)
             sys.exit(1)
+
+    print('\n--- las pizzas que se venden solo enteras (D-39) ---')
+    solo_enteras = sorted(p['nombre'] for p in cuerpo['productos'] if p.get('soloEntera'))
+    comprobar('la carta marca las tres especialidades armadas por sectores', solo_enteras,
+              ['Criolla española', 'Dos estaciones', 'Tres estaciones'])
 
     print('\n--- quien puede crear ---')
     una = venta([{'productoId': id_de['Peperoni'], 'cantidad': 1}], 50)
@@ -105,8 +110,10 @@ if __name__ == '__main__':
         ('1 Peperoni', [{'productoId': id_de['Peperoni'], 'cantidad': 1}], 50, 'pendiente'),
         ('1 mitad Salame, mitad Peperoni',
          [{'productoId': id_de['Salame'], 'mitadId': id_de['Peperoni'], 'cantidad': 1}], 47.5, 'pendiente'),
-        ('1 mitad Carnívora, mitad Criolla española',
-         [{'productoId': id_de['Carnívora'], 'mitadId': id_de['Criolla española'], 'cantidad': 1}], 62.5, 'pendiente'),
+        # La tabla del plan 05 usaba Carnívora con Criolla española (62,50), que ya no vale: la
+        # Criolla se vende solo entera (D-39). La mitad y mitad que termina en 50 centavos, con otra.
+        ('1 mitad Carnívora, mitad Cuatro quesos',
+         [{'productoId': id_de['Carnívora'], 'mitadId': id_de['Cuatro quesos'], 'cantidad': 1}], 57.5, 'pendiente'),
         ('2 mitad Salame, mitad Peperoni',
          [{'productoId': id_de['Salame'], 'mitadId': id_de['Peperoni'], 'cantidad': 2}], 95, 'pendiente'),
         ('1 Hawaiana con extra queso',
@@ -202,6 +209,12 @@ if __name__ == '__main__':
                                                 'cantidad': 1}], 31.5)),
         ('un extra vendido solo', venta([{'productoId': id_de['Extra queso'], 'cantidad': 1}], 8)),
         ('un producto que no existe', venta([{'productoId': 999999, 'cantidad': 1}], 10)),
+        ('Dos estaciones como mitad: se vende solo entera (D-39)',
+         venta([{'productoId': id_de['Salame'], 'mitadId': id_de['Dos estaciones'], 'cantidad': 1}], 47.5)),
+        ('Carnívora con Criolla española: la Criolla se vende solo entera (D-39)',
+         venta([{'productoId': id_de['Carnívora'], 'mitadId': id_de['Criolla española'], 'cantidad': 1}], 62.5)),
+        ('Tres estaciones como primera mitad (D-39)',
+         venta([{'productoId': id_de['Tres estaciones'], 'mitadId': id_de['Peperoni'], 'cantidad': 1}], 50)),
         ('una venta vacia', venta([], 0)),
     ]
     for nombre, cuerpo_venta in rechazos:

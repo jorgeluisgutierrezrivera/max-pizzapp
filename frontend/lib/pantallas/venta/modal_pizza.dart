@@ -293,7 +293,9 @@ class _Sabores extends StatelessWidget {
                 imagen: imagen,
                 lugar: armado.lugarDe(sabor),
                 mostrarLugar: armado.mitades,
-                alTocar: sabor.disponible ? () => armado.tocarSabor(sabor) : null,
+                // En mitad y mitad, las que ya combinan sabores se ven, pero no se eligen (D-39).
+                soloEntera: armado.mitades && sabor.soloEntera,
+                alTocar: armado.sePuedeElegir(sabor) ? () => armado.tocarSabor(sabor) : null,
               );
             },
           ),
@@ -480,6 +482,7 @@ class TarjetaSabor extends StatelessWidget {
     this.etiquetaPrecio,
     this.lugar,
     this.mostrarLugar = false,
+    this.soloEntera = false,
   });
 
   final Producto sabor;
@@ -494,22 +497,26 @@ class TarjetaSabor extends StatelessWidget {
   /// Si la marca dice la mitad (1 o 2) o solo que está elegido.
   final bool mostrarLugar;
 
+  /// En mitad y mitad, una pizza que se vende solo entera: se ve atenuada y lo dice (D-39).
+  final bool soloEntera;
+
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
     final colores = tema.colorScheme;
     final agotado = !sabor.disponible;
+    final noSeElige = agotado || soloEntera;
     final elegido = lugar != null;
     return Semantics(
       button: true,
-      enabled: !agotado,
+      enabled: !noSeElige,
       selected: elegido,
       label:
-          '${sabor.nombre}. ${agotado ? 'Agotada' : formatoBs(precio)}'
+          '${sabor.nombre}. ${agotado ? 'Agotada' : (soloEntera ? 'Solo entera' : formatoBs(precio))}'
           '${elegido && mostrarLugar ? '. Mitad $lugar' : ''}',
       excludeSemantics: true,
       child: Opacity(
-        opacity: agotado ? 0.4 : 1,
+        opacity: noSeElige ? 0.4 : 1,
         child: Card(
           margin: EdgeInsets.zero,
           clipBehavior: Clip.antiAlias,
@@ -571,9 +578,9 @@ class TarjetaSabor extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 6),
-                      if (agotado)
+                      if (agotado || soloEntera)
                         Text(
-                          'Agotada',
+                          agotado ? 'Agotada' : 'Solo entera',
                           style: tema.textTheme.titleSmall?.copyWith(color: colores.error, fontWeight: FontWeight.w700),
                         )
                       else

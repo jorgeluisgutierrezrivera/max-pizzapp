@@ -31,6 +31,16 @@ final carta = Carta([
   producto('Choclo', 'pizza', 45),
   producto('Hawaiana', 'pizza', 50),
   producto('Cuatro quesos', 'pizza', 55, disponible: false),
+  Producto.desdeJson({
+    'id': ++_id,
+    'nombre': 'Tres estaciones',
+    'categoria': 'pizza',
+    'precio': 50,
+    'descripcion': null,
+    'imagen': null,
+    'disponible': true,
+    'soloEntera': true,
+  }),
   producto('Extra choclo', 'extra', 5),
   producto('Extra queso', 'extra', 8),
   producto('Gaseosa 2 L', 'bebida', 18),
@@ -232,7 +242,7 @@ void main() {
       );
     });
 
-    for (final (ancho, alto) in [(1366.0, 630.0), (1536.0, 730.0), (1920.0, 950.0), (1024.0, 600.0)]) {
+    for (final (ancho, alto) in [(1366.0, 630.0), (1536.0, 730.0), (1920.0, 950.0), (1024.0, 640.0)]) {
       testWidgets(
         'en la computadora (${ancho.round()} × ${alto.round()}), el formulario ocupa la pantalla sin desplazarse',
         (t) async {
@@ -249,6 +259,12 @@ void main() {
         },
       );
     }
+
+    testWidgets('en una ventana muy baja, el formulario se desplaza en vez de apretarse', (t) async {
+      await empezar(t, ancho: 1024, alto: 560);
+      expect(t.widget(find.byKey(const Key('formulario-venta'))), isA<ListView>());
+      expect(find.byType(PanelPedido), findsOneWidget);
+    });
 
     testWidgets('con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista', (
       t,
@@ -494,6 +510,25 @@ void main() {
       expect(texto(t, 'listo-pizza'), 'Agregar 1 pizza · Bs 47,50');
       await tocarClave(t, 'listo-pizza');
       expect(find.text('Mitad Salame / mitad Peperoni'), findsWidgets);
+    });
+
+    testWidgets('en mitad y mitad, una pizza que se vende solo entera se ve pero no se elige (D-39)', (t) async {
+      await empezar(t);
+      await tocarClave(t, 'agregar-pizza');
+      await tocarClave(t, 'tipo-mitades');
+      final tres = find.byKey(const Key('sabor-Tres estaciones'));
+      final grilla = find
+          .descendant(of: find.byKey(const Key('grilla-sabores')), matching: find.byType(Scrollable))
+          .first;
+      await t.scrollUntilVisible(tres, 150, scrollable: grilla);
+      expect(find.descendant(of: tres, matching: find.text('Solo entera')), findsOneWidget);
+      await t.tap(tres, warnIfMissed: false);
+      await t.pumpAndSettle();
+      expect(texto(t, 'mitad-1'), 'Mitad 1: elige');
+      // Entera, sí.
+      await tocarClave(t, 'tipo-entera');
+      await tocarSabor(t, 'Tres estaciones');
+      expect(texto(t, 'listo-pizza'), 'Agregar 1 pizza · Bs 50');
     });
 
     testWidgets('una pizza agotada no responde', (t) async {

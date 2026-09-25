@@ -13,6 +13,7 @@ class EsqueletoRol extends StatelessWidget {
     required this.alCerrarSesion,
     required this.cuerpo,
     this.acciones = const [],
+    this.pestanas,
   });
 
   final String titulo;
@@ -23,15 +24,24 @@ class EsqueletoRol extends StatelessWidget {
   /// Botones propios de la pantalla, antes de quien esta dentro y de salir.
   final List<Widget> acciones;
 
+  /// Las pestanas de la pantalla, como las de recepcion. En una pantalla ancha van en la
+  /// misma barra, junto al titulo, para no quitarle alto al contenido; si no, debajo.
+  final PreferredSizeWidget? pestanas;
+
+  /// Desde este ancho, las pestanas caben en la barra, junto al titulo.
+  static const anchoPestanasEnLaBarra = 1100.0;
+
   @override
   Widget build(BuildContext context) {
     final ancho = MediaQuery.sizeOf(context).width;
     final angosta = ancho < 600;
+    final pestanasArriba = pestanas != null && ancho >= anchoPestanasEnLaBarra;
     // El nombre de la cuenta necesita lugar: en una tableta, la barra se lo cede a los
-    // botones de la pantalla.
-    final conNombre = ancho >= 900;
+    // botones de la pantalla, y con pestanas en la barra, a las pestanas.
+    final conNombre = ancho >= (pestanasArriba ? 1400 : 900);
     return Scaffold(
       appBar: AppBar(
+        bottom: pestanas == null || pestanasArriba ? null : pestanas,
         titleSpacing: 16,
         title: Row(
           children: [
@@ -39,6 +49,7 @@ class EsqueletoRol extends StatelessWidget {
             const SizedBox(width: 12),
             // En un celular angosto, con los botones de la pantalla, el titulo cede espacio.
             Flexible(child: Text(titulo, overflow: TextOverflow.ellipsis)),
+            if (pestanasArriba) ...[const SizedBox(width: 24), Flexible(flex: 3, child: pestanas!)],
           ],
         ),
         actions: [
