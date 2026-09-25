@@ -221,7 +221,7 @@ class _Acceso extends StatelessWidget {
         const SizedBox(height: 28),
         const Divider(height: 1),
         const SizedBox(height: 20),
-        const _Detalle(icono: Icons.receipt_long_outlined, texto: 'La venta, guiada paso a paso'),
+        const _Detalle(icono: Icons.receipt_long_outlined, texto: 'La venta en una sola pantalla'),
         const _Detalle(icono: Icons.soup_kitchen_outlined, texto: 'Cocina ve cada pedido al instante'),
         const _Detalle(icono: Icons.notifications_active_outlined, texto: 'Aviso cuando un pedido está listo'),
         const SizedBox(height: 20),
