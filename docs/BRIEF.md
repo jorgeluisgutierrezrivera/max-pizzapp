@@ -123,8 +123,8 @@ El **esquema de la BD es la fuente de verdad**: vive en `docker/postgres/init/*.
 |---|---|
 | **Producto** | id (PK), nombre, categoria, precio, disponible |
 | **Cliente** | id (PK), nombre, celular *(extensible a nit/razon_social en el futuro)* |
-| **Pedido** | id (PK), cliente (nombre o FK), creado_por (sub KC), estado, observacion, creado_en |
-| **DetallePedido** | id (PK), pedido_id (FK), producto_id (FK), cantidad, subtotal |
+| **Pedido** | id (PK), numero_del_dia, cliente_id (FK; vacío solo en la venta directa de bebidas), para_llevar, creado_por (sub KC), estado, observacion, total, creado_en, dia |
+| **DetallePedido** | id (PK), pedido_id (FK), producto_id (FK), producto_mitad_id, linea_de_id, cantidad, precio_unitario, subtotal, agregado_en/por (si llegó después de enviar el pedido) |
 | **HistorialEstado** | id (PK), pedido_id (FK), estado, usuario (sub KC), fecha_hora |
 
 Relaciones: Producto 1—N DetallePedido · Cliente 1—N Pedido · Pedido 1—N
@@ -177,13 +177,18 @@ Resumen operativo (los Must son exactamente el flujo que se demuestra en la defe
 | RF-11 | Should | Agregar observación al pedido |
 | RF-12 | Could | Ver comprobante del pedido |
 | RF-13 | Should | Marcar un producto como agotado (recepción o cocina) |
+| RF-14 | Should | Agregar productos a un pedido ya enviado (recepción) |
 
-Must have = 7/13 (54 %, ≤ 60 %); el reparto completo es 7 Must · 4 Should · 2 Could. Los
+Must have = 7/14 (50 %, ≤ 60 %); el reparto completo es 7 Must · 5 Should · 2 Could. Los
 Must son exactamente el flujo que se demuestra en la defensa.
 
 > **RF-11 pasó de *Could* a *Should* el 22-sep**, tras la tutoría T2: la observación del
 > pedido ya estaba en el modelo (`pedido.observacion`), en el caso de uso de registro y en
 > el cuerpo de `POST /api/v1/pedidos`, así que *Could* contradecía al resto del diseño.
+>
+> **RF-14 se sumó el 24-sep** (D-37), al revisar la venta con el autor: en el mostrador, el
+> cliente pide la pizza y después la soda. Se puede agregar mientras el pedido no se entregó;
+> pizzas, solo mientras cocina no lo terminó.
 
 **Fuera de alcance (rol administrador).** Gestionar la carta y consultar el historial del
 día exigirían un tercer rol diferenciado, por encima del máximo admitido; se declaran como
@@ -205,16 +210,18 @@ incompatible pueda convivir con la versión anterior mientras el cliente migra.
 
 ```
 GET    /api/v1/productos                      La carta, con agotados (recepción y cocina)
-POST   /api/v1/pedidos                        Crea pedido en estado "pendiente"
+POST   /api/v1/pedidos                        Crea pedido en estado "pendiente", o la venta directa
+                                              de bebidas, que nace "entregada"
 GET    /api/v1/pedidos                        Pedidos activos (filtro por estado)
 GET    /api/v1/pedidos/:id                    Pedido con sus líneas
+POST   /api/v1/pedidos/:id/lineas             Agrega productos a un pedido que no se entregó
 PATCH  /api/v1/pedidos/:id/estado             Avanza estado según rol autorizado
 POST   /api/v1/pedidos/:id/cancelacion        Cancela con motivo (antes de "listo")
 PATCH  /api/v1/productos/:id/disponibilidad   Marca un producto agotado o disponible
 GET    /api/v1/salud                          Estado del servicio
 ```
 Además, canal en tiempo real por **Socket.IO** sobre el mismo origen: eventos
-`pedido:nuevo`, `pedido:estado` y `producto:disponibilidad`. Todas las rutas (salvo salud)
+`pedido:nuevo`, `pedido:estado`, `pedido:actualizado` y `producto:disponibilidad`. Todas las rutas (salvo salud)
 exigen token válido de Keycloak: el servidor valida la firma del token y **los permisos que
 exige cada ruta**, que no son los mismos en todas. Cuando la operación **cambia el estado de
 un pedido**, comprueba además que la transición solicitada sea válida.

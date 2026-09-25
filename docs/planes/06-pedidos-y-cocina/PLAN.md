@@ -5,7 +5,9 @@
 
 - **Tarjeta:** 06 — Pedidos y cola de cocina
 - **Incremento:** pedidos sobre la URL pública
-- **Estado:** 🔵 **En curso — aprobado** el 2026-09-24, con "para llevar o comer aquí" (D-34)
+- **Estado:** 🔵 **En curso — aprobado** el 2026-09-24, con "para llevar o comer aquí" (D-34);
+  **revisado el mismo día** con la observación de la tutoría: la venta en una sola pantalla,
+  agregar a un pedido ya enviado y la venta directa de bebidas (D-36, D-37 y D-38)
 - **Entrada al tablero:** 2026-09-24
 - **Cierre:** —
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
@@ -16,8 +18,8 @@
 
 Cerrar el recorrido que el E2 pide ver funcionando **en la dirección pública**:
 
-1. Recepción termina la venta, y **el pedido queda guardado** con el precio que calcula el
-   servidor.
+1. Recepción arma la venta **en una sola pantalla** y la confirma, y **el pedido queda
+   guardado** con el precio que calcula el servidor.
 2. **Cocina lo ve en menos de 2 segundos**, sin recargar, en orden de llegada.
 3. Cocina lo **empieza** y lo marca **listo**.
 4. Recepción lo **entrega**, o lo **cancela** antes de que esté listo, con un motivo.
@@ -31,9 +33,15 @@ da de baja. Cada cambio queda registrado con quién lo hizo y cuándo.
 
 **Incluye:**
 
-- **Dos pasos nuevos en la venta**, antes del resumen:
-  - **"¿Para llevar o para comer aquí?"** (D-34);
-  - **"¿A nombre de quién?"** (D-31), con el nombre obligatorio y el celular opcional.
+- **La venta en una sola pantalla (D-36)**, en el orden en que se dicta en el mostrador: el
+  cliente (nombre obligatorio y celular opcional, D-31), si es para llevar o para comer aquí
+  (D-34), las pizzas, las bebidas, la observación y *Confirmar venta*. Cada pizza se arma en
+  un modal.
+- **La venta directa de bebidas (D-38):** la soda suelta, sin nombre ni preguntas. Nace
+  entregada y no pasa por cocina.
+- **Agregar productos a un pedido ya enviado (D-37)**, mientras no se haya entregado, con
+  reglas según su estado.
+- **El número del día (D-35):** "Pedido 12", el que se canta en el mostrador.
 - **`POST /api/v1/pedidos`:** valida todo de nuevo, calcula el precio con la regla de D-27 y
   guarda el pedido **en una sola transacción**.
 - **`GET /api/v1/pedidos`** (los activos, con filtro por estado) y **`GET
@@ -42,12 +50,15 @@ da de baja. Cada cambio queda registrado con quién lo hizo y cuándo.
   que le corresponde.
 - **`POST /api/v1/pedidos/:id/cancelacion`:** la baja, con motivo (D-33, adelantada de la
   tarjeta 08).
-- **Un canal en vivo mínimo con Socket.IO (D-21):** los eventos `pedido:nuevo` y
-  `pedido:estado`, con el mismo token que la API.
+- **Un canal en vivo mínimo con Socket.IO (D-21):** los eventos `pedido:nuevo`,
+  `pedido:estado` y `pedido:actualizado`, con el mismo token que la API.
 - **La pantalla de cocina:** la cola en vivo, con *Empezar* y *Listo*.
-- **Los pedidos en recepción:** los activos en vivo, con *Entregar*, *Cancelar* y *Llamar*.
-- **Una migración, la `06`:** el dato de si el pedido es para llevar, el formato del celular,
-  un celular por cliente y el motivo de la cancelación.
+- **Los pedidos en recepción:** los activos en vivo, con *Entregar*, *Cancelar*, *Llamar* y
+  *Agregar*.
+- **Dos migraciones:**
+  - la `06`: el dato de si el pedido es para llevar, el formato del celular, un celular por
+    cliente y el motivo de la cancelación;
+  - la `07`: el número del día, la venta directa y las líneas que se agregan después.
 
 **No incluye:**
 
@@ -56,8 +67,9 @@ da de baja. Cada cambio queda registrado con quién lo hizo y cuándo.
   - renovar el token de una conexión abierta;
   - el evento `producto:disponibilidad`.
 - **Marcar un producto agotado:** tarjeta 08.
-- **Editar las líneas de un pedido ya enviado:** si el cliente cambia de idea, el pedido se
-  cancela y se hace de nuevo. Así la cocina nunca prepara algo que cambió sin avisar.
+- **Quitar o cambiar algo de un pedido ya enviado:** solo se puede **agregar** (D-37). Si el
+  cliente cambia de idea sobre algo que ya está en cocina, el pedido se cancela y se hace de
+  nuevo. Así la cocina nunca prepara algo que cambió sin avisar.
 - **El tiempo de espera en la cola (RF-10) y el comprobante (RF-12):** son *Could*.
 - **Buscar o autocompletar clientes ya registrados:** trabajo futuro.
 
@@ -79,8 +91,10 @@ da de baja. Cada cambio queda registrado con quién lo hizo y cuándo.
    primer registro del historial se guardan en **una transacción**. Si algo falla, no queda
    nada a medias. Todas las consultas van **parametrizadas**.
 
-3. **El estado inicial lo decide el servidor.** Un pedido con pizzas nace **pendiente**. Uno
-   solo de bebidas nace **listo**, y cocina nunca lo ve (D-32).
+3. **El estado inicial lo decide el servidor.** Un pedido lleva al menos una pizza y nace
+   **pendiente**. Las bebidas solas son una **venta directa**: nace **entregada** y cocina
+   nunca la ve (D-38). Reemplaza a D-32, donde un pedido de solo bebidas nacía listo. Un
+   pedido con nombre y sin pizzas se rechaza con 400.
 
 4. **Cada cambio de estado tiene dueño:**
 
@@ -104,13 +118,15 @@ da de baja. Cada cambio queda registrado con quién lo hizo y cuándo.
    historial, con el motivo de la cancelación. No existe `DELETE` sobre pedidos.
 
 6. **Para llevar o para comer aquí (D-34), y el cliente (D-31).**
-   - **Para llevar:** se pregunta siempre, en su propia pantalla, y se guarda en
+   - **Para llevar:** se pregunta siempre, sin una opción marcada de entrada, y se guarda en
      `pedido.para_llevar`. El servidor lo exige: sin ese dato, 400.
    - **Nombre:** obligatorio, hasta 120 caracteres.
    - **Celular:** opcional, 8 dígitos que empiezan con 6 o 7. Si ya está registrado, se usa
      ese cliente. Si el pedido es para llevar, el campo sugiere dejarlo "para avisarle cuando
      esté listo".
    - **Quién ve el celular:** solo **recepción**. La respuesta a cocina no lo incluye.
+   - **La venta directa no lleva cliente**, ni dice si es para llevar (D-38): la soda se
+     entrega en el momento y no hay a quién llamar.
 
 7. **El canal en vivo, lo mínimo que exige el E2.**
    - **Socket.IO sobre el mismo servidor** de la API. Usa la ruta `/socket.io/`, que Caddy ya
@@ -129,14 +145,58 @@ da de baja. Cada cambio queda registrado con quién lo hizo y cuándo.
      el nombre del cliente, **si es para llevar**, cuánto hace que llegó, las pizzas con sus
      mitades y extras, las bebidas aparte y la observación destacada, con **un solo botón**:
      *Empezar* o *Listo*.
+   - **La venta, en una sola pantalla y en F (D-36).** Arriba, el cliente y "comer aquí o
+     para llevar". Debajo, las pizzas, las bebidas y la observación. A la derecha, el pedido
+     con el total y *Confirmar venta*; en el celular, una barra fija abajo. *Agregar pizza*
+     abre un modal con un solo scroll: entera o mitad y mitad, los sabores con su foto, los
+     extras, la cantidad y el botón con el precio. Se mantiene lo que el autor aprobó: un solo
+     precio a la vista, cada pizza confirmada con su precio y ninguna lista de combinaciones.
+   - **Confirmar venta:** muestra "Pedido 12 de Ana enviado a cocina" y deja el formulario
+     limpio para el siguiente cliente. Si el envío falla, **la venta no se pierde**.
+   - **Vender bebidas:** un modal aparte, con las bebidas, el total y *Cobrar*.
    - **Recepción:** suma una sección *Pedidos* junto a *Nueva venta*. Cada pedido activo
-     muestra su estado. Los listos ofrecen *Entregar* y, si hay celular, *Llamar*. Los que no
-     están listos, *Cancelar*.
-   - **Terminar venta:** muestra "Pedido #12 de Ana enviado a cocina" y deja lista una venta
-     nueva. Si el envío falla, **la venta no se pierde**.
+     muestra su estado. Los listos van primero y ofrecen *Entregar* y, si hay celular,
+     *Llamar*. Los que no están listos, *Cancelar*. Los que no se entregaron, *Agregar*.
 
 9. **Solo datos ficticios en las pruebas:** "Ana Prueba · 70000001", nunca un número real
    (observación 2.6 de la tutoría T2).
+
+10. **El número del día (D-35).**
+    - `pedido.numero_del_dia` empieza en 1 cada día y **no tiene huecos**. El día lo calcula la
+      base desde la hora del pedido, en la hora de Bolivia (`America/La_Paz`).
+    - Se asigna **dentro de la transacción que guarda el pedido**, después de un bloqueo de
+      transacción (`pg_advisory_xact_lock`) que pone en fila las ventas simultáneas: cada una
+      toma el máximo del día más uno. Si la venta falla, el número no se gasta.
+    - Una restricción única por día y número lo respalda en la base.
+    - La venta directa no lleva número: nadie la canta, y así cocina no ve saltos.
+
+11. **Agregar a un pedido ya enviado (D-37).**
+
+    | Estado del pedido | Bebidas | Pizzas |
+    |---|---|---|
+    | pendiente | sí | sí |
+    | en preparación | sí | sí, y cocina recibe el aviso con sonido |
+    | listo | sí | no: van en un pedido nuevo |
+    | entregado o cancelado | no | no |
+
+    - `POST /api/v1/pedidos/:id/lineas`, solo recepción. El mismo precio del servidor, el mismo
+      total comparado y **el mismo bloqueo** (`FOR UPDATE`) que los cambios de estado: si
+      cocina marca *Listo* justo cuando recepción agrega una pizza, gana el primero y el
+      segundo recibe 409.
+    - Cada línea agregada guarda **cuándo y quién** la agregó, para que cocina la vea marcada.
+    - **Nadie avanza un pedido sin haber visto lo último.** Las líneas solo se agregan, nunca
+      se quitan, así que su cantidad sirve de **versión** del pedido. *Empezar*, *Listo* y
+      *Entregar* mandan la versión que se vio; si después se agregó algo, **409
+      `PEDIDO_CAMBIADO`** y la pantalla se pone al día.
+    - El aviso `pedido:actualizado` va a recepción y, si el pedido está en su cola, a cocina.
+
+12. **La venta directa de bebidas (D-38).**
+    - `POST /api/v1/pedidos` con `ventaDirecta: true` y **solo bebidas**. No lleva cliente, ni
+      "para llevar", ni observación, ni número del día.
+    - Nace **entregada**, con su fila en el historial: queda quién la vendió y cuándo.
+    - No se avisa por el canal: no entra en ninguna lista activa.
+    - **La base rechaza cualquier mezcla:** un pedido tiene cliente, "para llevar" y número; una
+      venta directa no tiene ninguno de los tres, no lleva observación y está entregada.
 
 ---
 
@@ -193,43 +253,71 @@ Cada fase se prueba y se sube por separado.
 - [x] Un aviso que **suena** cuando llega un pedido nuevo.
 - [x] Pruebas de *widgets*, y revisión del autor en el navegador.
 
-### Fase G — Los pedidos en recepción
-- [ ] **El número del día (D-35):** empieza en 1 cada día, sin huecos, asignado en la misma
-      transacción que guarda el pedido; es el que se muestra y se canta en recepción y en
-      cocina. Una migración nueva, la `07`.
-- [ ] Los activos en vivo, con *Entregar*, *Cancelar* con motivo y *Llamar*.
+### Fase G — El número del día, agregar y la venta directa, en la API
+- [x] `07_numero_agregados_y_venta_directa.sql`:
+  - `pedido.dia`, calculado por la base, y `pedido.numero_del_dia`, único por día (D-35);
+  - la venta directa: sin cliente, sin "para llevar", sin número, sin observación y siempre
+    entregada; la base rechaza cualquier mezcla (D-38);
+  - cuándo y quién agregó cada línea que llega después de enviar el pedido (D-37);
+  - repetible, y probada en una instalación nueva y sobre la base local.
+- [x] `POST /api/v1/pedidos`: el número del día en la misma transacción; un pedido sin pizzas
+      se rechaza; la venta directa nace entregada.
+- [x] `POST /api/v1/pedidos/:id/lineas`: agregar, con las reglas de la decisión 11, y el aviso
+      `pedido:actualizado`.
+- [x] La versión del pedido: un cambio de estado con una versión vieja da 409
+      `PEDIDO_CAMBIADO`.
+- [x] Pruebas automáticas y la sonda contra la base real, con **dos carreras nuevas**: muchas
+      ventas a la vez no repiten ni saltan números, y *Listo* contra *Agregar*.
+
+### Fase H — La venta en una sola pantalla
+- [ ] El formulario en F, con el pedido y el total a la derecha; en el celular, una barra fija
+      abajo.
+- [ ] El modal de cada pizza, con un scroll: entera o mitad y mitad, sabores, extras y
+      cantidad. Tocar una pizza ya agregada la abre para corregirla.
+- [ ] *Vender bebidas*: el modal de la venta directa.
+- [ ] *Confirmar venta*: "Pedido 12 enviado a cocina" y el formulario limpio; si falla, la venta
+      no se pierde.
+- [ ] Pruebas de la lógica y de *widgets*, y revisión del autor en el navegador.
+
+### Fase I — Los pedidos en recepción
+- [ ] La sección *Pedidos*: los activos en vivo, los listos primero, con *Entregar*, *Cancelar*
+      con motivo, *Llamar* y *Agregar*.
 - [ ] Cuando un pedido queda listo: un aviso que **suena** en la computadora, el aviso a la
       vista y el título de la pestaña ("(1) Pedido listo"), pedido por el autor. El sonido se
       habilita con un toque por jornada: el navegador no deja sonar una página que nadie tocó.
+- [ ] Cocina: el número del día, y lo agregado, marcado y con sonido.
 - [ ] Pruebas de *widgets*, y revisión del autor en el navegador.
 
-### Fase H — En producción
-- [ ] La migración `06` en la base de producción, con respaldo previo.
+### Fase J — En producción
+- [ ] Las migraciones `06` y `07` en la base de producción, con respaldo previo.
 - [ ] La API reconstruida y la app publicada.
 - [ ] Las sondas y la medición del aviso, contra la dirección pública.
 
-### Fase I — La prueba del autor
+### Fase K — La prueba del autor
 - [ ] Recepción en el celular y cocina en la computadora, con cuentas distintas:
   - una venta completa hasta entregarla;
+  - una pizza agregada mientras cocina prepara el pedido;
   - otra venta cancelada;
-  - una de solo bebidas;
+  - una venta directa de bebidas;
   - cocina ve cada pedido nuevo en menos de 2 s.
 
 ---
 
 ## 5. Archivos que se tocan / crean
 
-- **Base:** `docker/postgres/init/06_pedido_cliente_y_cancelacion.sql` *(nuevo)*.
+- **Base:** `docker/postgres/init/06_pedido_cliente_y_cancelacion.sql` y
+  `docker/postgres/init/07_numero_agregados_y_venta_directa.sql` *(nuevos)*.
 - **API:**
   - `backend/src/rutas/pedidos.js` *(nuevo)*;
+  - `backend/src/pedidos/`: crear, leer, cambiar de estado y **agregar** *(nuevos)*;
   - `backend/src/precio.js` *(nuevo: la regla de D-27 en el servidor)*;
   - `backend/src/tiempo-real.js` *(nuevo: Socket.IO)*;
   - `backend/src/app.js`, `backend/src/index.js` y `backend/package.json` *(socket.io)*.
 - **Pruebas de la API:** `backend/test/pedidos.test.js`, `backend/test/tiempo-real.test.js`,
   `pruebas/api/probar_pedidos.py` y un script que mide el aviso.
 - **App:**
-  - `frontend/lib/`: el paso del cliente, el envío, la cocina, los pedidos de recepción y el
-    canal en vivo;
+  - `frontend/lib/`: la venta en una pantalla con sus modales, el envío, la cocina, los pedidos
+    de recepción y el canal en vivo;
   - `frontend/test/`;
   - `frontend/pubspec.yaml` *(el cliente de Socket.IO)*;
   - `frontend/web_dev_config.yaml` *(el proxy de desarrollo también reenvía `/socket.io/`)*.
@@ -258,6 +346,15 @@ totales que la app.
 | Un producto agotado | 409 `PRODUCTO_NO_DISPONIBLE` |
 | El total no coincide con el del servidor | 409 `PRECIO_CAMBIADO`, con el total correcto |
 | Cocina intenta crear un pedido | 403 |
+| Un pedido con nombre y sin pizzas | 400 |
+| Una venta directa con cliente, "para llevar", observación o algo que no es una bebida | 400 |
+| Agregar a un pedido entregado o cancelado, o una pizza a uno listo | 409 `AGREGADO_NO_PERMITIDO` |
+| Cambiar el estado con una versión vieja del pedido | 409 `PEDIDO_CAMBIADO` |
+
+**Las carreras, contra la base real:**
+- dos cambios de estado a la vez sobre el mismo pedido: pasa uno;
+- muchas ventas a la vez: los números del día salen seguidos, sin repetir ni saltar;
+- *Listo* y *Agregar una pizza* a la vez: gana el primero y el otro recibe 409.
 
 **Los estados:** la matriz entera, cada estado de origen por cada destino y cada rol, con su
 200, 403 o 409.
@@ -266,14 +363,16 @@ totales que la app.
 - sin token, no hay conexión;
 - cocina recibe el pedido nuevo;
 - un pedido de solo bebidas no le llega a cocina;
+- lo agregado a un pedido le llega a recepción, y a cocina si el pedido está en su cola;
 - el tiempo **del `POST` al evento**, medido en local y en producción. Tiene que quedar bajo
   2 segundos.
 
 **En el navegador, con dos cuentas a la vez:**
 - recepción vende; cocina ve el pedido, lo empieza y lo marca listo;
 - recepción lo entrega;
+- una pizza agregada mientras cocina prepara el pedido, que cocina ve marcada;
 - otra venta, cancelada con motivo;
-- una de solo bebidas, que cocina no ve.
+- una venta directa de bebidas, que nadie más ve.
 
 ---
 
@@ -285,7 +384,13 @@ totales que la app.
   saltee. Una transición inválida da 409, y un rol equivocado, 403.
 - Cancelar exige un motivo y solo se puede antes de "listo". El pedido cancelado no se borra.
 - Cada cambio queda en el historial con usuario y hora.
-- Un pedido de solo bebidas nace listo y cocina no lo ve.
+- La venta se arma y se confirma en una sola pantalla, y cada pizza en un modal.
+- La venta directa de bebidas no pide nombre, nace entregada y nadie más la ve. Un pedido con
+  nombre lleva al menos una pizza.
+- Cada pedido lleva su número del día, sin huecos ni repetidos, aunque dos ventas lleguen a la
+  vez.
+- A un pedido que no se entregó se le puede agregar, con las reglas de su estado, y nadie lo
+  avanza sin haber visto lo último que se le agregó.
 - Todo pedido dice si es para llevar, y cocina lo ve.
 - El nombre es obligatorio; el celular, opcional y con formato válido, y solo lo ve
   recepción.
@@ -303,6 +408,8 @@ totales que la app.
   - **RF-07** (actualizar estado, cocina);
   - **RF-09** (cancelar);
   - **RF-11** (observación);
+  - **RF-14** (agregar productos a un pedido ya enviado, *Should*), **nuevo** (D-37): se suma
+    a la lista de requisitos del documento;
   - **RF-03** y **RF-04** (el estado en vivo y el aviso de listo en recepción), en su
     versión mínima. La robustez del canal es la tarjeta 07.
 - **Institucionales:**
@@ -324,9 +431,11 @@ totales que la app.
 | D — El aviso en vivo | ✅ Verificada | 2026-09-24 | **El canal:** Socket.IO 4.8.3 en el mismo proceso y el mismo puerto que la API, por `/socket.io/`, que Caddy ya reenvía. El token viaja en el saludo, no en la dirección, y se valida con **el mismo verificador que la API**, que se separó del *middleware* para que un token valga en los dos o en ninguno. Cada conexión entra a la sala de su rol. **Los avisos:** `pedido:nuevo` a recepción completo y a cocina **sin el celular**, y a cocina solo si tiene algo que preparar; `pedido:estado` a los dos roles, con el pedido, el estado anterior, el nuevo y la hora. Salen **después del `COMMIT`**, y si el canal fallara, la operación ya quedó guardada y respondida. **`npm test`: 199 de 199** (178 anteriores y **21 nuevas**). **Con el cliente real de Socket.IO (13):** el canal rechaza, cada una con su código, la conexión sin token, con un token inventado, firmado por una clave ajena, de otra aplicación, vencido y sin los roles del sistema; recepción y cocina entran; cocina recibe el pedido sin el celular y recepción completo; un pedido de solo bebidas le llega a recepción y no a cocina; un cambio de estado les llega a los dos. **El orden (8):** el aviso del pedido nuevo sale una vez y después del `COMMIT`; una venta mal armada, un precio que cambió o un fallo a mitad de la transacción no avisan nada; un cambio de estado y una cancelación avisan después del `COMMIT` con desde y hacia; un cambio rechazado (409 o 403) no avisa; y si el canal falla, el pedido igual queda guardado y respondido. **Contra la API real, con tokens reales** (`pruebas/tiempo-real/medir_aviso.py`, 20 pedidos por *websocket*): **del envío de la venta al aviso en cocina, mediana 22 ms y peor caso 78 ms; del cambio de estado al aviso en recepción, mediana 17 ms y peor caso 30 ms**. La medición cancela los pedidos que crea. **Lo que salió (E-011):** la primera prueba contra la API en Docker encontró que **el proceso se caía** al recibir `/socket.io/`. Express y Socket.IO respondían la misma petición, porque Express se había agregado al servidor después de conectar el canal, y Socket.IO solo toma `/socket.io/` para los manejadores que ya existen. Docker lo reiniciaba y el chequeo de salud seguía en verde, así que el fallo pasaba inadvertido. Las pruebas no lo vieron porque montaban el canal sin Express. Se corrigió armando el servidor en un solo lugar (`src/servidor.js`), que usan el arranque y las pruebas, y dos pruebas nuevas lo cubren; después, cero reinicios |
 | E — La venta envía el pedido | ✅ Verificada · **aprobada por el autor** | 2026-09-24 | **Dos pasos nuevos**, después de la observación: "¿Para llevar o para comer aquí?" y "¿A nombre de quién?", con el nombre obligatorio y el celular opcional (solo números, hasta 8, y si es para llevar sugiere pedirlo). La lógica valida lo mismo que el servidor y la base. Si se vuelve del resumen a cambiar algo, ya no se pregunta de nuevo quién es. **El envío:** la venta arma el cuerpo de `POST /api/v1/pedidos` con el total mostrado en bolivianos; el cliente de la API suma `POST` y `PATCH` con la misma renovación del token ante un 401, y el error trae los datos extra del servidor (el total correcto, el producto agotado). *Terminar venta* dice "Enviando a cocina…" y no deja tocar dos veces; al guardar muestra el **número que asignó el servidor**, el cliente y el total, y *Nueva venta* empieza otra; un pedido de solo bebidas dice "listo para entregar". **Si no se guardó, la venta no se pierde**, y el mensaje dice qué hacer: agotado (con el nombre), sin conexión (y se reintenta) o precio cambiado (con el total correcto). **`flutter test`: 130 de 130** (106 anteriores y **24 nuevas**): 9 de la lógica (el orden de los pasos, nombre obligatorio, celular boliviano, 120 caracteres, volver, cambiar el cliente y la observación desde el resumen, y el cuerpo exacto del pedido con mitades, extras, bebidas y el total al centavo); 3 del cliente de la API; 10 de la pantalla (el envío completo con su confirmación, "Enviando" sin doble envío, solo bebidas, agotado, sin conexión con reintento, precio cambiado, la validación del cliente, el resumen con el cliente y *Cambiar*, y la distribución en pantalla ancha); y 2 de contraste. **Revisión con el autor:** pidió (a) **quitar el negro**, que desentonaba desde el acceso hasta la venta: entre tres paletas eligió **rojo ladrillo** `#C0392B` con amarillo suave en los precios; el negro y los colores puros quedan solo en el logo, y las pruebas WCAG se rehicieron (blanco sobre el rojo 5,4 a 1, rojo sobre el crema 5,0 a 1, precios más de 7 a 1); (b) **mejorar la vista en la computadora**, que se veía desordenada: la pregunta arriba en una franja angosta, un vacío debajo y la venta pegada al borde. Ahora va todo en un contenedor centrado de hasta 1280 px, la pregunta centrada en la altura, la venta en una tarjeta al lado y las opciones grandes en fila, como fichas; el celular no cambia; (c) **una pantalla de acceso más atractiva**: la foto de La Malcriada con el nombre del local y sus tres sucursales, y al lado el acceso con qué hace el sistema; en el celular, la foto como portada. Todo lo que dice del local sale de sus datos registrados. **Para revisar el diseño sin iniciar sesión** se armó una entrada aparte, fuera del repositorio, con la carta real; así se miraron la computadora, el celular y el acceso antes de mostrárselos al autor |
 | F — La cola de cocina | ✅ Verificada · **aprobada por el autor** ("cocina está trabajando correctamente") | 2026-09-24 | **La pantalla:** cada pedido es una tarjeta grande, en orden de llegada (de izquierda a derecha y de arriba abajo), en tantas columnas como quepan; dice el número, el cliente, si es para llevar, cuánto hace que llegó (se actualiza sola), las pizzas con sus mitades y extras, las bebidas aparte y la observación resaltada; un solo botón, *Empezar* y después *Listo*, y el pedido en preparación lleva borde rojo. Arriba, cuántos hay y si el canal está "En vivo". **En vivo:** el cliente de Socket.IO para Flutter (`socket_io_client` 3.1.6, fijado) entrega el token vigente **en cada conexión, también al reconectarse**. Un pedido nuevo aparece solo, al final, con la marca "Nuevo" un minuto y un **sonido de dos tonos** hecho con la Web Audio API, sin archivos; el sonido se habilita con un toque en "Activar sonido", porque el navegador no deja sonar una página que nadie tocó. Si otro dispositivo cambia un pedido, la tarjeta se actualiza; si recepción lo cancela, sale de la cola y cocina ve el aviso; **al reconectarse, la cola se vuelve a leer de la API**, porque el canal avisa y la API es la fuente. **`flutter test`: 149 de 149** (130 anteriores y **19 nuevas**): 17 de la cocina, con un canal y un timbre de prueba (los cuatro estados, lo que muestra cada tarjeta, el orden, columnas en la computadora y una en el celular a 320 px, *Empezar* y *Listo*, un solo cambio aunque se toque dos veces, el 409 que relee la cola, el pedido nuevo con su sonido y sin duplicados, el que nace listo no entra, el cambio desde otro dispositivo, la cancelación avisada, la relectura al reconectar y el botón de sonido), una de la barra a 600, 800 y 999 px, y una de los parámetros de consulta del cliente de la API. **Contra la API real**, con el cliente de Flutter fuera del navegador y tokens reales: el canal de la app recibe el pedido nuevo y su cambio de estado, el modelo los entiende, y **a cocina no le llega el celular**. **Lo que salió:** (1) a 800 px, una tableta, la barra no alcanzaba para el título, el sonido, el nombre y *Cerrar sesión*: el nombre se muestra desde 900 px y el sonido lleva texto desde 1000 px; (2) para revisarla en el navegador, el servidor de revisión reenvía también el WebSocket de `/socket.io/`, como Caddy, y el servidor de desarrollo de Flutter lo tiene declarado; (3) el autor preguntó cómo se numeran los pedidos y cómo sigue cocina el orden: la cola va por hora de llegada, y se decidió un **número del día** para el mostrador (D-35, fase G) |
-| G — Los pedidos en recepción | ⏳ Pendiente | — | — |
-| H — En producción | ⏳ Pendiente | — | — |
-| I — La prueba del autor | ⏳ Pendiente | — | — |
+| G — El número del día, agregar y la venta directa, en la API | ✅ Verificada | 2026-09-24 | **La migración `07`, en una instalación nueva** (PostgreSQL 17 descartable con la carpeta de scripts montada): corren `00` a `07` en orden y sin errores. **Repetible:** una segunda ejecución termina con código 0 y no renumera nada. **Casos, uno por uno: 24 de 24.** Se aceptan los **9 válidos**: un pedido con su número, dos del mismo día seguidos, la venta directa, dos ventas directas el mismo día (sin número no chocan), el mismo número en días distintos, una línea agregada con cuándo y quién, una línea original sin nada de eso, y **el día es el de Bolivia**: las 01:00 UTC del 25 cuentan como el 24 y las 04:00 UTC, como el 25. Se **rechazan los 15 imposibles**, cada uno por su restricción: un pedido con cliente y sin número, o sin "para llevar"; dos pedidos con el mismo número el mismo día; números 0 y negativo; una venta directa pendiente, lista, con observación, para llevar o con número; una venta directa que después se cancela; escribir el día a mano; y una línea agregada sin quién, con quién en blanco o con quién pero sin cuándo. **Sobre una base con pedidos:** cinco pedidos de dos días, con los ids cruzados respecto de la hora, quedan numerados 1, 2, 3 y 1, 2 **en orden de llegada**, y el de las 21:30 de Bolivia (01:30 UTC del día siguiente) queda en su día. **Base local:** aplicada; sus 54 pedidos anteriores quedaron numerados del 1 al 54, y los 24 casos, otra vez en verde. **La API.** El número del día se asigna después de un bloqueo de transacción (`pg_advisory_xact_lock`), y la hora del pedido se toma **después** del bloqueo, para que el orden de los números sea el de llegada. La venta directa (`ventaDirecta: true`) no toma el bloqueo ni crea cliente. `POST /pedidos/:id/lineas` toma la fila con `FOR UPDATE`, lee la carta con `FOR SHARE`, decide según el estado, compara el total y guarda las líneas con cuándo y quién, y suma al total. El cambio de estado acepta la `version` que se vio y la compara con la cantidad de líneas, **contada en una consulta aparte después de tomar la fila**: en READ COMMITTED, una misma consulta no vería lo que agregó quien tenía la fila hasta recién. **`npm test`: 259 de 259** (199 anteriores y **60 nuevas**): 16 de la regla (la venta directa nace entregada, un pedido sin pizzas se rechaza, una venta directa con pizza o con cliente, para llevar u observación se rechaza, lo agregado y su precio); 4 del alta (el orden bloqueo → número → pedido dentro de la transacción y en la hora de Bolivia, la venta directa sin cliente ni bloqueo, y sus dos rechazos), y se rehízo la de solo bebidas, que ahora da 400; **26 de agregar**, con la matriz generada de 5 estados por bebida y pizza, el orden de la transacción, cuándo y quién en cada línea, el extra colgado de la pizza agregada, el total, los 400, 404 y 409, el fallo a mitad de camino y el aviso después del `COMMIT`; 12 de la versión (vieja, igual, ausente, antes que la transición y 6 inválidas); y 2 del canal (lo agregado le llega a cocina sin el celular si el pedido está en su cola, y si está listo, solo a recepción), más la de solo bebidas rehecha: la venta directa no se avisa a nadie. **Contra la base real** (`probar_pedidos.py`, tokens reales): **71 de 71**. Los números salen seguidos en el orden de venta; la venta directa nace entregada, sin cliente ni número, con quien la vendió en el historial, y no aparece entre los activos; solo bebidas a nombre de un cliente, 400; agregar una soda a un pendiente (total 68, versión 2, marcada como agregada), una pizza mitad y mitad con extra a uno en preparación (123,50, versión 4), *Listo* con la versión vieja da 409 y con la actual pasa, una pizza a uno listo da 409 y una soda sí, nada a uno entregado. **Las dos carreras nuevas:** 12 ventas lanzadas a la vez se guardan todas, **con números seguidos, sin repetir ni saltar, y en el orden de llegada**; y en 8 rondas de *Listo* contra *Agregar una pizza* **siempre pasa uno solo**: ganaron las dos operaciones alguna vez (en una corrida, agregar 2 veces y listo 6), y el perdedor recibió siempre el 409 que le corresponde: `PEDIDO_CAMBIADO` si llegó tarde *Listo*, `AGREGADO_NO_PERMITIDO` si llegó tarde la pizza. **En la base,** después de todo: ningún pedido cuyo total difiera de la suma de sus líneas, 182 pedidos del día numerados del 1 al 182 sin huecos, y las ventas directas, todas entregadas. **El aviso en vivo**, medido otra vez: mediana 20 ms a cocina y 14 ms a recepción |
+| H — La venta en una sola pantalla | ⏳ Pendiente | — | — |
+| I — Los pedidos en recepción | ⏳ Pendiente | — | — |
+| J — En producción | ⏳ Pendiente | — | — |
+| K — La prueba del autor | ⏳ Pendiente | — | — |
 
 ---
 
@@ -338,6 +447,7 @@ totales que la app.
 | 2026-09-24 | **Aprobado**, sumando "para llevar o comer aquí" (D-34) | El autor aprobó el plan con la recomendación: cocina ve si va en caja o en plato. No toca el E1: es un dato más del pedido, dentro de RF-02 |
 | 2026-09-24 | **Número del día (D-35)**, a pedido del autor, en la fase G | El número de la base crece siempre, puede tener huecos y no vuelve a empezar: en un mes, los pedidos serían #1.543. Para cantarlos en el mostrador, un número que empieza en 1 cada día, sin huecos. El de la base se queda como identificador interno |
 | 2026-09-24 | **Revisión de la fase E con el autor** | Los colores pasan a rojo ladrillo (D-29, segunda revisión); la venta se distribuye mejor en la computadora; la pantalla de acceso lleva una foto del local. Se suma un **aviso que suena**: en recepción cuando un pedido queda listo, y en cocina cuando llega uno nuevo |
+| 2026-09-24 | **Observación de la tutoría: la venta en una sola pantalla (D-36)**, y dos casos del mostrador que sumó el autor: **agregar a un pedido ya enviado (D-37)** y **la venta directa de bebidas (D-38)**. Las fases pasan a ser G (la API), H (la venta), I (los pedidos en recepción), J (producción) y K (la prueba del autor). Aprobado por el autor | La tutoría observó que la venta eran demasiadas pantallas seguidas y que en la computadora se hacía larga. Pidió un formulario en F, en el orden cliente → para llevar o comer aquí → pizzas → observación → confirmar, con cada pizza en un modal. El autor sumó el cliente que pide la soda después de la pizza, sin hacer otro ticket, y el que solo pasa a comprar una soda, sin que se le pida el nombre |
 
 ---
 

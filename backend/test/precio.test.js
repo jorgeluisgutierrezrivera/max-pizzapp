@@ -4,8 +4,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
-  leerVenta, idsDeProductos, calcularVenta, precioDeDosMitades, aCentavos,
-  VentaInvalida, ProductoNoDisponible,
+  leerVenta, leerAgregado, idsDeProductos, calcularVenta, calcularLineas, precioDeDosMitades,
+  aCentavos, VentaInvalida, ProductoNoDisponible,
 } = require('../src/precio');
 
 // Los precios llegan de la base como texto, igual que los entrega pg.
@@ -38,6 +38,11 @@ function calcular(lineas) {
   return calcularVenta(leerVenta(venta(lineas)), CARTA);
 }
 
+// La venta directa de bebidas (D-38): sin cliente, sin "para llevar", sin observacion.
+function directa(lineas, cambios = {}) {
+  return { ventaDirecta: true, lineas, totalEsperado: 0, ...cambios };
+}
+
 // --- la tabla del plan 05, seccion 6 ---------------------------------------------------
 
 const TABLA = [
@@ -47,8 +52,11 @@ const TABLA = [
   ['2 mitad Salame, mitad Peperoni', [{ productoId: 1, mitadId: 2, cantidad: 2 }], 9500],
   ['1 Hawaiana con extra queso', [{ productoId: 5, cantidad: 1, extras: [20] }], 5800],
   ['3 Choclo, cada una con extra choclo', [{ productoId: 6, cantidad: 3, extras: [21] }], 15000],
-  ['solo 2 gaseosas', [{ productoId: 10, cantidad: 2 }], 3600],
 ];
+
+test('precio: venta directa de 2 gaseosas = Bs 36', () => {
+  assert.equal(calcularVenta(leerVenta(directa([{ productoId: 10, cantidad: 2 }])), CARTA).total, 3600);
+});
 
 for (const [nombre, lineas, total] of TABLA) {
   test(`precio: ${nombre} = Bs ${total / 100}`, () => {
@@ -79,9 +87,39 @@ test('precio: cada linea guarda su precio unitario y su subtotal; los extras, la
   });
 });
 
-test('estado inicial: con pizzas nace pendiente; solo bebidas nace listo (D-32)', () => {
+test('estado inicial: un pedido, con pizzas y bebidas, nace pendiente', () => {
   assert.equal(calcular([{ productoId: 2, cantidad: 1 }, { productoId: 10, cantidad: 1 }]).estadoInicial, 'pendiente');
-  assert.equal(calcular([{ productoId: 10, cantidad: 2 }]).estadoInicial, 'listo');
+});
+
+test('estado inicial: la venta directa de bebidas nace entregada (D-38)', () => {
+  const calculo = calcularVenta(leerVenta(directa([{ productoId: 10, cantidad: 2 }])), CARTA);
+  assert.equal(calculo.estadoInicial, 'entregado');
+});
+
+test('un pedido a nombre de un cliente lleva al menos una pizza: solo bebidas se rechaza (D-38)', () => {
+  assert.throws(() => calcular([{ productoId: 10, cantidad: 2 }]), (err) => {
+    assert.ok(err instanceof VentaInvalida);
+    assert.match(err.message, /al menos una pizza.*venta directa/);
+    return true;
+  });
+});
+
+test('una venta directa con una pizza se rechaza: las pizzas van en un pedido (D-38)', () => {
+  const v = leerVenta(directa([{ productoId: 10, cantidad: 1 }, { productoId: 2, cantidad: 1 }]));
+  assert.throws(() => calcularVenta(v, CARTA), (err) => {
+    assert.ok(err instanceof VentaInvalida);
+    assert.match(err.message, /solo de bebidas/);
+    return true;
+  });
+});
+
+test('lo que se agrega a un pedido: su precio y si trae pizzas (D-37)', () => {
+  const soda = calcularLineas(leerAgregado({ lineas: [{ productoId: 10, cantidad: 1 }], totalEsperado: 18 }), CARTA);
+  assert.equal(soda.total, 1800);
+  assert.equal(soda.hayPizzas, false);
+  const pizza = calcularLineas(leerAgregado({ lineas: [{ productoId: 1, mitadId: 2, cantidad: 1 }], totalEsperado: 47.5 }), CARTA);
+  assert.equal(pizza.total, 4750);
+  assert.equal(pizza.hayPizzas, true);
 });
 
 test('los ids de producto que menciona la venta, sin repetir', () => {
@@ -156,7 +194,42 @@ rechazaForma('sin el total mostrado', venta(PIZZA, { totalEsperado: undefined })
 rechazaForma('total negativo', venta(PIZZA, { totalEsperado: -5 }), /total/);
 rechazaForma('total con tres decimales', venta(PIZZA, { totalEsperado: 47.505 }), /total/);
 
+// La venta directa: lo que no le corresponde se rechaza, no se ignora.
+rechazaForma('venta directa con cliente', directa([{ productoId: 10, cantidad: 1 }], { cliente: { nombre: 'Ana' } }), /no lleva cliente/);
+rechazaForma('venta directa para llevar', directa([{ productoId: 10, cantidad: 1 }], { paraLlevar: true }), /no lleva cliente/);
+rechazaForma('venta directa para comer aqui', directa([{ productoId: 10, cantidad: 1 }], { paraLlevar: false }), /no lleva cliente/);
+rechazaForma('venta directa con observacion', directa([{ productoId: 10, cantidad: 1 }], { observacion: 'sin hielo' }), /no lleva cliente/);
+rechazaForma('venta directa sin lineas', directa([]), /al menos un producto/);
+rechazaForma('venta directa sin el total', directa([{ productoId: 10, cantidad: 1 }], { totalEsperado: undefined }), /total/);
+rechazaForma('ventaDirecta como texto', venta(PIZZA, { ventaDirecta: 'si' }), /verdadero o falso/);
+
+// Lo que se agrega: solo lineas y el total que se mostro.
+function rechazaAgregado(nombre, cuerpo, fragmento) {
+  test(`rechaza lo agregado: ${nombre}`, () => {
+    assert.throws(() => leerAgregado(cuerpo), (err) => {
+      assert.ok(err instanceof VentaInvalida);
+      assert.match(err.message, fragmento);
+      return true;
+    });
+  });
+}
+rechazaAgregado('sin cuerpo', undefined, /nada para agregar/);
+rechazaAgregado('sin lineas', { lineas: [], totalEsperado: 0 }, /al menos un producto/);
+rechazaAgregado('cantidad 0', { lineas: [{ productoId: 10, cantidad: 0 }], totalEsperado: 0 }, /cantidad/);
+rechazaAgregado('sin el total', { lineas: [{ productoId: 10, cantidad: 1 }] }, /total/);
+
 // --- lo que se normaliza ---------------------------------------------------------------
+
+test('normaliza: la venta directa queda sin cliente, sin para llevar y sin observacion', () => {
+  const v = leerVenta(directa([{ productoId: 10, cantidad: 2 }], { totalEsperado: 36 }));
+  assert.equal(v.ventaDirecta, true);
+  assert.equal(v.cliente, null);
+  assert.equal(v.paraLlevar, null);
+  assert.equal(v.observacion, null);
+  assert.equal(v.totalEsperadoCentavos, 3600);
+  // Enviar esos campos en null es lo mismo que no enviarlos.
+  assert.doesNotThrow(() => leerVenta(directa([{ productoId: 10, cantidad: 1 }], { cliente: null, paraLlevar: null })));
+});
 
 test('normaliza: celular y observacion vacios quedan como nulos; el nombre sin espacios', () => {
   const v = leerVenta(venta(PIZZA, {

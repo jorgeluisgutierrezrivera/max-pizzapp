@@ -34,6 +34,9 @@ function baseSimulada({ pedidos = pedidosIniciales() } = {}) {
       const pedido = b.pedidos.get(p[0]);
       return { rows: pedido ? [{ estado: pedido.estado }] : [] };
     }
+    if (/^SELECT count\(\*\)::int AS version FROM detalle_pedido WHERE pedido_id = \$1$/.test(s)) {
+      return { rows: [{ version: 1 }] };
+    }
     if (/^UPDATE pedido SET estado/.test(s)) { tx.cambios.push([p[0], p[1]]); return { rows: [] }; }
     if (/^INSERT INTO historial_estado/.test(s)) { tx.historial.push(p); return { rows: [] }; }
     if (/^SELECT id\s+FROM pedido/.test(s)) {
@@ -332,3 +335,58 @@ test('un cambio de estado: bloqueo, cambio e historial dentro de una transaccion
   assert.ok(i(/^UPDATE pedido/) < i(/^INSERT INTO historial_estado/));
   assert.ok(i(/^INSERT INTO historial_estado/) < i(/^COMMIT$/));
 });
+
+// --- la version del pedido (D-37) ---------------------------------------------------------
+// Cada pedido de la base simulada tiene 1 linea: su version es 1.
+
+test('marcar listo con la version que se vio: 200', async () => {
+  const { estado, base } = await llamar('PATCH', '/pedidos/2/estado', { token: cocina, cuerpo: { estado: 'listo', version: 1 } });
+  assert.equal(estado, 200);
+  assert.equal(base.pedidos.get(2).estado, 'listo');
+});
+
+test('marcar listo con una version vieja: 409 PEDIDO_CAMBIADO con la actual, y el pedido no cambia', async () => {
+  const { estado, cuerpo, base } = await llamar('PATCH', '/pedidos/2/estado', { token: cocina, cuerpo: { estado: 'listo', version: 2 } });
+  assert.equal(estado, 409);
+  assert.equal(cuerpo.error.codigo, 'PEDIDO_CAMBIADO');
+  assert.equal(cuerpo.error.version, 1);
+  assert.equal(base.pedidos.get(2).estado, 'en_preparacion');
+  assert.ok(base.hubo(/^ROLLBACK$/));
+  assert.ok(!base.hubo(/^UPDATE/));
+  assert.ok(!base.hubo(/^INSERT INTO historial_estado/));
+});
+
+test('entregar con una version vieja: 409 PEDIDO_CAMBIADO', async () => {
+  const { estado, cuerpo } = await llamar('PATCH', '/pedidos/3/estado', { cuerpo: { estado: 'entregado', version: 3 } });
+  assert.equal(estado, 409);
+  assert.equal(cuerpo.error.codigo, 'PEDIDO_CAMBIADO');
+});
+
+test('la version se cuenta despues de tomar la fila, en una consulta aparte', async () => {
+  const { base } = await llamar('PATCH', '/pedidos/1/estado', { token: cocina, cuerpo: { estado: 'en_preparacion', version: 1 } });
+  const textos = base.consultas.map((c) => c.sql);
+  const iBloqueo = textos.findIndex((t) => /FOR UPDATE/.test(t));
+  const iVersion = textos.findIndex((t) => /AS version/.test(t));
+  assert.ok(iBloqueo >= 0 && iVersion > iBloqueo);
+  assert.ok(!/FOR UPDATE/.test(textos[iVersion]));
+});
+
+test('sin version, el cambio no la compara: la cuenta ni se hace', async () => {
+  const { estado, base } = await llamar('PATCH', '/pedidos/2/estado', { token: cocina, cuerpo: { estado: 'listo' } });
+  assert.equal(estado, 200);
+  assert.ok(!base.hubo(/AS version/));
+});
+
+test('si la transicion no vale, responde eso antes que la version', async () => {
+  const { cuerpo } = await llamar('PATCH', '/pedidos/4/estado', { token: cocina, cuerpo: { estado: 'listo', version: 9 } });
+  assert.equal(cuerpo.error.codigo, 'TRANSICION_NO_PERMITIDA');
+});
+
+for (const version of ['1', 0, -1, 1.5, true, 100001]) {
+  test(`una version ${JSON.stringify(version)}: 400 VERSION_INVALIDA sin tocar la base`, async () => {
+    const { estado, cuerpo, base } = await llamar('PATCH', '/pedidos/2/estado', { token: cocina, cuerpo: { estado: 'listo', version } });
+    assert.equal(estado, 400);
+    assert.equal(cuerpo.error.codigo, 'VERSION_INVALIDA');
+    assert.equal(base.consultas.length, 0);
+  });
+}

@@ -4,10 +4,14 @@
 Las pruebas del backend (npm test) simulan la base para ver QUE le llega y en que orden.
 Esta es la otra mitad: que las consultas funcionen contra el esquema de verdad, que los
 precios guardados sean los de la tabla del plan 05, seccion 6, que el ciclo de estados se
-cumpla con los dos roles, y que dos cambios simultaneos sobre el mismo pedido no pasen los
-dos: eso lo decide el bloqueo de la base, que solo existe en la base real.
+cumpla con los dos roles, y TRES CARRERAS que solo se pueden probar en la base real, porque
+las decide su bloqueo:
+  - dos cambios simultaneos sobre el mismo pedido: pasa uno;
+  - muchas ventas a la vez: los numeros del dia salen seguidos, sin repetir ni saltar (D-35);
+  - "Listo" y "Agregar una pizza" a la vez: gana el primero y el otro recibe 409 (D-37).
 
-Uso, con el entorno levantado, la migracion 06 aplicada y las contrasenas de demostracion:
+Uso, con el entorno levantado, las migraciones 06 y 07 aplicadas y las contrasenas de
+demostracion:
 
     python pruebas/api/probar_pedidos.py
 
@@ -109,16 +113,22 @@ if __name__ == '__main__':
          [{'productoId': id_de['Hawaiana'], 'cantidad': 1, 'extras': [id_de['Extra queso']]}], 58, 'pendiente'),
         ('3 Choclo, cada una con extra choclo',
          [{'productoId': id_de['Choclo'], 'cantidad': 3, 'extras': [id_de['Extra choclo']]}], 150, 'pendiente'),
-        ('solo 2 gaseosas: nace lista (D-32)',
-         [{'productoId': id_de['Gaseosa 2 L'], 'cantidad': 2}], 36, 'listo'),
     ]
     creados = []
+    numeros = []
     for nombre, lineas, total, estado_inicial in tabla:
         estado, cuerpo = enviar('/pedidos', recepcion, venta(lineas, total))
         pedido = cuerpo.get('pedido', {})
         creados.append(pedido.get('id'))
+        numeros.append(pedido.get('numero'))
         comprobar(nombre, (estado, pedido.get('total'), pedido.get('estado')),
-                  (201, total, estado_inicial), '#%s' % pedido.get('id'))
+                  (201, total, estado_inicial), 'Pedido %s (#%s)' % (pedido.get('numero'), pedido.get('id')))
+
+    print('\n--- el numero del dia (D-35) ---')
+    comprobar('cada pedido lleva su numero del dia', all(isinstance(n, int) and n > 0 for n in numeros), True,
+              ' '.join(str(n) for n in numeros))
+    comprobar('  seguidos, en el orden en que se vendieron',
+              numeros == list(range(numeros[0], numeros[0] + len(numeros))), True)
 
     print('\n--- lo que devuelve un pedido recien creado ---')
     estado, cuerpo = enviar('/pedidos', recepcion, venta([
@@ -141,6 +151,8 @@ if __name__ == '__main__':
     comprobar('  el extra viaja dentro de su pizza, con su cantidad',
               [(e['producto']['nombre'], e['cantidad'], e['subtotal']) for e in lineas[1]['extras']],
               [('Extra queso', 1, 8)])
+    comprobar('  la version: 4 lineas guardadas (3 y el extra), ninguna agregada despues',
+              (pedido.get('version'), [l.get('agregadoEn') for l in lineas]), (4, [None, None, None]))
 
     print('\n--- sin celular y para comer aqui ---')
     estado, cuerpo = enviar('/pedidos', recepcion, venta(
@@ -150,6 +162,33 @@ if __name__ == '__main__':
     creados.append(pedido.get('id'))
     comprobar('cliente sin celular', (estado, pedido.get('cliente'), pedido.get('paraLlevar')),
               (201, {'nombre': 'Usuario Demo', 'celular': None}, False))
+
+    print('\n--- la venta directa de bebidas (D-38) ---')
+    directa = {'ventaDirecta': True, 'lineas': [{'productoId': id_de['Gaseosa 2 L'], 'cantidad': 2}],
+               'totalEsperado': 36}
+    estado, cuerpo = enviar('/pedidos', recepcion, directa)
+    vendida = cuerpo.get('pedido', {})
+    comprobar('2 gaseosas, sin nombre: nace entregada',
+              (estado, vendida.get('estado'), vendida.get('total')), (201, 'entregado', 36), '#%s' % vendida.get('id'))
+    comprobar('  sin cliente, sin para llevar y sin numero del dia',
+              (vendida.get('cliente'), vendida.get('paraLlevar'), vendida.get('numero')), (None, None, None))
+    estado, cuerpo = llamar('GET', '/pedidos/%s' % vendida.get('id'), recepcion)
+    comprobar('  queda quien la vendio, en el historial',
+              [(h['estado'], 'ocina' in h['usuario']) for h in cuerpo.get('pedido', {}).get('historial', [])],
+              [('entregado', False)])
+    _, cuerpo = llamar('GET', '/pedidos', recepcion)
+    comprobar('  y no aparece entre los activos',
+              vendida.get('id') in [p['id'] for p in cuerpo.get('pedidos', [])], False)
+    estado, cuerpo = enviar('/pedidos', recepcion, venta([{'productoId': id_de['Gaseosa 2 L'], 'cantidad': 2}], 36))
+    comprobar('solo bebidas a nombre de un cliente: se rechaza', (estado, codigo(cuerpo)), (400, 'VENTA_INVALIDA'),
+              cuerpo.get('error', {}).get('mensaje'))
+    estado, cuerpo = enviar('/pedidos', recepcion,
+                            dict(directa, lineas=[{'productoId': id_de['Peperoni'], 'cantidad': 1}], totalEsperado=50))
+    comprobar('venta directa con una pizza: se rechaza', (estado, codigo(cuerpo)), (400, 'VENTA_INVALIDA'))
+    estado, cuerpo = enviar('/pedidos', recepcion, dict(directa, cliente={'nombre': 'Ana Prueba'}))
+    comprobar('venta directa con nombre: se rechaza', (estado, codigo(cuerpo)), (400, 'VENTA_INVALIDA'))
+    estado, cuerpo = enviar('/pedidos', cocina, directa)
+    comprobar('cocina no vende', (estado, codigo(cuerpo)), (403, 'ROL_SIN_PERMISO'))
 
     print('\n--- lo que el servidor rechaza ---')
     estado, cuerpo = enviar('/pedidos', recepcion, venta([{'productoId': id_de['Peperoni'], 'cantidad': 1}], 45))
@@ -175,8 +214,18 @@ if __name__ == '__main__':
         creados.append(pedido_id)
         return pedido_id
 
-    def cambiar(pedido_id, token, estado):
-        return llamar('PATCH', '/pedidos/%s/estado' % pedido_id, token, {'estado': estado})
+    def cambiar(pedido_id, token, estado, version=None):
+        cuerpo = {'estado': estado}
+        if version is not None:
+            cuerpo['version'] = version
+        return llamar('PATCH', '/pedidos/%s/estado' % pedido_id, token, cuerpo)
+
+    def agregar(pedido_id, token, lineas, total):
+        return llamar('POST', '/pedidos/%s/lineas' % pedido_id, token, {'lineas': lineas, 'totalEsperado': total})
+
+    SODA = [{'productoId': id_de['Gaseosa 2 L'], 'cantidad': 1}]
+    PIZZA = [{'productoId': id_de['Salame'], 'mitadId': id_de['Peperoni'], 'cantidad': 1,
+              'extras': [id_de['Extra queso']]}]
 
     print('\n--- el ciclo completo, con los dos roles ---')
     pid = nuevo_pedido()
@@ -232,13 +281,100 @@ if __name__ == '__main__':
     comprobar('  y el historial registra un solo "listo"',
               [h['estado'] for h in cuerpo.get('pedido', {}).get('historial', [])].count('listo'), 1)
 
+    print('\n--- agregar a un pedido ya enviado (D-37) ---')
+    pid = nuevo_pedido()
+    estado, cuerpo = agregar(pid, recepcion, SODA, 18)
+    pedido = cuerpo.get('pedido', {})
+    comprobar('una soda a un pedido pendiente', (estado, pedido.get('total'), pedido.get('version')),
+              (200, 68, 2), '#%s' % pid)
+    comprobar('  la soda queda marcada como agregada; la pizza del principio, no',
+              [l['agregadoEn'] is not None for l in pedido.get('lineas', [])], [False, True])
+    _, cuerpo = llamar('GET', '/pedidos/%s' % pid, cocina)
+    comprobar('  cocina ve lo agregado, sin el celular',
+              (len(cuerpo.get('pedido', {}).get('lineas', [])), 'celular' in cuerpo.get('pedido', {}).get('cliente', {})),
+              (2, False))
+    estado, cuerpo = agregar(pid, cocina, SODA, 18)
+    comprobar('cocina no agrega', (estado, codigo(cuerpo)), (403, 'ROL_SIN_PERMISO'))
+    estado, cuerpo = agregar(pid, recepcion, SODA, 15)
+    comprobar('lo agregado con otro total', (estado, codigo(cuerpo)), (409, 'PRECIO_CAMBIADO'))
+
+    cambiar(pid, cocina, 'en_preparacion')
+    estado, cuerpo = agregar(pid, recepcion, PIZZA, 55.5)
+    pedido = cuerpo.get('pedido', {})
+    comprobar('una pizza mitad y mitad con extra, mientras cocina la prepara',
+              (estado, pedido.get('total'), pedido.get('version')), (200, 123.5, 4))
+    comprobar('  el extra, dentro de la pizza agregada',
+              [e['producto']['nombre'] for e in pedido.get('lineas', [{}])[-1].get('extras', [])], ['Extra queso'])
+    estado, cuerpo = cambiar(pid, cocina, 'listo', version=2)
+    comprobar('marcar listo sin haber visto lo ultimo',
+              (estado, codigo(cuerpo), cuerpo.get('error', {}).get('version')), (409, 'PEDIDO_CAMBIADO', 4))
+    estado, cuerpo = cambiar(pid, cocina, 'listo', version=4)
+    comprobar('  con la version que se ve, pasa', (estado, cuerpo.get('pedido', {}).get('estado')), (200, 'listo'))
+    estado, cuerpo = agregar(pid, recepcion, PIZZA, 55.5)
+    comprobar('una pizza a un pedido listo: va en otro pedido', (estado, codigo(cuerpo)),
+              (409, 'AGREGADO_NO_PERMITIDO'))
+    estado, cuerpo = agregar(pid, recepcion, SODA, 18)
+    comprobar('una soda a un pedido listo: si', (estado, cuerpo.get('pedido', {}).get('total')), (200, 141.5))
+    cambiar(pid, recepcion, 'entregado')
+    estado, cuerpo = agregar(pid, recepcion, SODA, 18)
+    comprobar('nada a un pedido entregado', (estado, codigo(cuerpo)), (409, 'AGREGADO_NO_PERMITIDO'))
+
+    print('\n--- la carrera: muchas ventas a la vez y el numero del dia (D-35) ---')
+    simultaneas = []
+    candado = threading.Lock()
+
+    def vender():
+        estado, cuerpo = enviar('/pedidos', recepcion, venta([{'productoId': id_de['Peperoni'], 'cantidad': 1}], 50))
+        with candado:
+            simultaneas.append((estado, cuerpo.get('pedido', {})))
+    hilos = [threading.Thread(target=vender) for _ in range(12)]
+    for h in hilos:
+        h.start()
+    for h in hilos:
+        h.join()
+    creados.extend(p.get('id') for _, p in simultaneas)
+    comprobar('12 ventas lanzadas a la vez: todas se guardan', [e for e, _ in simultaneas].count(201), 12)
+    nums = sorted(p.get('numero') or 0 for _, p in simultaneas)
+    comprobar('  sin repetir ni saltar un numero', nums == list(range(nums[0], nums[0] + 12)), True,
+              '%s a %s' % (nums[0], nums[-1]))
+    por_hora = [p.get('numero') for p in sorted((p for _, p in simultaneas), key=lambda p: (p.get('creadoEn'), p.get('id')))]
+    comprobar('  y el orden de los numeros es el orden de llegada', por_hora == sorted(por_hora), True)
+
+    print('\n--- la carrera: "Listo" y "Agregar una pizza" a la vez (D-37) ---')
+    ganadores = {'agregar': 0, 'listo': 0}
+    consistente = True
+    for _ in range(8):
+        pid = nuevo_pedido()
+        _, cuerpo = cambiar(pid, cocina, 'en_preparacion')
+        version = cuerpo.get('pedido', {}).get('version')
+        salida = {}
+        h1 = threading.Thread(target=lambda: salida.__setitem__('listo', cambiar(pid, cocina, 'listo', version=version)))
+        h2 = threading.Thread(target=lambda: salida.__setitem__('agregar', agregar(pid, recepcion, PIZZA, 55.5)))
+        h1.start()
+        h2.start()
+        h1.join()
+        h2.join()
+        (e_listo, c_listo), (e_agregar, c_agregar) = salida['listo'], salida['agregar']
+        _, final = llamar('GET', '/pedidos/%s' % pid, recepcion)
+        final = final.get('pedido', {})
+        if e_agregar == 200:
+            ganadores['agregar'] += 1
+            consistente &= (e_listo, codigo(c_listo), final.get('estado'), final.get('version')) == \
+                (409, 'PEDIDO_CAMBIADO', 'en_preparacion', version + 2)
+        else:
+            ganadores['listo'] += 1
+            consistente &= (e_listo, e_agregar, codigo(c_agregar), final.get('estado'), final.get('version')) == \
+                (200, 409, 'AGREGADO_NO_PERMITIDO', 'listo', version)
+    comprobar('8 rondas: siempre pasa uno solo y el otro recibe 409', consistente, True,
+              'gano agregar %d veces, gano listo %d' % (ganadores['agregar'], ganadores['listo']))
+
     print('\n--- la cola ---')
     estado, cuerpo = llamar('GET', '/pedidos?estado=pendiente,en_preparacion', cocina)
     cola = cuerpo.get('pedidos', [])
     comprobar('cocina lee su cola', estado, 200, '%d pedidos' % len(cola))
     comprobar('  sin el celular de nadie (D-31)', any('celular' in p['cliente'] for p in cola), False)
     comprobar('  en orden de llegada', [p['creadoEn'] for p in cola] == sorted(p['creadoEn'] for p in cola), True)
-    comprobar('  sin los listos: el pedido de solo bebidas no le llega (D-32)',
+    comprobar('  solo los pendientes y los que estan en preparacion',
               all(p['estado'] in ('pendiente', 'en_preparacion') for p in cola), True)
     estado, cuerpo = llamar('GET', '/pedidos?estado=pagado', cocina)
     comprobar('un estado que no existe', (estado, codigo(cuerpo)), (400, 'FILTRO_INVALIDO'))

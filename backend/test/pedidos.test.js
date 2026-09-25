@@ -21,6 +21,9 @@ const CARTA = [
 ];
 const nombreDe = (id) => CARTA.find((p) => p.id === id);
 
+// La hora que la base toma despues del bloqueo del numero del dia.
+const AHORA = new Date('2026-09-24T19:00:00Z');
+
 // Una base simulada. "fallarEn" hace fallar la primera consulta que coincida.
 function baseSimulada({ fallarEn = null, errorDeConexion = null, rollbackFalla = false } = {}) {
   const b = { consultas: [], liberaciones: [], cliente: null, pedido: null, lineas: [] };
@@ -38,6 +41,8 @@ function baseSimulada({ fallarEn = null, errorDeConexion = null, rollbackFalla =
     if (/FROM producto/.test(s) && /FOR SHARE/.test(s)) {
       return { rows: CARTA.filter((r) => p[0].includes(r.id)) };
     }
+    if (/pg_advisory_xact_lock/.test(s)) return { rows: [{}] };
+    if (/^WITH ahora AS/.test(s)) return { rows: [{ creado_en: AHORA, numero: 12 }] };
     if (/^INSERT INTO cliente/.test(s)) {
       b.cliente = { id: 77, nombre: p[0], celular: p[1] === undefined ? null : p[1] };
       return { rows: [{ id: 77 }] };
@@ -56,16 +61,16 @@ function baseSimulada({ fallarEn = null, errorDeConexion = null, rollbackFalla =
       const q = b.pedido.parametros;
       return {
         rows: [{
-          id: 42, estado: q[3], para_llevar: q[6], observacion: q[4], total: q[5],
-          creado_en: new Date('2026-09-24T15:00:00Z'), creado_por_nombre: q[2],
-          cliente_nombre: b.cliente.nombre, cliente_celular: b.cliente.celular,
+          id: 42, numero_del_dia: q[7], estado: q[3], para_llevar: q[6], observacion: q[4], total: q[5],
+          creado_en: q[8] || new Date('2026-09-24T15:00:00Z'), creado_por_nombre: q[2], cliente_id: q[0],
+          cliente_nombre: b.cliente && b.cliente.nombre, cliente_celular: b.cliente && b.cliente.celular,
         }],
       };
     }
     if (/FROM detalle_pedido d/.test(s)) {
       return {
         rows: b.lineas.map(({ id, parametros: q }) => ({
-          id, pedido_id: q[0], linea_de_id: q[3], cantidad: q[4], precio_unitario: q[5], subtotal: q[6],
+          id, pedido_id: q[0], linea_de_id: q[3], cantidad: q[4], precio_unitario: q[5], subtotal: q[6], agregado_en: null,
           producto_id: q[1], producto_nombre: nombreDe(q[1]).nombre, producto_categoria: nombreDe(q[1]).categoria,
           mitad_id: q[2], mitad_nombre: q[2] === null ? null : nombreDe(q[2]).nombre,
         })),
@@ -167,6 +172,8 @@ test('crear pedido: 201 con el pedido guardado y el precio del servidor', async 
   assert.equal(ubicacion, '/api/v1/pedidos/42');
   const { pedido } = cuerpo;
   assert.equal(pedido.id, 42);
+  assert.equal(pedido.numero, 12);
+  assert.equal(pedido.version, 4);
   assert.equal(pedido.estado, 'pendiente');
   assert.equal(pedido.paraLlevar, true);
   assert.equal(pedido.total, 189);
@@ -199,6 +206,21 @@ test('crear pedido: una sola transaccion, en orden, y la conexion se devuelve', 
   assert.deepEqual(base.liberaciones, [false]);
 });
 
+test('el numero del dia: bloqueo, maximo mas uno y el pedido, en ese orden y dentro de la transaccion (D-35)', async () => {
+  const { base } = await enviar(VENTA);
+  const textos = base.textos();
+  const iBloqueo = textos.findIndex((t) => /pg_advisory_xact_lock/.test(t));
+  const iNumero = textos.findIndex((t) => /^WITH ahora AS/.test(t));
+  const iPedido = textos.findIndex((t) => /^INSERT INTO pedido/.test(t));
+  assert.ok(iBloqueo > textos.indexOf('BEGIN'));
+  assert.ok(iBloqueo < iNumero && iNumero < iPedido && iPedido < textos.indexOf('COMMIT'));
+  // Un bloqueo de TRANSACCION: se suelta solo con el COMMIT o el ROLLBACK, no hay que soltarlo a mano.
+  assert.ok(!base.hubo(/pg_advisory_unlock/));
+  // El dia se cuenta en la hora de Bolivia, desde la hora tomada despues del bloqueo.
+  assert.match(textos[iNumero], /clock_timestamp\(\)/);
+  assert.match(textos[iNumero], /America\/La_Paz/);
+});
+
 test('crear pedido: todo viaja como parametro, nada pegado al SQL', async () => {
   const { base } = await enviar(VENTA);
   for (const { sql } of base.consultas) {
@@ -207,6 +229,7 @@ test('crear pedido: todo viaja como parametro, nada pegado al SQL', async () => 
   const pedido = base.consultas.find((c) => /^INSERT INTO pedido/.test(c.sql));
   assert.deepEqual(pedido.parametros, [
     77, '11111111-2222-3333-4444-555555555555', 'Recepcion de prueba', 'pendiente', 'sin cebolla', '189.00', true,
+    12, AHORA,
   ]);
   const historial = base.consultas.find((c) => /^INSERT INTO historial_estado/.test(c.sql));
   assert.deepEqual(historial.parametros, [42, 'pendiente', '11111111-2222-3333-4444-555555555555', 'Recepcion de prueba']);
@@ -231,14 +254,51 @@ test('con celular, el cliente se busca por su numero; sin celular, es uno nuevo'
   assert.deepEqual(sinCelular.cuerpo.pedido.cliente, { nombre: 'Usuario Demo', celular: null });
 });
 
-test('solo bebidas: el pedido nace listo y asi queda en el historial (D-32)', async () => {
+test('solo bebidas a nombre de un cliente: 400, las bebidas solas son una venta directa (D-38)', async () => {
   const { estado, cuerpo, base } = await enviar({
     ...VENTA, lineas: [{ productoId: 10, cantidad: 2 }], totalEsperado: 36,
   });
+  assert.equal(estado, 400);
+  assert.match(cuerpo.error.mensaje, /venta directa/);
+  assert.ok(!base.hubo(/^INSERT/));
+});
+
+const DIRECTA = { ventaDirecta: true, lineas: [{ productoId: 10, cantidad: 2 }], totalEsperado: 36 };
+
+test('venta directa: 201, entregada, sin cliente, sin para llevar y sin numero del dia (D-38)', async () => {
+  const { estado, cuerpo, base } = await enviar(DIRECTA);
   assert.equal(estado, 201);
-  assert.equal(cuerpo.pedido.estado, 'listo');
+  const { pedido } = cuerpo;
+  assert.equal(pedido.estado, 'entregado');
+  assert.equal(pedido.cliente, null);
+  assert.equal(pedido.paraLlevar, null);
+  assert.equal(pedido.numero, null);
+  assert.equal(pedido.total, 36);
+  // Ni cliente, ni bloqueo del numero: nadie la canta.
+  assert.ok(!base.hubo(/^INSERT INTO cliente/));
+  assert.ok(!base.hubo(/pg_advisory_xact_lock/));
+  const insercion = base.consultas.find((c) => /^INSERT INTO pedido/.test(c.sql));
+  assert.deepEqual(insercion.parametros, [
+    null, '11111111-2222-3333-4444-555555555555', 'Recepcion de prueba', 'entregado', null, '36.00', null, null, null,
+  ]);
+  // Queda quien la vendio y cuando: nace entregada.
   const historial = base.consultas.find((c) => /^INSERT INTO historial_estado/.test(c.sql));
-  assert.equal(historial.parametros[1], 'listo');
+  assert.equal(historial.parametros[1], 'entregado');
+});
+
+test('venta directa con una pizza: 400, sin tocar la base mas alla de leer la carta', async () => {
+  const { estado, cuerpo, base } = await enviar({
+    ventaDirecta: true, lineas: [{ productoId: 2, cantidad: 1 }], totalEsperado: 50,
+  });
+  assert.equal(estado, 400);
+  assert.match(cuerpo.error.mensaje, /solo de bebidas/);
+  assert.ok(!base.hubo(/^INSERT/));
+});
+
+test('venta directa con el nombre del cliente: 400 sin tocar la base', async () => {
+  const { estado, base } = await enviar({ ...DIRECTA, cliente: { nombre: 'Ana Prueba' } });
+  assert.equal(estado, 400);
+  assert.equal(base.consultas.length, 0);
 });
 
 // --- lo que se rechaza con la carta en la mano -------------------------------------------
@@ -305,6 +365,7 @@ function avisosQueAnotan(base) {
   return {
     anotados,
     pedidoNuevo: (pedido) => anotados.push({ tipo: 'pedidoNuevo', pedido, despuesDelCommit: base.hubo(/^COMMIT$/) }),
+    pedidoActualizado: (pedido) => anotados.push({ tipo: 'pedidoActualizado', pedido, despuesDelCommit: base.hubo(/^COMMIT$/) }),
     estadoCambiado: (aviso) => anotados.push({ tipo: 'estadoCambiado', aviso, despuesDelCommit: base.hubo(/^COMMIT$/) }),
   };
 }

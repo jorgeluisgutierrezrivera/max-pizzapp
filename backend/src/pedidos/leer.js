@@ -6,12 +6,15 @@
 // El celular del cliente solo lo recibe quien lo va a usar: recepcion, para avisarle que
 // su pedido esta listo. A cocina no le hace falta, y un dato personal que no se necesita no
 // se entrega (D-31).
+//
+// La venta directa de bebidas no tiene cliente (D-38): de ahi el LEFT JOIN, y "cliente",
+// "paraLlevar" y "numero" en null.
 
 const SQL_PEDIDOS = `
-  SELECT p.id, p.estado, p.para_llevar, p.observacion, p.total, p.creado_en,
-         p.creado_por_nombre, c.nombre AS cliente_nombre, c.celular AS cliente_celular
+  SELECT p.id, p.numero_del_dia, p.estado, p.para_llevar, p.observacion, p.total, p.creado_en,
+         p.creado_por_nombre, p.cliente_id, c.nombre AS cliente_nombre, c.celular AS cliente_celular
     FROM pedido p
-    JOIN cliente c ON c.id = p.cliente_id
+    LEFT JOIN cliente c ON c.id = p.cliente_id
    WHERE p.id = ANY($1::int[])
    ORDER BY p.creado_en, p.id`;
 
@@ -19,7 +22,7 @@ const SQL_PEDIDOS = `
 // todas juntas y se agrupan aqui: una consulta por pedido seria una por cada tarjeta de
 // la cola de cocina.
 const SQL_LINEAS = `
-  SELECT d.id, d.pedido_id, d.linea_de_id, d.cantidad, d.precio_unitario, d.subtotal,
+  SELECT d.id, d.pedido_id, d.linea_de_id, d.cantidad, d.precio_unitario, d.subtotal, d.agregado_en,
          pr.id AS producto_id, pr.nombre AS producto_nombre, pr.categoria AS producto_categoria,
          m.id AS mitad_id, m.nombre AS mitad_nombre
     FROM detalle_pedido d
@@ -38,15 +41,22 @@ function aLinea(fila) {
     cantidad: fila.cantidad,
     precioUnitario: Number(fila.precio_unitario),
     subtotal: Number(fila.subtotal),
+    // Cuando se agrego a un pedido ya enviado (D-37); null en lo que se pidio al principio.
+    agregadoEn: fila.agregado_en ?? null,
     extras: [],
   };
 }
 
-function aPedido(fila, lineas, verCelular) {
-  const cliente = { nombre: fila.cliente_nombre };
-  if (verCelular) cliente.celular = fila.cliente_celular;
+function aPedido(fila, lineas, version, verCelular) {
+  let cliente = null;
+  if (fila.cliente_id !== null) {
+    cliente = { nombre: fila.cliente_nombre };
+    if (verCelular) cliente.celular = fila.cliente_celular;
+  }
   return {
     id: fila.id,
+    // El que se canta en el mostrador (D-35); el id es el identificador interno.
+    numero: fila.numero_del_dia ?? null,
     estado: fila.estado,
     paraLlevar: fila.para_llevar,
     cliente,
@@ -54,6 +64,9 @@ function aPedido(fila, lineas, verCelular) {
     total: Number(fila.total),
     creadoEn: fila.creado_en,
     creadoPor: fila.creado_por_nombre,
+    // Cuantas lineas tiene guardadas, extras incluidos. Solo se agregan, nunca se quitan:
+    // quien avanza el pedido manda la version que vio (D-37).
+    version,
     lineas,
   };
 }
@@ -65,8 +78,10 @@ async function leerPedidos(db, ids, { verCelular }) {
   const { rows: filas } = await db.query(SQL_LINEAS, [ids]);
 
   const lineasDe = new Map(pedidos.map((p) => [p.id, []]));
+  const versionDe = new Map(pedidos.map((p) => [p.id, 0]));
   const porId = new Map();
   for (const fila of filas) {
+    versionDe.set(fila.pedido_id, (versionDe.get(fila.pedido_id) ?? 0) + 1);
     const linea = aLinea(fila);
     porId.set(fila.id, linea);
     if (fila.linea_de_id === null) {
@@ -81,7 +96,7 @@ async function leerPedidos(db, ids, { verCelular }) {
     }
   }
 
-  return pedidos.map((p) => aPedido(p, lineasDe.get(p.id), verCelular));
+  return pedidos.map((p) => aPedido(p, lineasDe.get(p.id), versionDe.get(p.id), verCelular));
 }
 
 // La cola: los pedidos en esos estados, en orden de llegada. El tope solo importa si alguien

@@ -109,13 +109,36 @@ test('un pedido nuevo le llega a cocina sin el celular, y a recepcion completo',
   assert.deepEqual((await enRecepcion).cliente, { nombre: 'Ana Prueba', celular: '70000001' });
 });
 
-test('un pedido de solo bebidas nace listo: le llega a recepcion y no a cocina (D-32)', async () => {
+test('una venta directa de bebidas no se avisa a nadie: nace entregada (D-38)', async () => {
   const { socket: deCocinaSocket } = await entrar(firmar(deCocina));
   const { socket: deRecepcionSocket } = await entrar(firmar(deRecepcion));
   const enCocina = esperar(deCocinaSocket, 'pedido:nuevo', 500);
-  const enRecepcion = esperar(deRecepcionSocket, 'pedido:nuevo');
-  canal.pedidoNuevo({ ...PEDIDO, id: 43, estado: 'listo' });
-  assert.equal((await enRecepcion).id, 43);
+  const enRecepcion = esperar(deRecepcionSocket, 'pedido:nuevo', 500);
+  canal.pedidoNuevo({ ...PEDIDO, id: 43, estado: 'entregado', cliente: null, paraLlevar: null, numero: null });
+  assert.equal(await enRecepcion, null);
+  assert.equal(await enCocina, null);
+});
+
+test('lo agregado a un pedido en cocina les llega a los dos, a cocina sin el celular (D-37)', async () => {
+  const { socket: deCocinaSocket } = await entrar(firmar(deCocina));
+  const { socket: deRecepcionSocket } = await entrar(firmar(deRecepcion));
+  const enCocina = esperar(deCocinaSocket, 'pedido:actualizado');
+  const enRecepcion = esperar(deRecepcionSocket, 'pedido:actualizado');
+  canal.pedidoActualizado({ ...PEDIDO, id: 45, estado: 'en_preparacion', version: 2 });
+  const aCocina = await enCocina;
+  assert.equal(aCocina.id, 45);
+  assert.equal(aCocina.version, 2);
+  assert.deepEqual(aCocina.cliente, { nombre: 'Ana Prueba' });
+  assert.deepEqual((await enRecepcion).cliente, { nombre: 'Ana Prueba', celular: '70000001' });
+});
+
+test('lo agregado a un pedido listo le llega a recepcion y no a cocina, que ya no lo tiene', async () => {
+  const { socket: deCocinaSocket } = await entrar(firmar(deCocina));
+  const { socket: deRecepcionSocket } = await entrar(firmar(deRecepcion));
+  const enCocina = esperar(deCocinaSocket, 'pedido:actualizado', 500);
+  const enRecepcion = esperar(deRecepcionSocket, 'pedido:actualizado');
+  canal.pedidoActualizado({ ...PEDIDO, id: 46, estado: 'listo' });
+  assert.equal((await enRecepcion).id, 46);
   assert.equal(await enCocina, null);
 });
 

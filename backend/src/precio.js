@@ -61,19 +61,46 @@ function textoOpcional(valor, largo, campo) {
   return limpio === '' ? null : limpio;
 }
 
+function esObjeto(valor) {
+  return Boolean(valor) && typeof valor === 'object' && !Array.isArray(valor);
+}
+
 // --- 1. La forma ------------------------------------------------------------------------
 // Todo lo que se puede comprobar sin la carta. Devuelve la venta normalizada.
+//
+// Dos formas de venta (D-38): el PEDIDO, a nombre de un cliente, que pasa por cocina; y la
+// VENTA DIRECTA de bebidas ("ventaDirecta": true), que no lleva cliente, ni "para llevar",
+// ni observacion, y se entrega en el momento.
 function leerVenta(cuerpo) {
-  if (!cuerpo || typeof cuerpo !== 'object' || Array.isArray(cuerpo)) {
+  if (!esObjeto(cuerpo)) {
     throw new VentaInvalida('La venta llego vacia.');
   }
-  const { paraLlevar, cliente, observacion, lineas, totalEsperado } = cuerpo;
+  const { ventaDirecta = false, paraLlevar, cliente, observacion, lineas, totalEsperado } = cuerpo;
+
+  if (typeof ventaDirecta !== 'boolean') {
+    throw new VentaInvalida('ventaDirecta debe ser verdadero o falso.');
+  }
+  if (ventaDirecta) {
+    // Lo que no corresponde se rechaza en vez de ignorarse: una venta con nombre que llega
+    // como directa es un error de la pantalla, y no debe guardarse a medias.
+    if ([paraLlevar, cliente, observacion].some((v) => v !== undefined && v !== null)) {
+      throw new VentaInvalida('Una venta directa no lleva cliente, ni para llevar, ni observacion.');
+    }
+    return {
+      ventaDirecta: true,
+      paraLlevar: null,
+      cliente: null,
+      observacion: null,
+      lineas: leerLineas(lineas),
+      totalEsperadoCentavos: leerTotal(totalEsperado),
+    };
+  }
 
   if (typeof paraLlevar !== 'boolean') {
     throw new VentaInvalida('Falta indicar si el pedido es para llevar o para comer aqui.');
   }
 
-  if (!cliente || typeof cliente !== 'object' || Array.isArray(cliente)) {
+  if (!esObjeto(cliente)) {
     throw new VentaInvalida('Falta el nombre del cliente.');
   }
   const nombre = textoOpcional(cliente.nombre, LARGO_NOMBRE, 'El nombre');
@@ -83,13 +110,34 @@ function leerVenta(cuerpo) {
     throw new VentaInvalida('El celular debe tener 8 digitos y empezar con 6 o 7.');
   }
 
+  return {
+    ventaDirecta: false,
+    paraLlevar,
+    cliente: { nombre, celular },
+    observacion: textoOpcional(observacion, LARGO_OBSERVACION, 'La observacion'),
+    lineas: leerLineas(lineas),
+    totalEsperadoCentavos: leerTotal(totalEsperado),
+  };
+}
+
+// Lo que se agrega a un pedido ya enviado (D-37): solo las lineas y el total que la
+// pantalla mostro para ellas. Nada del cliente cambia.
+function leerAgregado(cuerpo) {
+  if (!esObjeto(cuerpo)) {
+    throw new VentaInvalida('No llego nada para agregar.');
+  }
+  const { lineas, totalEsperado } = cuerpo;
+  return { lineas: leerLineas(lineas), totalEsperadoCentavos: leerTotal(totalEsperado) };
+}
+
+function leerLineas(lineas) {
   if (!Array.isArray(lineas) || lineas.length === 0) {
     throw new VentaInvalida('Agregue al menos un producto.');
   }
   if (lineas.length > MAXIMO_DE_LINEAS) {
     throw new VentaInvalida(`Una venta admite hasta ${MAXIMO_DE_LINEAS} lineas.`);
   }
-  const normalizadas = lineas.map((linea, i) => {
+  return lineas.map((linea, i) => {
     const donde = `La linea ${i + 1}`;
     if (!linea || typeof linea !== 'object' || Array.isArray(linea)) {
       throw new VentaInvalida(`${donde} no es valida.`);
@@ -113,19 +161,14 @@ function leerVenta(cuerpo) {
     }
     return { productoId, mitadId, cantidad, extras };
   });
+}
 
-  const totalEsperadoCentavos = aCentavos(totalEsperado);
-  if (totalEsperadoCentavos === null) {
+function leerTotal(totalEsperado) {
+  const centavos = aCentavos(totalEsperado);
+  if (centavos === null) {
     throw new VentaInvalida('Falta el total que se mostro en la venta.');
   }
-
-  return {
-    paraLlevar,
-    cliente: { nombre, celular },
-    observacion: textoOpcional(observacion, LARGO_OBSERVACION, 'La observacion'),
-    lineas: normalizadas,
-    totalEsperadoCentavos,
-  };
+  return centavos;
 }
 
 // Los ids de producto que la venta menciona, para leerlos de la base de una vez.
@@ -142,8 +185,27 @@ function idsDeProductos(venta) {
 // --- 2. El precio -----------------------------------------------------------------------
 // Con los productos de la base (id -> { nombre, categoria, precio, disponible }), cada
 // linea recibe su precio unitario y su subtotal. Los extras cuelgan de su pizza y llevan
-// su misma cantidad. Un pedido con pizzas nace pendiente; uno sin pizzas, listo (D-32).
+// su misma cantidad.
+//
+// El estado inicial lo decide el servidor (D-38): un pedido lleva al menos una pizza y
+// nace pendiente; la venta directa es solo de bebidas y nace entregada.
 function calcularVenta(venta, productos) {
+  const calculo = calcularLineas(venta, productos);
+  if (venta.ventaDirecta) {
+    if (calculo.hayPizzas) {
+      throw new VentaInvalida('Una venta directa es solo de bebidas. Las pizzas van en un pedido, a nombre del cliente.');
+    }
+    return { ...calculo, estadoInicial: 'entregado' };
+  }
+  if (!calculo.hayPizzas) {
+    throw new VentaInvalida('Un pedido lleva al menos una pizza. Las bebidas solas son una venta directa.');
+  }
+  return { ...calculo, estadoInicial: 'pendiente' };
+}
+
+// Lo mismo para lo que se agrega a un pedido: el precio de cada linea y si trae pizzas. Que
+// se pueda agregar o no depende del estado del pedido, y lo decide quien lo lee (D-37).
+function calcularLineas(venta, productos) {
   function producto(id, donde) {
     const p = productos.get(id);
     if (!p) throw new VentaInvalida(`${donde} menciona un producto que no existe en la carta.`);
@@ -199,7 +261,7 @@ function calcularVenta(venta, productos) {
     };
   });
 
-  return { lineas, total, estadoInicial: hayPizzas ? 'pendiente' : 'listo' };
+  return { lineas, total, hayPizzas };
 }
 
 // Centavos a la forma en que los guarda la base (numeric) y los muestra la API.
@@ -208,6 +270,6 @@ function aBolivianos(centavos) {
 }
 
 module.exports = {
-  leerVenta, idsDeProductos, calcularVenta, precioDeDosMitades, aCentavos, aBolivianos,
-  VentaInvalida, ProductoNoDisponible, MAXIMO_POR_LINEA, LARGO_OBSERVACION,
+  leerVenta, leerAgregado, idsDeProductos, calcularVenta, calcularLineas, precioDeDosMitades,
+  aCentavos, aBolivianos, VentaInvalida, ProductoNoDisponible, MAXIMO_POR_LINEA, LARGO_OBSERVACION,
 };

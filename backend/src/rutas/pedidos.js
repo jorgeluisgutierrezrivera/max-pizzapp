@@ -1,16 +1,19 @@
 const express = require('express');
 const { exigirRol, ROLES_DEL_SISTEMA } = require('../autenticacion');
 const { ErrorApi } = require('../errores');
-const { leerVenta, VentaInvalida, ProductoNoDisponible } = require('../precio');
+const { leerVenta, leerAgregado, VentaInvalida, ProductoNoDisponible } = require('../precio');
 const { crearPedido } = require('../pedidos/crear');
+const { agregarAlPedido } = require('../pedidos/agregar');
 const { leerPedidos, idsPorEstados, leerHistorial, puedeVerCelular } = require('../pedidos/leer');
 const { TRANSICIONES, cambiarEstado } = require('../pedidos/estados');
 
 // Los pedidos, con su CRUD completo:
 //
-//   POST   /api/v1/pedidos                   crear (recepcion, RF-02)
+//   POST   /api/v1/pedidos                   crear (recepcion, RF-02); tambien la venta
+//                                            directa de bebidas (D-38)
 //   GET    /api/v1/pedidos?estado=...        leer la cola (los dos roles, RF-06)
 //   GET    /api/v1/pedidos/:id               leer uno, con su historial
+//   POST   /api/v1/pedidos/:id/lineas        agregar a un pedido ya enviado (recepcion, RF-14)
 //   PATCH  /api/v1/pedidos/:id/estado        avanzar (cocina: RF-07; recepcion: RF-05)
 //   POST   /api/v1/pedidos/:id/cancelacion   dar de baja, con motivo (recepcion, RF-09)
 //
@@ -56,6 +59,17 @@ function leerId(texto) {
     throw new ErrorApi(400, 'ID_INVALIDO', 'El numero de pedido no es valido.');
   }
   return Number(texto);
+}
+
+// La version del pedido que tenia a la vista quien toca el boton (D-37). Es opcional: si
+// llega, el servidor la compara con la actual.
+function leerVersion(cuerpo) {
+  const version = cuerpo && cuerpo.version;
+  if (version === undefined || version === null) return null;
+  if (!Number.isInteger(version) || version < 1 || version > 100000) {
+    throw new ErrorApi(400, 'VERSION_INVALIDA', 'La version del pedido no es valida.');
+  }
+  return version;
 }
 
 function leerMotivo(cuerpo) {
@@ -116,6 +130,19 @@ function rutasPedidos({ pool, autenticar, avisos }) {
     res.json({ pedido: { ...pedido, historial: await leerHistorial(pool, id) } });
   });
 
+  rutas.post('/pedidos/:id/lineas', autenticar, exigirRol('recepcion'), async (req, res) => {
+    const id = leerId(req.params.id);
+    try {
+      const agregado = leerAgregado(req.body);
+      await agregarAlPedido(pool, id, agregado, req.usuario);
+    } catch (err) {
+      throw aErrorApi(err);
+    }
+    const pedido = await uno(id, req.usuario);
+    res.json({ pedido });
+    avisar(() => avisos.pedidoActualizado(pedido));
+  });
+
   rutas.patch('/pedidos/:id/estado', ...deCualquierRol, async (req, res) => {
     const id = leerId(req.params.id);
     const hacia = req.body && req.body.estado;
@@ -125,7 +152,8 @@ function rutasPedidos({ pool, autenticar, avisos }) {
     if (typeof hacia !== 'string' || !Object.hasOwn(TRANSICIONES, hacia)) {
       throw new ErrorApi(400, 'ESTADO_INVALIDO', 'El estado debe ser en_preparacion, listo o entregado.');
     }
-    const { anterior } = await cambiarEstado(pool, id, hacia, req.usuario);
+    const versionVista = leerVersion(req.body);
+    const { anterior } = await cambiarEstado(pool, id, hacia, req.usuario, null, versionVista);
     res.json({ pedido: await uno(id, req.usuario) });
     avisar(() => avisos.estadoCambiado({ id, anterior, nuevo: hacia }));
   });

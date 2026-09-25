@@ -15,8 +15,11 @@ const SALA = { recepcion: 'rol:recepcion', cocina: 'rol:cocina' };
 
 // Lo que cocina recibe de un pedido: todo menos el celular del cliente (D-31).
 function paraCocina(pedido) {
-  return { ...pedido, cliente: { nombre: pedido.cliente.nombre } };
+  return { ...pedido, cliente: pedido.cliente && { nombre: pedido.cliente.nombre } };
 }
+
+// Los estados que cocina tiene en su cola.
+const EN_COCINA = ['pendiente', 'en_preparacion'];
 
 function crearCanal(servidorHttp, { usuarioDelToken }) {
   // Mismo origen que la app: Caddy sirve las dos cosas desde el mismo dominio, asi que no
@@ -47,11 +50,19 @@ function crearCanal(servidorHttp, { usuarioDelToken }) {
   });
 
   return {
-    // Un pedido recien guardado. A recepcion, completo; a cocina, sin el celular, y solo si
-    // tiene algo que preparar: un pedido de solo bebidas nace listo y no le llega (D-32).
+    // Un pedido recien guardado. A recepcion, completo; a cocina, sin el celular. La venta
+    // directa de bebidas no se avisa: nace entregada y no entra en ninguna lista (D-38).
     pedidoNuevo(pedido) {
+      if (pedido.cliente === null) return;
       io.to(SALA.recepcion).emit('pedido:nuevo', pedido);
-      if (pedido.estado !== 'listo') io.to(SALA.cocina).emit('pedido:nuevo', paraCocina(pedido));
+      if (EN_COCINA.includes(pedido.estado)) io.to(SALA.cocina).emit('pedido:nuevo', paraCocina(pedido));
+    },
+
+    // Se le agrego algo a un pedido (D-37). Va completo, para que cada pantalla reemplace su
+    // tarjeta: a recepcion siempre; a cocina, si el pedido esta en su cola.
+    pedidoActualizado(pedido) {
+      io.to(SALA.recepcion).emit('pedido:actualizado', pedido);
+      if (EN_COCINA.includes(pedido.estado)) io.to(SALA.cocina).emit('pedido:actualizado', paraCocina(pedido));
     },
 
     // Un cambio de estado, a los dos roles: cual pedido, desde donde, hacia donde y cuando.
@@ -67,6 +78,6 @@ function crearCanal(servidorHttp, { usuarioDelToken }) {
 }
 
 // Para las pruebas y para arrancar sin canal: avisos que no hacen nada.
-const SIN_AVISOS = { pedidoNuevo() {}, estadoCambiado() {} };
+const SIN_AVISOS = { pedidoNuevo() {}, pedidoActualizado() {}, estadoCambiado() {} };
 
 module.exports = { crearCanal, SIN_AVISOS };

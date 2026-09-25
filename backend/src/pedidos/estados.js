@@ -22,6 +22,12 @@ const QUIEN = { cocina: 'cocina', recepcion: 'recepcion' };
 // la vez, la segunda espera, lee el estado que dejo la primera y recibe un 409.
 const SQL_ESTADO_ACTUAL = 'SELECT estado FROM pedido WHERE id = $1 FOR UPDATE';
 const SQL_CAMBIAR = 'UPDATE pedido SET estado = $2::estado_pedido WHERE id = $1';
+
+// La version del pedido (D-37): cuantas lineas tiene. Las lineas solo se agregan, nunca se
+// quitan, asi que si el numero cambio, alguien agrego algo. Se cuenta en una consulta
+// APARTE, despues de tomar la fila: en READ COMMITTED cada consulta ve lo ultimo
+// confirmado, y asi incluye lo que agrego quien tenia la fila tomada hasta recien.
+const SQL_VERSION = 'SELECT count(*)::int AS version FROM detalle_pedido WHERE pedido_id = $1';
 const SQL_HISTORIAL = `
   INSERT INTO historial_estado (pedido_id, estado, usuario_id, usuario_nombre, motivo)
   VALUES ($1, $2::estado_pedido, $3, $4, $5)`;
@@ -41,7 +47,11 @@ function comprobarRol(hacia, usuario) {
 
 // Cambia el estado en una transaccion y deja su fila en el historial. Devuelve el estado
 // anterior, que el aviso en vivo necesita.
-async function cambiarEstado(pool, id, hacia, usuario, motivo = null) {
+//
+// "versionVista" es la version del pedido que tenia a la vista quien toco el boton. Si
+// despues se le agrego algo, el cambio se rechaza: nadie marca listo, ni entrega, un pedido
+// sin haber visto lo ultimo que se le agrego.
+async function cambiarEstado(pool, id, hacia, usuario, motivo = null, versionVista = null) {
   comprobarRol(hacia, usuario);
   const db = await pool.connect();
   let conexionRota = false;
@@ -56,6 +66,14 @@ async function cambiarEstado(pool, id, hacia, usuario, motivo = null) {
       throw new ErrorApi(409, 'TRANSICION_NO_PERMITIDA',
         `El pedido #${id} esta ${anterior.replace('_', ' ')}: no puede pasar a ${hacia.replace('_', ' ')}.`,
         { estadoActual: anterior });
+    }
+    if (versionVista !== null) {
+      const { rows: [{ version }] } = await db.query(SQL_VERSION, [id]);
+      if (version !== versionVista) {
+        throw new ErrorApi(409, 'PEDIDO_CAMBIADO',
+          `Al pedido #${id} se le agrego algo. Revisalo antes de marcarlo ${hacia.replace('_', ' ')}.`,
+          { version });
+      }
     }
     await db.query(SQL_CAMBIAR, [id, hacia]);
     await db.query(SQL_HISTORIAL, [id, hacia, usuario.sub, nombreDe(usuario), motivo]);
