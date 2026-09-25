@@ -1,11 +1,18 @@
 # Max Pizzapp
 
-Sistema de **gestión de pedidos para un restaurante pequeño**. La recepción toma el
-pedido, lo envía a cocina, y el estado de preparación se sincroniza **en tiempo real**
-entre ambas pantallas; cuando cocina marca "listo", recepción lo entrega.
+> Trabajo Final · Diplomado en Desarrollo Web y Aplicaciones Móviles · UAJMS 2026\
+> Módulo 4 — Integración y Despliegue de Soluciones\
+> Autor: Jorge Luis Gutierrez Rivera · Tutor: M.Sc. Ing. Isaac Lange Aguilar
 
-Trabajo Final del **Módulo 4 — Integración y Despliegue de Soluciones** (Diplomado en
-Desarrollo Web y Aplicaciones Móviles, UAJMS, gestión 2026).
+## Descripción
+
+Sistema web de **gestión de pedidos con sincronización en tiempo real** del estado de
+preparación, para el personal de **recepción y cocina** de la pizzería **Max's Pizzas**, en
+su local central de la zona Villa Fátima de Tarija. La recepción toma el pedido y lo envía
+a cocina; cocina lo ve llegar en vivo y avanza su estado, y cuando lo marca "listo",
+recepción recibe el aviso y lo entrega.
+
+**Sistema desplegado:** https://maxpizzapp.tech
 
 ## Alcance
 
@@ -25,31 +32,33 @@ Un flujo acotado y **desplegable**, priorizando profundidad sobre cantidad de m�
 El sistema tiene **dos roles**. La administración de la carta y el historial quedan fuera
 de alcance y se recogen como trabajo futuro.
 
-## Stack
+### Credenciales de prueba
 
-- **Backend:** Node.js + Express (API REST) + **Socket.IO** (tiempo real)
-- **Base de datos:** PostgreSQL
-- **Identidad y roles:** Keycloak (OIDC)
-- **Frontend:** Flutter (web)
-- **Infraestructura:** Docker Compose · Caddy (HTTPS)
+| Rol | Usuario | Contraseña |
+|---|---|---|
+| Recepción | `recepcion.demo` | Se entrega a la coordinación por canal privado |
+| Cocina | `cocina.demo` | Se entrega a la coordinación por canal privado |
 
-### Versiones fijadas
+Las contraseñas **no están en este repositorio**: se asignan en cada entorno desde su `.env`
+(`KEYCLOAK_DEMO_PASSWORD`), como explica `docker/keycloak/README.md`.
+
+## Stack tecnológico
 
 Versiones tomadas del entorno de desarrollo real. Las imágenes se fijan por versión
 (nunca `latest`) para que el entorno sea reproducible en desarrollo y en el servidor.
 
-| Componente | Versión | Cómo se fija |
-|---|---|---|
-| Node.js | 24.15.0 (LTS) | imagen `node:24-alpine` |
-| npm | 11.12.1 | incluido en la imagen de Node |
-| Flutter | 3.44.8 (stable) | SDK local; se declara en `frontend/pubspec.yaml` |
-| Dart | 3.12.2 | incluido en el SDK de Flutter |
-| PostgreSQL | 17.11 | imagen `postgres:17-alpine` |
-| Keycloak | 26.7.4 | imagen `quay.io/keycloak/keycloak:26.7` |
-| Caddy | 2.11.4 | imagen `caddy:2-alpine` |
-| Docker Engine | 29.7.2 (desarrollo) · 29.8.1 (servidor) | instalación del sistema |
-| Docker Compose | v5.3.1 (desarrollo) · v5.5.1 (servidor) | instalación del sistema |
-| Sistema del servidor | Ubuntu 24.04.5 LTS | imagen del proveedor |
+| Componente | Versión | Función | Cómo se fija |
+|---|---|---|---|
+| Node.js | 24.15.0 (LTS) | Ejecuta la API REST (Express) y el canal en vivo (Socket.IO) | imagen `node:24-alpine` |
+| npm | 11.12.1 | Instala las librerías de la API | incluido en la imagen de Node |
+| Flutter | 3.44.8 (stable) | La app web de recepción y cocina | SDK local; se declara en `frontend/pubspec.yaml` |
+| Dart | 3.12.2 | El lenguaje de la app | incluido en el SDK de Flutter |
+| PostgreSQL | 17.11 | La base de datos, única fuente de verdad | imagen `postgres:17-alpine` |
+| Keycloak | 26.7.4 | Identidad y roles (OIDC, con PKCE) | imagen `quay.io/keycloak/keycloak:26.7` |
+| Caddy | 2.11.4 | HTTPS y proxy inverso en producción | imagen `caddy:2-alpine` |
+| Docker Engine | 29.7.2 (desarrollo) · 29.8.1 (servidor) | Los contenedores | instalación del sistema |
+| Docker Compose | v5.3.1 (desarrollo) · v5.5.1 (servidor) | Levanta el sistema completo desde un archivo | instalación del sistema |
+| Sistema del servidor | Ubuntu 24.04.5 LTS | El servidor de producción | imagen del proveedor |
 
 Las versiones exactas de PostgreSQL, Keycloak y Caddy se leyeron de los contenedores en
 ejecución en el servidor.
@@ -63,7 +72,7 @@ Librerías del backend, fijadas sin rangos en `backend/package.json` y con
 | pg | 8.23.0 | Acceso a PostgreSQL con consultas parametrizadas |
 | jsonwebtoken | 9.0.3 | Verificación de la firma y de los datos del token |
 | jwks-rsa | 4.1.0 | Lectura y caché de las claves públicas de Keycloak |
-| socket.io | 4.8.3 | El canal en vivo: avisos de pedido nuevo y de cambio de estado |
+| socket.io | 4.8.3 | El canal en vivo: avisos de pedido nuevo, de lo agregado y de cambio de estado |
 | socket.io-client | 4.8.3 | Solo desarrollo: las pruebas del canal y la medición del aviso |
 
 Paquetes de la app Flutter, fijados sin rangos en `frontend/pubspec.yaml` y con
@@ -74,14 +83,19 @@ Paquetes de la app Flutter, fijados sin rangos en `frontend/pubspec.yaml` y con
 | http | 1.6.0 | Peticiones a la API y canje del token |
 | crypto | 3.0.7 | SHA-256 del desafío PKCE |
 | web | 1.1.1 | Acceso al navegador: redirección, dirección actual y `sessionStorage` |
+| socket_io_client | 3.1.6 | El canal en vivo en la app: pedidos nuevos, lo agregado y los cambios de estado |
 | flutter_lints | 6.0.0 | Reglas de análisis estático (solo desarrollo) |
 
 
 ## Pruebas
 
+Las del backend y la app corren sin el entorno levantado; las de `pruebas/`, contra
+Keycloak y la API reales. Antes de la primera vez: `cd backend && npm ci` y
+`cd frontend && flutter pub get`.
+
 ```bash
 cd backend && npm test            # 267 pruebas: acceso, carta, precio, pedidos, lo agregado y canal en vivo, sin base ni Keycloak reales
-cd frontend && flutter test       # pruebas de la app Flutter
+cd frontend && flutter test       # 193 pruebas de la app: la venta, los pedidos, la cocina, el acceso y el contraste de colores
 python pruebas/identidad/probar_acceso_pkce.py   # inicio de sesión real con PKCE
 python pruebas/api/probar_salud_y_token.py       # la API con tokens reales del realm
 python pruebas/api/probar_carta.py               # la carta con token real y la base real
@@ -90,7 +104,8 @@ python pruebas/tiempo-real/medir_aviso.py       # cuánto tarda el aviso en vivo
 ```
 
 Las pruebas de `pruebas/` aceptan `KEYCLOAK_URL` y `API_URL` para ejecutarse contra el
-despliegue público.
+despliegue público. La tabla completa de casos de prueba está en el apartado 2.8 del
+documento monográfico.
 
 ## Metodología
 
@@ -116,8 +131,7 @@ codigo/
 | Aplicación | **https://maxpizzapp.tech** |
 | Identidad (Keycloak) | https://auth.maxpizzapp.tech |
 
-Hay una cuenta de demostración por rol: `recepcion.demo` y `cocina.demo`. Sus contraseñas
-**no están en este repositorio**: se asignan en el servidor desde el `.env`.
+Para entrar, las cuentas de prueba del apartado *Credenciales de prueba*.
 
 ## La carta
 
@@ -128,7 +142,9 @@ La carta vive en `docker/postgres/init/05_carta.sql` y se cambia sin tocar el es
 - **Las bebidas y los extras son ficticios** hasta tener los reales.
 
 El local vende **solo pizzas enteras**, de un sabor o de dos mitades. Una pizza de dos
-mitades cuesta (precio A + precio B) / 2, al centavo.
+mitades cuesta (precio A + precio B) / 2, al centavo. Dos estaciones, Tres estaciones y
+Criolla española ya combinan varios sabores y se venden **solo enteras**: no pueden ser
+mitad de otra (columna `producto.solo_entera`).
 
 Las imágenes viven en `frontend/web/carta/`, y la base guarda solo el nombre del archivo,
 nunca la imagen ni una dirección:
@@ -149,11 +165,12 @@ nunca la imagen ni una dirección:
 La app lleva la identidad de **Max's Pizzas**, con su autorización: el logo «MP» en la
 barra, en la pantalla de acceso y como ícono de la app, y su paleta.
 
-- **Tema claro fijo:** fondo crema con tarjetas blancas, para que luzcan las fotos de las
-  pizzas. La app no sigue el modo claro u oscuro del dispositivo.
-- **Negro y amarillo del logo `#FAF126`:** la barra superior negra con el logo, los botones
-  principales negros con letra amarilla y los precios en etiqueta amarilla.
-- **Rojo `#F90304`** solo para lo que cierra una venta.
+- **Tema claro fijo:** fondo crema `#FBF6EE` con tarjetas blancas, para que luzcan las fotos
+  de las pizzas. La app no sigue el modo claro u oscuro del dispositivo.
+- **Rojo ladrillo `#C0392B`** en la barra superior, los botones y los íconos, y un
+  **amarillo suave `#FFE58A`** en los precios y en lo que está elegido. Son los colores de
+  la marca bajados de tono.
+- **El negro, el amarillo `#FAF126` y el rojo `#F90304` puros quedan solo en el logo.**
 
 Las pruebas miden el contraste de cada combinación de colores con la fórmula de WCAG, así
 que un cambio de color que deje un texto ilegible no pasa. El logo vive en
@@ -163,16 +180,57 @@ El **software** se llama Max Pizzapp; el **local**, Max's Pizzas.
 
 ## Variables de entorno
 
-Copiar `.env.example` como `.env` y completar los valores. El `.env` **no** se versiona, y
-el de producción no es una copia del de desarrollo: sus contraseñas se generan en el
-servidor y no salen de ahí.
+Todas se documentan en `.env.example`: se copia como `.env` y se completan los valores. El
+`.env` **nunca** se versiona, y el de producción no es una copia del de desarrollo: sus
+contraseñas se generan en el servidor y no salen de ahí.
+
+| Variable | Obligatoria | Descripción |
+|---|---|---|
+| `POSTGRES_DB` | Sí | Nombre de la base de datos |
+| `POSTGRES_USER` | Sí | Usuario de la base |
+| `POSTGRES_PASSWORD` | Sí | Contraseña de la base |
+| `POSTGRES_PORT` | No | Puerto del host si se publica la base en desarrollo (5433). Por omisión no se publica |
+| `NODE_ENV` | No | `development` o `production`. La imagen de la API ya trae `production` |
+| `API_PORT` | Solo en desarrollo | Puerto del host para la API (3001) |
+| `KEYCLOAK_PORT` | Solo en desarrollo | Puerto del host para Keycloak (8082) |
+| `KEYCLOAK_REALM` | Sí | El realm del sistema: `maxpizzapp` |
+| `KEYCLOAK_CLIENT_ID` | No | La audiencia que la API exige en los tokens. Por omisión, `backend-api` |
+| `KEYCLOAK_ADMIN` | Sí | Usuario administrador de la consola de Keycloak |
+| `KEYCLOAK_ADMIN_PASSWORD` | Sí | Su contraseña |
+| `KEYCLOAK_DEMO_PASSWORD` | Sí | Contraseña de las cuentas de prueba; la usan también las pruebas de `pruebas/` |
+| `KEYCLOAK_INTERNAL_URL` | No | Keycloak por la red interna de Docker. Por omisión, `http://keycloak:8080` |
+| `DOMINIO` | Sí, en producción | Dominio raíz, sin protocolo ni barra final: de él salen la dirección de la app, la de Keycloak y el emisor de los tokens |
+| `CADDY_EMAIL` | Sí, en producción | Correo al que Let's Encrypt avisa si un certificado está por vencer |
+| `WEB_DIR` | No | Carpeta del servidor con la app publicada. Por omisión, `/opt/maxpizzapp-web` |
+
+No van en el `.env` las variables que Compose le pasa a la API, como el emisor de los
+tokens (`KEYCLOAK_ISSUER`), porque se derivan de las anteriores. Tampoco hay secretos para
+firmar tokens ni orígenes CORS: los tokens los firma Keycloak, y la app y la API comparten
+origen.
+
+## Requisitos previos
+
+- Git.
+- Docker con el plugin de Compose (en Windows, Docker Desktop).
+- Flutter 3.44.8 (stable), para compilar y probar la app.
+- Node.js 24 LTS, para las pruebas del backend y la medición del aviso en vivo.
+- Python 3, solo con su biblioteca estándar, para las pruebas de `pruebas/`. Los
+  `scripts/` que preparan las imágenes de la carta usan además Pillow.
 
 ## Puesta en marcha en local
 
-Requisitos: Docker con el plugin de Compose. Todo se ejecuta desde la carpeta `codigo/`.
+Todo se ejecuta desde la raíz del repositorio.
 
-1. Crear el `.env` a partir de `.env.example` y completar las contraseñas.
-2. Levantar la base de datos y Keycloak:
+1. Clonar el repositorio y crear el `.env` a partir de `.env.example`, completando las
+   contraseñas:
+
+   ```bash
+   git clone https://github.com/jorgeluisgutierrezrivera/max-pizzapp.git
+   cd max-pizzapp
+   cp .env.example .env
+   ```
+
+2. Levantar la base de datos, Keycloak y la API:
 
    ```bash
    docker compose --env-file .env -f docker/docker-compose.yml up -d
@@ -209,7 +267,9 @@ declarado como origen permitido del cliente `frontend-web`.
 ## Despliegue en el servidor
 
 El despliegue es **un `docker compose` versionado**: con este repositorio, un archivo de
-entorno y un servidor con Docker, se levanta igual en cualquier proveedor.
+entorno y un servidor con Docker, se levanta igual en cualquier proveedor. El detalle
+completo está en el apartado 2.9 del documento y en el Anexo B, *Manual de instalación y
+despliegue*.
 
 ```
 Internet ──HTTPS 443──▶ Caddy ─┬─ /              ▶ archivos estáticos
@@ -262,7 +322,6 @@ POSTGRES_PASSWORD=$(openssl rand -hex 24)
 NODE_ENV=production
 KEYCLOAK_REALM=maxpizzapp
 KEYCLOAK_CLIENT_ID=backend-api
-KEYCLOAK_CLIENT_SECRET=
 KEYCLOAK_ADMIN=maxpizzapp-admin
 KEYCLOAK_ADMIN_PASSWORD=$(openssl rand -hex 24)
 KEYCLOAK_DEMO_PASSWORD=$(openssl rand -base64 18 | tr -dc 'A-Za-z0-9' | cut -c1-14)
@@ -359,7 +418,17 @@ sin él, Compose reutiliza la imagen anterior y el código nuevo no llega al con
 
 **Si el cambio trae una migración nueva** en `docker/postgres/init/`: los scripts de esa
 carpeta solo corren al **crear** la base, así que en una base que ya existe hay que aplicar
-cada archivo nuevo una vez, a mano, **en orden de número**:
+cada archivo nuevo una vez, a mano, **en orden de número**. Antes, un respaldo de la base,
+fuera de la carpeta del repositorio:
+
+```bash
+mkdir -p /opt/respaldos
+docker exec maxpizzapp-bd sh -c 'pg_dump -Fc -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+  > /opt/respaldos/maxpizzapp-$(date +%F-%H%M).dump
+ls -lh /opt/respaldos
+```
+
+Y después, las migraciones:
 
 ```bash
 for f in 02_porciones_y_carta 04_solo_enteras_y_extras 05_carta 06_pedido_cliente_y_cancelacion 07_numero_agregados_y_venta_directa 08_pizzas_solo_enteras; do
@@ -390,3 +459,8 @@ del realm también hay que aplicarlo desde la consola de Keycloak.
 
 Los contenedores se reinician con `restart: unless-stopped`: tras un reinicio completo del
 servidor, el sistema vuelve solo.
+
+## Licencia
+
+Uso académico. Todos los derechos reservados por el autor. El nombre, el logo y las fotos
+de Max's Pizzas se usan con autorización del local y no forman parte de esta licencia.

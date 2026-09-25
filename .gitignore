@@ -7,6 +7,13 @@
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+*.p12
+*.keystore
+*.jks
+credentials.json
+serviceAccount*.json
 
 # --- Node / Backend ---
 node_modules/
@@ -28,13 +35,36 @@ frontend/.pub/
 # frontend/web/ SI se versiona: tiene el index.html y el manifiesto de la aplicacion.
 # Lo que se genera y no se versiona es frontend/build/ (ignorado arriba).
 
+# --- Pruebas de extremo a extremo (Python) ---
+__pycache__/
+*.pyc
+.venv/
+
+# --- Cobertura de pruebas (se genera) ---
+coverage/
+
 # --- Docker / datos persistentes ---
 docker/postgres/data/
 *.pgdata
 
+# --- Respaldos de la base: nunca en el repo, tienen datos reales ---
+*.dump
+*.sql.gz
+dump.sql
+respaldos/
+
 # --- Caddy (certificados y estado, se generan) ---
 docker/caddy/data/
 docker/caddy/config/
+
+# --- Logs y temporales ---
+logs/
+tmp/
+temp/
+
+# --- Documentos abiertos en Word o Excel (los definitivos SI se versionan en docs/) ---
+~$*.docx
+~$*.xlsx
 
 # --- Sistema operativo ---
 .DS_Store
