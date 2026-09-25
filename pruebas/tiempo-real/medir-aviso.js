@@ -10,7 +10,8 @@
 //
 // No se corre solo: lo lanza medir_aviso.py, que obtiene los tokens reales de Keycloak y
 // los pasa por el entorno (TOKEN_RECEPCION, TOKEN_COCINA). Nunca se imprimen.
-// Cada pedido que crea lo cancela al terminar: no deja nada en la cola de cocina.
+// Cada pedido que crea lo cierra al terminar: no deja nada en la cola de cocina. Como cocina
+// ya los empezo, no se cancelan (D-41): se terminan y se entregan.
 //
 // Usa el cliente de Socket.IO que el backend ya tiene como dependencia de desarrollo, en la
 // misma version que el servidor, para no mantener otro package.json.
@@ -118,7 +119,11 @@ async function main() {
     }
   } finally {
     for (const id of creados) {
-      await llamar('POST', `/pedidos/${id}/cancelacion`, recepcion, { motivo: 'Medicion del aviso' });
+      const { estado } = await llamar('POST', `/pedidos/${id}/cancelacion`, recepcion, { motivo: 'Medicion del aviso' });
+      if (estado !== 200) {
+        await llamar('PATCH', `/pedidos/${id}/estado`, cocina, { estado: 'listo' });
+        await llamar('PATCH', `/pedidos/${id}/estado`, recepcion, { estado: 'entregado' });
+      }
     }
     enCocina.socket.close();
     enRecepcion.socket.close();
@@ -129,7 +134,7 @@ async function main() {
   const peorNuevo = resumen('pedido nuevo -> cocina', nuevos);
   const peorCambio = resumen('cambio de estado -> recepcion', cambios);
   const peorAgregado = resumen('lo agregado -> cocina', agregados);
-  console.log(`Pedidos de la medicion cancelados: ${creados.length}`);
+  console.log(`Pedidos de la medicion cerrados: ${creados.length}`);
   const bien = peorNuevo < LIMITE_MS && peorCambio < LIMITE_MS && peorAgregado < LIMITE_MS;
   console.log(bien ? `TODO BAJO ${LIMITE_MS} ms` : `HAY MEDICIONES DE ${LIMITE_MS} ms O MAS`);
   process.exit(bien ? 0 : 1);

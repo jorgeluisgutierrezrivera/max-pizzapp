@@ -223,7 +223,8 @@ for (const [i, actual] of ESTADOS.entries()) {
 
 for (const [i, actual] of ESTADOS.entries()) {
   const id = i + 1;
-  const permitido = ['pendiente', 'en_preparacion'].includes(actual);
+  // Solo el pendiente: el que cocina ya empezo no se cancela (D-41).
+  const permitido = actual === 'pendiente';
 
   test(`cancelar un pedido ${actual}: ${permitido ? '200 con el motivo en el historial' : '409'}`, async () => {
     const { estado, cuerpo, base } = await llamar('POST', `/pedidos/${id}/cancelacion`, {

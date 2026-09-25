@@ -125,6 +125,7 @@ class Escena {
   final titulos = <int>[];
   Future<Pedido> Function(Pedido, EstadoPedido)? responderCambio;
   Future<Pedido> Function(Pedido, Map<String, dynamic>)? responderAgregado;
+  Future<Pedido> Function(Pedido, String)? responderCancelacion;
 
   Widget app() => MaterialApp(
     theme: temaMaxPizzas(),
@@ -145,6 +146,7 @@ class Escena {
       },
       cancelarPedido: (pedido, motivo) async {
         cancelaciones.add((pedido.id, motivo));
+        if (responderCancelacion != null) return responderCancelacion!(pedido, motivo);
         return pedido.conEstado(EstadoPedido.cancelado);
       },
       agregarAlPedido: (pedido, cuerpo) async {
@@ -336,8 +338,14 @@ void main() {
       expect(enTarjeta(12, find.text('En preparación')), findsOneWidget);
     });
 
-    testWidgets('el listo ofrece Entregar, Llamar y Agregar bebida; el de cocina, Agregar y Cancelar', (t) async {
-      await abrir(t, [jsonPedido(1, estado: 'listo'), jsonPedido(2), jsonPedido(3, estado: 'listo', celular: null)]);
+    testWidgets('el listo ofrece Entregar, Llamar y Agregar bebida; el pendiente, Agregar y Cancelar; '
+        'el que cocina ya empezó, solo Agregar (D-41)', (t) async {
+      await abrir(t, [
+        jsonPedido(1, estado: 'listo'),
+        jsonPedido(2),
+        jsonPedido(3, estado: 'listo', celular: null),
+        jsonPedido(4, estado: 'en_preparacion'),
+      ]);
       for (final clave in ['entregar-1', 'llamar-1', 'agregar-1']) {
         expect(find.byKey(Key(clave)), findsOneWidget, reason: clave);
       }
@@ -346,6 +354,8 @@ void main() {
       expect(find.byKey(const Key('entregar-2')), findsNothing);
       expect(find.byKey(const Key('cancelar-2')), findsOneWidget);
       expect(find.byKey(const Key('agregar-2')), findsOneWidget);
+      expect(find.byKey(const Key('cancelar-4')), findsNothing, reason: 'cocina ya lo empezó (D-41)');
+      expect(find.byKey(const Key('agregar-4')), findsOneWidget);
     });
 
     testWidgets('en el celular, una columna y sin desbordes', (t) async {
@@ -424,6 +434,24 @@ void main() {
       await t.pump();
       await tocar(t, find.byKey(const Key('confirmar-cancelacion')));
       expect(e.cancelaciones.single, (2, 'Pago rechazado'));
+    });
+
+    testWidgets('si cocina lo empezó justo antes (409), lo dice, relee y ya no ofrece Cancelar (D-41)', (t) async {
+      final e = await abrir(t, [jsonPedido(2)]);
+      e.responderCancelacion = (pedido, motivo) async {
+        e.pedidos = [jsonPedido(2, estado: 'en_preparacion')];
+        throw const ErrorApi(409, 'TRANSICION_NO_PERMITIDA', 'El pedido #2 esta en preparacion.', {
+          'estadoActual': 'en_preparacion',
+        });
+      };
+      final lecturas = e.lecturas;
+      await tocar(t, find.byKey(const Key('cancelar-2')));
+      await tocar(t, find.byKey(const Key('motivo-0')));
+      await tocar(t, find.byKey(const Key('confirmar-cancelacion')));
+      expect(find.text('Cocina ya empezó el Pedido 102: ya no se puede cancelar.'), findsOneWidget);
+      expect(e.lecturas, lecturas + 1);
+      expect(enTarjeta(2, find.text('En preparación')), findsOneWidget);
+      expect(find.byKey(const Key('cancelar-2')), findsNothing);
     });
   });
 

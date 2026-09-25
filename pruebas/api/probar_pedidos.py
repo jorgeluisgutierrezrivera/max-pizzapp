@@ -21,8 +21,9 @@ Contra el despliegue publico:
         python3 pruebas/api/probar_pedidos.py
 
 Crea pedidos de prueba con datos ficticios ("Ana Prueba", 70000001) y AL FINAL LOS CIERRA:
-cancela los que siguen en cocina y entrega los listos, para no dejar nada en la cola. Solo
-toca los pedidos que ella misma creo. La contrasena se lee del .env y nunca se imprime; los
+cancela los pendientes, y los que cocina ya empezo, que no se cancelan (D-41), los termina y
+los entrega, igual que los listos. No deja nada en la cola. Solo toca los pedidos que ella
+misma creo. La contrasena se lee del .env y nunca se imprime; los
 tokens tampoco.
 """
 import importlib.util
@@ -278,6 +279,12 @@ if __name__ == '__main__':
               ('cancelado', 'El cliente se fue'))
     estado, cuerpo = llamar('POST', '/pedidos/%s/cancelacion' % pid, recepcion, {'motivo': 'otra vez'})
     comprobar('cancelarlo de nuevo', (estado, codigo(cuerpo)), (409, 'TRANSICION_NO_PERMITIDA'))
+    pid = nuevo_pedido()
+    cambiar(pid, cocina, 'en_preparacion')
+    estado, cuerpo = llamar('POST', '/pedidos/%s/cancelacion' % pid, recepcion, {'motivo': 'El cliente se fue'})
+    comprobar('uno que cocina ya empezo no se cancela (D-41)',
+              (estado, codigo(cuerpo), cuerpo.get('error', {}).get('estadoActual')),
+              (409, 'TRANSICION_NO_PERMITIDA', 'en_preparacion'))
 
     print('\n--- la carrera: dos cambios a la vez sobre el mismo pedido ---')
     pid = nuevo_pedido()
@@ -399,10 +406,13 @@ if __name__ == '__main__':
     for pid in [p for p in creados if p]:
         _, cuerpo = llamar('GET', '/pedidos/%s' % pid, recepcion)
         estado_actual = cuerpo.get('pedido', {}).get('estado')
-        if estado_actual in ('pendiente', 'en_preparacion'):
+        if estado_actual == 'pendiente':
             llamar('POST', '/pedidos/%s/cancelacion' % pid, recepcion, {'motivo': 'Pedido de prueba'})
             cerrados += 1
-        elif estado_actual == 'listo':
+        elif estado_actual in ('en_preparacion', 'listo'):
+            # El que cocina ya empezo no se cancela (D-41): se termina y se entrega.
+            if estado_actual == 'en_preparacion':
+                cambiar(pid, cocina, 'listo')
             cambiar(pid, recepcion, 'entregado')
             cerrados += 1
     _, cuerpo = llamar('GET', '/pedidos', recepcion)

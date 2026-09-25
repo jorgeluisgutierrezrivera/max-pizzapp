@@ -44,7 +44,7 @@ Regla del módulo: **máximo 2 roles diferenciados**. Decisión:
 
 | Rol | MoSCoW | Funciones | Dispositivo |
 |---|---|---|---|
-| **Recepción** | **Must** | Crea pedidos desde la carta, ve el estado en vivo, cancela antes de "listo", marca entregado, marca un producto agotado | Tablet / PC |
+| **Recepción** | **Must** | Crea pedidos desde la carta, ve el estado en vivo, cancela mientras está pendiente, marca entregado, marca un producto agotado | Tablet / PC |
 | **Cocina** | **Must** | Ve los pedidos entrantes en vivo (orden de llegada), avanza estado, marca "listo", marca un producto agotado | Tablet / monitor |
 
 El sistema tiene **exactamente dos roles**: Recepción y Cocina. El rol de administrador
@@ -62,7 +62,7 @@ credenciales las gestiona **Keycloak** (nunca hay tabla propia de usuarios).
 
 ```
 pendiente → en preparación → listo → entregado
-                          \→ cancelado (solo antes de "listo")
+                          \→ cancelado (solo mientras está pendiente, D-41)
 ```
 
 - Cada transición la ejecuta **solo el rol habilitado** (cocina avanza a
@@ -216,7 +216,7 @@ GET    /api/v1/pedidos                        Pedidos activos (filtro por estado
 GET    /api/v1/pedidos/:id                    Pedido con sus líneas
 POST   /api/v1/pedidos/:id/lineas             Agrega productos a un pedido que no se entregó
 PATCH  /api/v1/pedidos/:id/estado             Avanza estado según rol autorizado
-POST   /api/v1/pedidos/:id/cancelacion        Cancela con motivo (antes de "listo")
+POST   /api/v1/pedidos/:id/cancelacion        Cancela con motivo (solo si está pendiente)
 PATCH  /api/v1/productos/:id/disponibilidad   Marca un producto agotado o disponible
 GET    /api/v1/salud                          Estado del servicio
 ```

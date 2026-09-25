@@ -1,7 +1,10 @@
 // Los cambios de estado de un pedido: quien puede hacer cada uno y desde donde.
 //
 //   pendiente -> en_preparacion -> listo -> entregado
-//        \______________\___> cancelado (solo antes de "listo", con motivo)
+//        \___> cancelado (solo mientras esta pendiente, con motivo)
+//
+// Cuando cocina lo empieza, ya no se cancela (D-41): la preparacion es corta y lo que entra
+// al horno ya se gasto. Recepcion puede seguir agregandole cosas (D-37).
 //
 // La app oculta los botones que no corresponden, pero quien decide es el servidor: una
 // peticion armada a mano recibe el mismo 403 o 409 que un boton que no deberia estar.
@@ -13,7 +16,7 @@ const TRANSICIONES = {
   en_preparacion: { desde: ['pendiente'], rol: 'cocina' },
   listo: { desde: ['en_preparacion'], rol: 'cocina' },
   entregado: { desde: ['listo'], rol: 'recepcion' },
-  cancelado: { desde: ['pendiente', 'en_preparacion'], rol: 'recepcion' },
+  cancelado: { desde: ['pendiente'], rol: 'recepcion' },
 };
 
 const QUIEN = { cocina: 'cocina', recepcion: 'recepcion' };

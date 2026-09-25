@@ -26,7 +26,7 @@ Un flujo acotado y **desplegable**, priorizando profundidad sobre cantidad de m�
 
 | Rol | Qué hace |
 |---|---|
-| **Recepción** | Crea pedidos, ve estados en vivo, cancela antes de "listo", entrega, marca productos agotados |
+| **Recepción** | Crea pedidos, ve estados en vivo, cancela mientras el pedido está pendiente, entrega, marca productos agotados |
 | **Cocina** | Ve pedidos entrantes en vivo, avanza el estado, marca "listo", marca productos agotados |
 
 El sistema tiene **dos roles**. La administración de la carta y el historial quedan fuera
@@ -95,7 +95,7 @@ Keycloak y la API reales. Antes de la primera vez: `cd backend && npm ci` y
 
 ```bash
 cd backend && npm test            # 267 pruebas: acceso, carta, precio, pedidos, lo agregado y canal en vivo, sin base ni Keycloak reales
-cd frontend && flutter test       # 193 pruebas de la app: la venta, los pedidos, la cocina, el acceso y el contraste de colores
+cd frontend && flutter test       # 194 pruebas de la app: la venta, los pedidos, la cocina, el acceso y el contraste de colores
 python pruebas/identidad/probar_acceso_pkce.py   # inicio de sesión real con PKCE
 python pruebas/api/probar_salud_y_token.py       # la API con tokens reales del realm
 python pruebas/api/probar_carta.py               # la carta con token real y la base real

@@ -19,7 +19,8 @@ const motivosDeCancelacion = ['El cliente se fue', 'El cliente cambió de idea',
 /// entregar.
 ///
 /// - Listo: *Entregar*, *Llamar* si dio celular, y *Agregar* bebidas.
-/// - En cocina: *Agregar* (pizzas o bebidas) y *Cancelar*, con motivo.
+/// - En cocina: *Agregar* (pizzas o bebidas). *Cancelar*, con motivo, solo mientras está
+///   pendiente: cuando cocina lo empieza ya no se cancela (D-41).
 ///
 /// Quien decide si una acción vale es el servidor: si otro dispositivo cambió el pedido
 /// antes, responde 409, se avisa y la lista se vuelve a leer.
@@ -109,6 +110,10 @@ class _PedidosDeRecepcionState extends State<PedidosDeRecepcion> {
       if (!mounted) return;
       if (error.codigo == 'PEDIDO_CAMBIADO') {
         setState(() => _aviso = 'Al ${pedido.etiqueta} se le agregó algo. Revísalo antes de entregarlo.');
+        await widget.pedidos.leer();
+      } else if (error.codigo == 'TRANSICION_NO_PERMITIDA' && error.datos['estadoActual'] == 'en_preparacion') {
+        // Se quiso cancelar justo cuando cocina lo empezaba: ya no se cancela (D-41).
+        setState(() => _aviso = 'Cocina ya empezó el ${pedido.etiqueta}: ya no se puede cancelar.');
         await widget.pedidos.leer();
       } else if (error.estado == 409 || error.estado == 404) {
         setState(() => _aviso = 'El ${pedido.etiqueta} ya había cambiado. La lista se actualizó.');
@@ -432,7 +437,8 @@ class TarjetaDeRecepcion extends StatelessWidget {
                   icon: const Icon(Icons.add),
                   label: Text(listo ? 'Agregar bebida' : 'Agregar'),
                 ),
-                if (!listo)
+                // Solo el pendiente: el que cocina ya empezó no se cancela (D-41).
+                if (pedido.estado == EstadoPedido.pendiente)
                   TextButton.icon(
                     key: Key('cancelar-$id'),
                     style: TextButton.styleFrom(minimumSize: const Size(0, 48), foregroundColor: colores.error),
