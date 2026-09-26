@@ -1,0 +1,612 @@
+openapi: 3.0.3
+info:
+  title: Max Pizzapp · API REST
+  version: 1.0.0
+  description: |
+    Contrato de la API de Max Pizzapp: los pedidos entre recepción y cocina de la pizzería
+    Max's Pizzas. Es el mismo contrato de la Tabla 12 del documento, con el detalle de cada
+    cuerpo y de cada error.
+
+    **Autenticación.** Todas las rutas, salvo `/salud`, exigen el token de acceso que emite
+    Keycloak (OpenID Connect, flujo Authorization Code con PKCE) en la cabecera
+    `Authorization: Bearer <token>`. El servidor valida firma, emisor, audiencia y
+    vencimiento, y después el rol que exige cada ruta: `recepcion` o `cocina`.
+
+    **Errores.** Una sola forma en toda la API:
+    `{ "error": { "codigo": "...", "mensaje": "..." } }`. El `codigo` es estable y lo
+    interpreta la app; el `mensaje` se muestra a la persona. Algunos errores traen datos
+    para resolverlos, por ejemplo `totalCorrecto` o `estadoActual`. Nunca se devuelve la
+    traza ni el detalle interno.
+
+    **Tiempo real.** Además de estas rutas, el servidor expone un canal Socket.IO en
+    `/socket.io`, autenticado con el mismo token. Emite `pedido:nuevo`,
+    `pedido:actualizado` y `pedido:estado` después de confirmar cada cambio en la base.
+servers:
+  - url: https://maxpizzapp.tech/api/v1
+    description: Producción
+  - url: http://localhost:3001/api/v1
+    description: Desarrollo (docker compose, API_PORT del .env)
+
+tags:
+  - name: Sistema
+  - name: Carta
+  - name: Pedidos
+
+security:
+  - tokenKeycloak: []
+
+paths:
+  /salud:
+    get:
+      tags: [Sistema]
+      summary: Estado de la API y de la base de datos
+      description: Única ruta pública. Consulta la base de verdad y no revela versiones.
+      security: []
+      responses:
+        '200':
+          description: La API y la base responden.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Salud' }
+              example: { estado: ok, baseDeDatos: ok }
+        '503':
+          description: La base no responde.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Salud' }
+              example: { estado: degradado, baseDeDatos: sin respuesta }
+
+  /sesion:
+    get:
+      tags: [Sistema]
+      summary: Quién es el usuario del token y qué roles tiene
+      description: 'Roles: recepcion o cocina.'
+      responses:
+        '200':
+          description: Datos de la sesión.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Sesion' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermiso' }
+        '503': { $ref: '#/components/responses/BaseNoDisponible' }
+
+  /productos:
+    get:
+      tags: [Carta]
+      summary: La carta, con sus precios y disponibilidad
+      description: |
+        Roles: recepcion o cocina. Sin filtros devuelve toda la carta, agotados incluidos,
+        ordenada por categoría y nombre.
+      parameters:
+        - name: categoria
+          in: query
+          schema: { $ref: '#/components/schemas/Categoria' }
+        - name: disponible
+          in: query
+          schema: { type: string, enum: ['true', 'false'] }
+      responses:
+        '200':
+          description: Los productos.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [productos]
+                properties:
+                  productos:
+                    type: array
+                    items: { $ref: '#/components/schemas/Producto' }
+        '400': { $ref: '#/components/responses/PeticionInvalida' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermiso' }
+        '503': { $ref: '#/components/responses/BaseNoDisponible' }
+
+  /pedidos:
+    get:
+      tags: [Pedidos]
+      summary: Listar los pedidos (la cola de cocina y los pedidos de recepción)
+      description: |
+        Roles: recepcion o cocina (RF-03, RF-06). Sin filtro devuelve los activos
+        (pendiente, en preparación y listo) en orden de llegada, hasta 200. Cocina los
+        recibe sin el celular del cliente.
+      parameters:
+        - name: estado
+          in: query
+          description: Uno o varios estados separados por coma.
+          schema: { type: string, example: 'pendiente,en_preparacion' }
+      responses:
+        '200':
+          description: Los pedidos.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [pedidos]
+                properties:
+                  pedidos:
+                    type: array
+                    items: { $ref: '#/components/schemas/Pedido' }
+        '400': { $ref: '#/components/responses/PeticionInvalida' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermiso' }
+        '503': { $ref: '#/components/responses/BaseNoDisponible' }
+    post:
+      tags: [Pedidos]
+      summary: Crear un pedido, o una venta directa de bebidas
+      description: |
+        Rol: recepcion (RF-02, RF-11). El servidor recalcula el precio con la carta de la
+        base y lo compara con `totalEsperado`; si no coincide, no guarda nada y responde 409.
+        Un pedido lleva cliente, "para llevar" o no, y al menos una pizza; nace
+        *pendiente* con su número del día. Una venta directa (`ventaDirecta: true`) es solo
+        de bebidas, no lleva cliente y nace *entregada*.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/NuevoPedido'
+                - $ref: '#/components/schemas/NuevaVentaDirecta'
+            examples:
+              pedido:
+                summary: Un pedido para llevar
+                description: |
+                  Mitad Choclo y mitad Española con extra jamón, y una gaseosa: 52,50 + 8 + 18.
+                  Los ids son de ejemplo; los reales se leen de GET /productos.
+                value:
+                  paraLlevar: true
+                  cliente: { nombre: Ana Prueba, celular: '70000001' }
+                  observacion: Sin cebolla
+                  lineas:
+                    - { productoId: 3, mitadId: 8, cantidad: 1, extras: [21] }
+                    - { productoId: 30, cantidad: 1 }
+                  totalEsperado: 78.5
+              ventaDirecta:
+                summary: Una venta directa de bebidas
+                value:
+                  ventaDirecta: true
+                  lineas:
+                    - { productoId: 30, cantidad: 1 }
+                  totalEsperado: 18
+      responses:
+        '201':
+          description: Pedido creado. La cabecera Location apunta a él.
+          headers:
+            Location:
+              schema: { type: string, example: /api/v1/pedidos/102 }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RespuestaPedido' }
+        '400': { $ref: '#/components/responses/PeticionInvalida' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermiso' }
+        '409': { $ref: '#/components/responses/ConflictoDeVenta' }
+        '503': { $ref: '#/components/responses/BaseNoDisponible' }
+
+  /pedidos/{id}:
+    get:
+      tags: [Pedidos]
+      summary: Consultar un pedido, con su historial de estados
+      description: 'Roles: recepcion o cocina.'
+      parameters:
+        - $ref: '#/components/parameters/IdPedido'
+      responses:
+        '200':
+          description: El pedido y quién cambió su estado, cuándo y por qué.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [pedido]
+                properties:
+                  pedido:
+                    allOf:
+                      - $ref: '#/components/schemas/Pedido'
+                      - type: object
+                        required: [historial]
+                        properties:
+                          historial:
+                            type: array
+                            items: { $ref: '#/components/schemas/CambioDelHistorial' }
+        '400': { $ref: '#/components/responses/PeticionInvalida' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermiso' }
+        '404': { $ref: '#/components/responses/PedidoNoEncontrado' }
+        '503': { $ref: '#/components/responses/BaseNoDisponible' }
+
+  /pedidos/{id}/lineas:
+    post:
+      tags: [Pedidos]
+      summary: Agregar productos a un pedido ya enviado
+      description: |
+        Rol: recepcion (RF-14). Pizzas y bebidas mientras el pedido está *pendiente* o
+        *en preparación*; cuando ya está *listo*, solo bebidas. Nunca se quita nada.
+      parameters:
+        - $ref: '#/components/parameters/IdPedido'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Agregado' }
+            example:
+              # Una Peperoni de Bs 50; el id es de ejemplo.
+              lineas:
+                - { productoId: 12, cantidad: 1 }
+              totalEsperado: 50
+      responses:
+        '200':
+          description: El pedido con lo agregado y su total nuevo.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RespuestaPedido' }
+        '400': { $ref: '#/components/responses/PeticionInvalida' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermiso' }
+        '404': { $ref: '#/components/responses/PedidoNoEncontrado' }
+        '409':
+          description: |
+            `AGREGADO_NO_PERMITIDO` (el pedido ya se entregó o se canceló, o está listo y
+            se intentó agregar una pizza; trae `estadoActual`), `PRECIO_CAMBIADO` (trae
+            `totalCorrecto`) o `PRODUCTO_NO_DISPONIBLE` (trae `producto`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '503': { $ref: '#/components/responses/BaseNoDisponible' }
+
+  /pedidos/{id}/estado:
+    patch:
+      tags: [Pedidos]
+      summary: Avanzar el estado del pedido
+      description: |
+        Cada cambio tiene un rol dueño: cocina pasa de *pendiente* a *en preparación* y de
+        ahí a *listo* (RF-07); recepción pasa de *listo* a *entregado* (RF-05). Para
+        cancelar se usa `/cancelacion`. Si llega `version` y el pedido tiene más líneas que
+        las que vio la pantalla (se le agregó algo), responde 409 `PEDIDO_CAMBIADO`.
+      parameters:
+        - $ref: '#/components/parameters/IdPedido'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CambioDeEstado' }
+            example: { estado: listo, version: 6 }
+      responses:
+        '200':
+          description: El pedido con su estado nuevo.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RespuestaPedido' }
+        '400': { $ref: '#/components/responses/PeticionInvalida' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermiso' }
+        '404': { $ref: '#/components/responses/PedidoNoEncontrado' }
+        '409':
+          description: |
+            `TRANSICION_NO_PERMITIDA` (el estado actual no admite ese cambio; trae
+            `estadoActual`) o `PEDIDO_CAMBIADO` (se le agregó algo; trae la `version` actual).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '503': { $ref: '#/components/responses/BaseNoDisponible' }
+
+  /pedidos/{id}/cancelacion:
+    post:
+      tags: [Pedidos]
+      summary: Dar de baja un pedido pendiente, con su motivo
+      description: |
+        Rol: recepcion (RF-09). Solo se cancela un pedido *pendiente*: cuando cocina lo
+        empieza, lo preparado ya es un costo para el local (D-41). El pedido no se borra:
+        queda *cancelado*, y el historial guarda quién, cuándo y por qué.
+      parameters:
+        - $ref: '#/components/parameters/IdPedido'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/Cancelacion' }
+            example: { motivo: El cliente se fue }
+      responses:
+        '200':
+          description: El pedido cancelado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RespuestaPedido' }
+        '400': { $ref: '#/components/responses/PeticionInvalida' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermiso' }
+        '404': { $ref: '#/components/responses/PedidoNoEncontrado' }
+        '409':
+          description: '`TRANSICION_NO_PERMITIDA`: el pedido ya no está pendiente. Trae `estadoActual`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+              example:
+                error:
+                  codigo: TRANSICION_NO_PERMITIDA
+                  mensaje: 'El pedido #102 esta en preparacion: no puede pasar a cancelado.'
+                  estadoActual: en_preparacion
+        '503': { $ref: '#/components/responses/BaseNoDisponible' }
+
+components:
+  securitySchemes:
+    tokenKeycloak:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        Token de acceso de Keycloak, realm `maxpizzapp`. Lo obtiene la app con
+        Authorization Code y PKCE en https://auth.maxpizzapp.tech.
+
+  parameters:
+    IdPedido:
+      name: id
+      in: path
+      required: true
+      description: Identificador interno del pedido (no el número del día).
+      schema: { type: integer, minimum: 1, maximum: 2147483647 }
+
+  responses:
+    PeticionInvalida:
+      description: |
+        La petición está mal formada: `JSON_INVALIDO`, `VENTA_INVALIDA`, `FILTRO_INVALIDO`,
+        `ID_INVALIDO`, `ESTADO_INVALIDO`, `VERSION_INVALIDA` o `MOTIVO_INVALIDO`.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NoAutenticado:
+      description: 'Sin token, o con uno vencido o inválido: `TOKEN_AUSENTE`, `TOKEN_EXPIRADO` o `TOKEN_INVALIDO`.'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            error: { codigo: TOKEN_AUSENTE, mensaje: Inicia sesion para continuar. }
+    SinPermiso:
+      description: 'El token es válido pero el rol no permite la operación: `ROL_SIN_PERMISO`.'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            error: { codigo: ROL_SIN_PERMISO, mensaje: Tu rol no permite esta operacion. }
+    PedidoNoEncontrado:
+      description: '`PEDIDO_NO_ENCONTRADO`.'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    ConflictoDeVenta:
+      description: |
+        `PRECIO_CAMBIADO` (la carta cambió mientras se armaba la venta; trae
+        `totalCorrecto`) o `PRODUCTO_NO_DISPONIBLE` (un producto se agotó; trae `producto`).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            error:
+              codigo: PRECIO_CAMBIADO
+              mensaje: La carta cambio mientras se armaba la venta. El total correcto es Bs 80.
+              totalCorrecto: 80
+    BaseNoDisponible:
+      description: 'La base de datos no responde: `BASE_NO_DISPONIBLE`. Tiene sentido reintentar.'
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [codigo, mensaje]
+          properties:
+            codigo: { type: string, example: VENTA_INVALIDA }
+            mensaje: { type: string, example: Falta el nombre del cliente. }
+          additionalProperties: true
+
+    Salud:
+      type: object
+      required: [estado, baseDeDatos]
+      properties:
+        estado: { type: string, enum: [ok, degradado] }
+        baseDeDatos: { type: string, enum: [ok, sin respuesta] }
+
+    Sesion:
+      type: object
+      required: [sub, nombre, usuario, roles]
+      properties:
+        sub: { type: string, description: Identificador del usuario en Keycloak. }
+        nombre: { type: string, example: Recepcion Demostracion }
+        usuario: { type: string, example: recepcion.demo }
+        roles:
+          type: array
+          items: { type: string, enum: [recepcion, cocina] }
+
+    Categoria:
+      type: string
+      enum: [pizza, entrada, bebida, postre, extra]
+
+    EstadoPedido:
+      type: string
+      enum: [pendiente, en_preparacion, listo, entregado, cancelado]
+
+    Producto:
+      type: object
+      required: [id, nombre, categoria, precio, disponible, soloEntera]
+      properties:
+        id: { type: integer }
+        nombre: { type: string, example: Carnívora }
+        categoria: { $ref: '#/components/schemas/Categoria' }
+        precio: { type: number, description: 'En bolivianos, con dos decimales.', example: 60 }
+        descripcion: { type: string, nullable: true, description: Los ingredientes. }
+        imagen: { type: string, nullable: true, description: Solo el nombre del archivo. }
+        disponible: { type: boolean }
+        soloEntera: { type: boolean, description: Las especialidades que no se venden por mitades. }
+
+    LineaDeVenta:
+      type: object
+      required: [productoId, cantidad]
+      properties:
+        productoId: { type: integer, minimum: 1 }
+        mitadId:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: La segunda mitad de una pizza de dos sabores; distinta de productoId.
+        cantidad: { type: integer, minimum: 1, maximum: 999 }
+        extras:
+          type: array
+          maxItems: 10
+          uniqueItems: true
+          items: { type: integer, minimum: 1 }
+          description: Ids de productos de categoría extra; solo en una pizza.
+
+    NuevoPedido:
+      type: object
+      required: [paraLlevar, cliente, lineas, totalEsperado]
+      properties:
+        paraLlevar: { type: boolean }
+        cliente:
+          type: object
+          required: [nombre]
+          properties:
+            nombre: { type: string, maxLength: 120 }
+            celular:
+              type: string
+              nullable: true
+              pattern: '^[67][0-9]{7}$'
+              description: Celular boliviano, opcional.
+        observacion: { type: string, maxLength: 240, nullable: true }
+        lineas:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { $ref: '#/components/schemas/LineaDeVenta' }
+        totalEsperado:
+          type: number
+          minimum: 0
+          description: El total que mostró la pantalla, en bolivianos.
+
+    NuevaVentaDirecta:
+      type: object
+      required: [ventaDirecta, lineas, totalEsperado]
+      properties:
+        ventaDirecta: { type: boolean, enum: [true] }
+        lineas:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { $ref: '#/components/schemas/LineaDeVenta' }
+          description: Solo bebidas.
+        totalEsperado: { type: number, minimum: 0 }
+
+    Agregado:
+      type: object
+      required: [lineas, totalEsperado]
+      properties:
+        lineas:
+          type: array
+          minItems: 1
+          maxItems: 100
+          items: { $ref: '#/components/schemas/LineaDeVenta' }
+        totalEsperado:
+          type: number
+          minimum: 0
+          description: Lo que suma lo agregado, según la pantalla.
+
+    CambioDeEstado:
+      type: object
+      required: [estado]
+      properties:
+        estado: { type: string, enum: [en_preparacion, listo, entregado] }
+        version:
+          type: integer
+          minimum: 1
+          maximum: 100000
+          description: Cuántas líneas tenía el pedido en la pantalla de quien toca el botón.
+
+    Cancelacion:
+      type: object
+      required: [motivo]
+      properties:
+        motivo: { type: string, minLength: 1, maxLength: 120 }
+
+    ProductoResumido:
+      type: object
+      required: [id, nombre]
+      properties:
+        id: { type: integer }
+        nombre: { type: string }
+        categoria: { $ref: '#/components/schemas/Categoria' }
+
+    LineaDePedido:
+      type: object
+      required: [id, producto, cantidad, precioUnitario, subtotal]
+      properties:
+        id: { type: integer }
+        producto: { $ref: '#/components/schemas/ProductoResumido' }
+        mitad:
+          allOf: [{ $ref: '#/components/schemas/ProductoResumido' }]
+          nullable: true
+        cantidad: { type: integer }
+        precioUnitario: { type: number }
+        subtotal: { type: number }
+        agregadoEn:
+          type: string
+          format: date-time
+          nullable: true
+          description: Cuándo se agregó a un pedido ya enviado; null en lo pedido al principio.
+        extras:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer }
+              producto: { $ref: '#/components/schemas/ProductoResumido' }
+              cantidad: { type: integer }
+              precioUnitario: { type: number }
+              subtotal: { type: number }
+              agregadoEn: { type: string, format: date-time, nullable: true }
+
+    Pedido:
+      type: object
+      required: [id, estado, total, creadoEn, version, lineas]
+      properties:
+        id: { type: integer, description: Identificador interno. }
+        numero:
+          type: integer
+          nullable: true
+          description: El número del día que se canta en el mostrador; null en la venta directa.
+        estado: { $ref: '#/components/schemas/EstadoPedido' }
+        paraLlevar: { type: boolean, nullable: true }
+        cliente:
+          type: object
+          nullable: true
+          properties:
+            nombre: { type: string, example: Ana Prueba }
+            celular:
+              type: string
+              nullable: true
+              description: Solo lo recibe recepción.
+        observacion: { type: string, nullable: true }
+        total: { type: number, description: En bolivianos. }
+        creadoEn: { type: string, format: date-time }
+        creadoPor: { type: string }
+        version: { type: integer, description: 'Cuántas líneas tiene guardadas, extras incluidos.' }
+        lineas:
+          type: array
+          items: { $ref: '#/components/schemas/LineaDePedido' }
+
+    RespuestaPedido:
+      type: object
+      required: [pedido]
+      properties:
+        pedido: { $ref: '#/components/schemas/Pedido' }
+
+    CambioDelHistorial:
+      type: object
+      properties:
+        estado: { $ref: '#/components/schemas/EstadoPedido' }
+        usuario: { type: string }
+        fechaHora: { type: string, format: date-time }
+        motivo: { type: string, nullable: true }

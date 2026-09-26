@@ -94,7 +94,7 @@ Keycloak y la API reales. Antes de la primera vez: `cd backend && npm ci` y
 `cd frontend && flutter pub get`.
 
 ```bash
-cd backend && npm test            # 267 pruebas: acceso, carta, precio, pedidos, lo agregado y canal en vivo, sin base ni Keycloak reales
+cd backend && npm test            # 269 pruebas: acceso, carta, precio, pedidos, lo agregado, canal en vivo y el contrato OpenAPI, sin base ni Keycloak reales
 cd frontend && flutter test       # 195 pruebas de la app: la venta, los pedidos, la cocina, el acceso y el contraste de colores
 python pruebas/identidad/probar_acceso_pkce.py   # inicio de sesión real con PKCE
 python pruebas/api/probar_salud_y_token.py       # la API con tokens reales del realm
@@ -121,7 +121,8 @@ codigo/
 ├── docker/       Compose, Postgres (init SQL), Keycloak (realm), Caddy
 ├── pruebas/      Pruebas de extremo a extremo contra Keycloak y la API reales
 ├── scripts/      Publicar la app, preparar las fotos de la carta y dibujar las bebidas
-└── docs/         Documentación técnica: BRIEF de desarrollo y planes de trabajo
+└── docs/         Documentación técnica: BRIEF de desarrollo, planes de trabajo y el
+                  contrato de la API (docs/api/openapi.yaml)
 ```
 
 ## Dirección pública
@@ -130,8 +131,18 @@ codigo/
 |---|---|
 | Aplicación | **https://maxpizzapp.tech** |
 | Identidad (Keycloak) | https://auth.maxpizzapp.tech |
+| Salud de la API | https://maxpizzapp.tech/api/v1/salud |
 
 Para entrar, las cuentas de prueba del apartado *Credenciales de prueba*.
+
+### Contrato de la API
+
+El contrato completo está en [`docs/api/openapi.yaml`](docs/api/openapi.yaml) (OpenAPI 3.0):
+cada ruta con su rol, sus parámetros, sus cuerpos y todos sus errores, en el formato único
+`{ "error": { "codigo", "mensaje" } }`. Se puede ver pegándolo en
+[editor.swagger.io](https://editor.swagger.io). Una prueba del backend (`contrato.test.js`)
+comprueba que el contrato y el servidor tengan exactamente las mismas rutas, y que la única
+pública sea `/salud`.
 
 ## La carta
 
