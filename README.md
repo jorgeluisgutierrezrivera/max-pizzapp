@@ -26,8 +26,20 @@ Un flujo acotado y **desplegable**, priorizando profundidad sobre cantidad de m�
 
 | Rol | Qué hace |
 |---|---|
-| **Recepción** | Crea pedidos, ve estados en vivo, cancela mientras el pedido está pendiente, entrega, marca productos agotados |
-| **Cocina** | Ve pedidos entrantes en vivo, avanza el estado, marca "listo", marca productos agotados |
+| **Recepción** | Crea pedidos y ventas directas de bebidas, ve estados en vivo, agrega productos a un pedido ya enviado, cancela mientras el pedido está pendiente, entrega |
+| **Cocina** | Ve pedidos entrantes en vivo, avanza el estado, marca "listo" |
+
+A un pedido ya enviado se le agrega según su estado:
+
+| Estado | Bebidas | Pizzas |
+|---|:-:|:-:|
+| Pendiente | sí | sí |
+| En preparación | sí | sí |
+| Listo | sí | no |
+| Entregado o cancelado | no | no |
+
+Marcar un producto como agotado (RF-13) está **previsto** para una tarjeta posterior:
+todavía no está implementado.
 
 El sistema tiene **dos roles**. La administración de la carta y el historial quedan fuera
 de alcance y se recogen como trabajo futuro.
@@ -115,14 +127,14 @@ curso y entregas incrementales). No se usan sprints.
 ## Estructura del repositorio
 
 ```
-codigo/
+max-pizzapp/
 ├── backend/      API Node/Express + Socket.IO
 ├── frontend/     App Flutter
 ├── docker/       Compose, Postgres (init SQL), Keycloak (realm), Caddy
 ├── pruebas/      Pruebas de extremo a extremo contra Keycloak y la API reales
 ├── scripts/      Publicar la app, preparar las fotos de la carta y dibujar las bebidas
-└── docs/         Documentación técnica: BRIEF de desarrollo, planes de trabajo y el
-                  contrato de la API (docs/api/openapi.yaml)
+└── docs/         Documentación técnica: BRIEF de desarrollo, planes de trabajo, el
+                  contrato de la API (docs/api/openapi.yaml) y el perfil del proyecto
 ```
 
 ## Dirección pública
@@ -454,7 +466,7 @@ agrega a un pedido y la venta directa de bebidas, y la `08` marca las pizzas que
 solo enteras. Y van **antes** del `up -d --build`:
 la API nueva ya consulta las columnas que ellas agregan. No hay `03`: era una carta
 ficticia que la real reemplazó. Volver a cargar la carta actualiza los productos por su
-nombre sin duplicarlos, y no revive uno que cocina marcó agotado.
+nombre sin duplicarlos, y no vuelve disponible uno que la base tenga marcado como agotado.
 
 La `06` exige que todo pedido tenga cliente. Si encontrara uno sin cliente, se detiene
 **sin cambiar nada**: corre en una sola transacción. La `07` numera los pedidos que ya
