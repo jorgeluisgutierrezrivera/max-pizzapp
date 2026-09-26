@@ -107,5 +107,16 @@ void main() {
       await t.pumpAndSettle();
       expect(t.takeException(), isNull);
     });
+
+    testWidgets('la portada nombra solo el local piloto (D-03)', (t) async {
+      t.view.physicalSize = const Size(1280, 800);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      await t.pumpWidget(MaterialApp(theme: tema, home: const PantallaAcceso()));
+      await t.pumpAndSettle();
+      expect(find.text('Villa Fátima'), findsOneWidget);
+      expect(find.textContaining('Avaroa'), findsNothing);
+      expect(find.textContaining('Tabladita'), findsNothing);
+    });
   });
 }

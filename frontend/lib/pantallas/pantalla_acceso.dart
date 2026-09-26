@@ -11,7 +11,8 @@ import 'logo.dart';
 ///
 /// En una pantalla ancha, dos mitades: la foto de una pizza del local con su nombre, y el
 /// acceso. En el celular, la foto arriba, como portada. Todo lo que dice del local sale de
-/// sus datos registrados: nada inventado.
+/// sus datos registrados: nada inventado. Solo nombra el local donde funciona el sistema,
+/// Villa Fátima: las sucursales quedan fuera del alcance (D-03).
 class PantallaAcceso extends StatelessWidget {
   const PantallaAcceso({super.key, this.alIniciarSesion, this.mensaje});
 
@@ -132,7 +133,7 @@ class _Portada extends StatelessWidget {
                     const SizedBox(width: 6),
                     Flexible(
                       child: Text(
-                        'Villa Fátima · Villa Avaroa · Tabladita',
+                        'Villa Fátima',
                         style: tema.textTheme.bodyMedium?.copyWith(color: suave),
                       ),
                     ),
