@@ -3,8 +3,8 @@
 --
 -- QUÉ ES REAL Y QUÉ NO
 --   PIZZAS:   las 15 del catálogo del local (WhatsApp Business, 23-sep-2026), con
---             sus ingredientes. Los PRECIOS son los del catálogo y ESTÁN POR
---             CONFIRMAR con la dueña. Todas llevan masa casera y salsa de la
+--             sus ingredientes. Los PRECIOS son los del catálogo, CONFIRMADOS por
+--             la dueña el 25-sep-2026. Todas llevan masa casera y salsa de la
 --             casa; la descripción dice solo lo que cambia.
 --   BEBIDAS y EXTRAS: FICTICIOS. El catálogo no los muestra; se reemplazan cuando
 --             lleguen los reales.
@@ -29,14 +29,14 @@
 --       < docker/postgres/init/05_carta.sql
 --   Se puede ejecutar las veces que haga falta: un producto que ya existe (por su
 --   nombre) se actualiza con los datos de este archivo, sin duplicarse. Lo único que
---   NO se toca es «disponible»: si cocina marcó un producto agotado, volver a cargar
---   la carta no lo revive.
+--   NO se toca es «disponible»: un producto marcado agotado en la base sigue
+--   agotado aunque se vuelva a cargar la carta.
 -- ============================================================================
 
 BEGIN;
 
 INSERT INTO producto (nombre, categoria, precio, descripcion, imagen) VALUES
-    -- Pizzas: las del catálogo del local, precios por confirmar
+    -- Pizzas: las del catálogo del local, con los precios confirmados por la dueña
     ('Carnívora',          'pizza', 60.00, 'Doble queso, peperoni y carne',                                             'carnivora.webp'),
     ('Champiñones',        'pizza', 50.00, 'Doble queso, jamón y champiñones',                                          'champinones.webp'),
     ('Choclo',             'pizza', 45.00, 'Doble queso, jamón y choclo',                                               'choclo.webp'),

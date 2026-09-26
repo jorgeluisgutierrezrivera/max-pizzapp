@@ -160,8 +160,8 @@ pública sea `/salud`.
 
 La carta vive en `docker/postgres/init/05_carta.sql` y se cambia sin tocar el esquema:
 
-- **Las 15 pizzas son las del local**, con sus ingredientes, tomadas de su catálogo. Sus
-  **precios están por confirmar** con la dueña.
+- **Las 15 pizzas son las del local**, con sus ingredientes y fotos, tomadas de su catálogo.
+  Sus **precios los confirmó la dueña** el 25-sep.
 - **Las bebidas y los extras son ficticios** hasta tener los reales.
 
 El local vende **solo pizzas enteras**, de un sabor o de dos mitades. Una pizza de dos
