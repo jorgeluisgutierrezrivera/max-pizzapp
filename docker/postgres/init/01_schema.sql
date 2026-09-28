@@ -33,7 +33,7 @@
 
 -- Ciclo de vida del pedido:
 --   pendiente → en_preparacion → listo → entregado
---                             ↘ cancelado  (solo antes de «listo»)
+--           ↘ cancelado  (solo desde «pendiente»: D-41)
 -- Los nombres técnicos van sin acentos ni espacios; la interfaz muestra la
 -- etiqueta legible.
 CREATE TYPE estado_pedido AS ENUM (

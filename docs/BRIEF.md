@@ -44,14 +44,15 @@ Regla del módulo: **máximo 2 roles diferenciados**. Decisión:
 
 | Rol | MoSCoW | Funciones | Dispositivo |
 |---|---|---|---|
-| **Recepción** | **Must** | Crea pedidos desde la carta, ve el estado en vivo, cancela mientras está pendiente, marca entregado, marca un producto agotado | Tablet / PC |
-| **Cocina** | **Must** | Ve los pedidos entrantes en vivo (orden de llegada), avanza estado, marca "listo", marca un producto agotado | Tablet / monitor |
+| **Recepción** | **Must** | Crea pedidos desde la carta, ve el estado en vivo, cancela mientras está pendiente, marca entregado. *Previsto:* marcar un producto agotado (RF-13) | Tablet / PC |
+| **Cocina** | **Must** | Ve los pedidos entrantes en vivo (orden de llegada), avanza estado, marca "listo". *Previsto:* marcar un producto agotado (RF-13) | Tablet / monitor |
 
 El sistema tiene **exactamente dos roles**: Recepción y Cocina. El rol de administrador
 —gestión de la carta e historial del día— queda **declarado fuera de alcance** y pasa a
 trabajo futuro: sería un tercer rol diferenciado, por encima del máximo que admite el
 módulo. Lo único que de verdad hacía falta de ese rol, que un producto agotado deje de
-ofrecerse, lo resuelven los dos roles existentes (RF-13).
+ofrecerse, lo resolverán los dos roles existentes con RF-13, previsto y todavía sin
+implementar.
 
 **Autorización siempre en el servidor**, no solo en la interfaz. La identidad y las
 credenciales las gestiona **Keycloak** (nunca hay tabla propia de usuarios).
@@ -144,13 +145,20 @@ Cubierto por el stack:
 - **Gestión de secretos:** variables de entorno (`.env`), **fuera del repo** (`.gitignore`);
   `.env.example` con los nombres, sin valores reales.
 
-A implementar:
-1. **Validación en cliente Y servidor** (la del servidor es la única confiable).
+Implementado (tarjetas 02 a 06):
+1. **Validación en cliente Y servidor** (la del servidor es la única confiable), con el
+   mismo formato de error en toda la API.
 2. **Consultas parametrizadas** siempre (nunca concatenar SQL con texto del usuario).
-3. **Escapado/saneo** de lo que se muestra en pantalla (XSS).
-4. **Rate limiting** de login (Keycloak).
-5. **Autorización por petición:** cada endpoint (salvo login) valida token, rol y estado.
+3. **Sin HTML interpretado** en pantalla (XSS): la app muestra los textos con los widgets
+   de texto de Flutter, que no interpretan HTML.
+4. **Límite de intentos de acceso** en Keycloak: tras 5 fallos la cuenta se bloquea por
+   un tiempo (no de forma permanente).
+5. **Autorización por petición:** cada endpoint (salvo el de salud) valida token y rol, y
+   los que cambian un pedido, además, la transición de estado.
+
+Previsto (tarjeta 09, todavía **no** implementado):
 6. **Cabeceras de seguridad** (Helmet en Express).
+7. **Límite de peticiones** en la API.
 
 > **RNF con métrica a cumplir:** propagación de cambios en tiempo real **< 2 s**; token
 > JWT con vigencia **~60 min**; interfaz **responsive**; degradación controlada si cae el
@@ -193,8 +201,10 @@ Must son exactamente el flujo que se demuestra en la defensa.
 **Fuera de alcance (rol administrador).** Gestionar la carta y consultar el historial del
 día exigirían un tercer rol diferenciado, por encima del máximo admitido; se declaran como
 capacidades fuera de alcance y quedan como trabajo futuro. La necesidad concreta que
-justificaba la gestión de la carta —que un producto agotado deje de ofrecerse— se resuelve
-con **RF-13**, que ejecutan los dos roles existentes desde su propia pantalla.
+justificaba la gestión de la carta —que un producto agotado deje de ofrecerse— se resolverá
+con **RF-13**, que ejecutarán los dos roles existentes desde su propia pantalla. Está
+previsto: la columna `producto.disponible` existe y la carta ya muestra los agotados, pero
+todavía no hay ruta ni pantalla para marcarlos.
 
 ---
 
@@ -217,11 +227,13 @@ GET    /api/v1/pedidos/:id                    Pedido con sus líneas
 POST   /api/v1/pedidos/:id/lineas             Agrega productos a un pedido que no se entregó
 PATCH  /api/v1/pedidos/:id/estado             Avanza estado según rol autorizado
 POST   /api/v1/pedidos/:id/cancelacion        Cancela con motivo (solo si está pendiente)
-PATCH  /api/v1/productos/:id/disponibilidad   Marca un producto agotado o disponible
+PATCH  /api/v1/productos/:id/disponibilidad   PREVISTA (RF-13): marca un producto agotado
+                                              o disponible. Todavía no existe
 GET    /api/v1/salud                          Estado del servicio
 ```
 Además, canal en tiempo real por **Socket.IO** sobre el mismo origen: eventos
-`pedido:nuevo`, `pedido:estado`, `pedido:actualizado` y `producto:disponibilidad`. Todas las rutas (salvo salud)
+`pedido:nuevo`, `pedido:estado` y `pedido:actualizado`; `producto:disponibilidad` llegará
+con RF-13. Todas las rutas (salvo salud)
 exigen token válido de Keycloak: el servidor valida la firma del token y **los permisos que
 exige cada ruta**, que no son los mismos en todas. Cuando la operación **cambia el estado de
 un pedido**, comprueba además que la transición solicitada sea válida.

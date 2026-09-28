@@ -43,7 +43,7 @@
     "realm": [
       {
         "name": "recepcion",
-        "description": "Atiende el mostrador: registra pedidos, consulta su estado en vivo, cancela antes de listo y marca entregados."
+        "description": "Atiende el mostrador: registra pedidos, consulta su estado en vivo, cancela los que siguen pendientes y marca entregados."
       },
       {
         "name": "cocina",

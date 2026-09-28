@@ -4,9 +4,10 @@ const { ErrorApi } = require('../errores');
 
 // La carta: GET /api/v1/productos?categoria=pizza&disponible=true
 //
-// La usan los dos roles: recepcion para armar el pedido y cocina para marcar un producto
-// agotado (RF-13). Sin filtros devuelve TODA la carta, agotados incluidos: la pantalla los
-// muestra atenuados, y un producto que desaparece sin aviso confunde mas que uno marcado.
+// La pueden leer los dos roles: recepcion la usa para armar el pedido. Marcar un producto
+// agotado (RF-13) esta previsto y todavia no tiene ruta. Sin filtros devuelve TODA la carta,
+// agotados incluidos: la pantalla los muestra atenuados, y un producto que desaparece sin
+// aviso confunde mas que uno marcado.
 
 // Los mismos valores que el tipo categoria_producto de la base. «extra» es un agregado que
 // se vende colgado de una pizza (D-28).
