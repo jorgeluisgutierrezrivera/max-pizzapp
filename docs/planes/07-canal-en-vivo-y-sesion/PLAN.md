@@ -5,7 +5,7 @@
 
 - **Tarjeta:** 07 — El canal en vivo y la sesión
 - **Incremento:** tiempo real completo (E3)
-- **Estado:** 🔵 **Aprobado** el 2026-09-29, sin cambios (propuesto el 2026-09-28)
+- **Estado:** 🔵 **En curso** — aprobado el 2026-09-29, sin cambios (propuesto el 2026-09-28)
 - **Entrada al tablero:** 2026-09-28
 - **Cierre:** —
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
@@ -156,15 +156,15 @@ aunque la app renueve el token después.
 Cada fase se prueba y se sube por separado.
 
 ### Fase A — El servidor: latido corto y corte al vencer el token
-- [ ] `pingInterval` 4 s y `pingTimeout` 3 s en el canal (D-44).
-- [ ] `usuarioDelToken` devuelve también cuándo vence el token.
-- [ ] Cada conexión se corta al vencer su token, y el temporizador se limpia si la conexión se
+- [x] `pingInterval` 4 s y `pingTimeout` 3 s en el canal (D-44).
+- [x] `usuarioDelToken` devuelve también cuándo vence el token.
+- [x] Cada conexión se corta al vencer su token, y el temporizador se limpia si la conexión se
       cierra antes (D-47).
-- [ ] Pruebas con el cliente real de Socket.IO:
+- [x] Pruebas con el cliente real de Socket.IO:
   - el saludo trae los dos valores;
   - una conexión con un token que vence en 2 s se corta a los 2 s;
   - una conexión que se cierra antes no deja un temporizador vivo.
-- [ ] `pruebas/tiempo-real/medir-caida.js`, contra la API local: 10 repeticiones bajo 10 s.
+- [x] `pruebas/tiempo-real/medir-caida.js`, contra la API local: 10 repeticiones bajo 10 s.
 
 ### Fase B — La app: la sesión y la reconexión
 - [ ] El canal distingue por qué se cortó:
@@ -217,8 +217,9 @@ Cada fase se prueba y se sube por separado.
 
 - **API:** `backend/src/tiempo-real.js` (el latido y el corte al vencer) y
   `backend/src/autenticacion.js` (cuándo vence el token).
-- **Pruebas de la API:** `backend/test/tiempo-real.test.js` y
-  `pruebas/tiempo-real/medir-caida.js` *(nuevo)*.
+- **Pruebas de la API:** `backend/test/tiempo-real.test.js`, y
+  `pruebas/tiempo-real/medir-caida.js` con `medir_caida.py`, que obtiene el token real como
+  `medir_aviso.py` *(nuevos)*.
 - **App:**
   - `frontend/lib/api/canal_en_vivo.dart`: la reconexión y el rechazo;
   - `frontend/lib/api/cliente_api.dart`: el 401 que persiste;
@@ -286,7 +287,7 @@ No cambia la base de datos, el contrato HTTP de la API ni el realm de producció
 
 | Fase | Estado | Fecha | Evidencia de la prueba |
 |---|---|---|---|
-| A — El servidor | ⬜ Pendiente | | |
+| A — El servidor | ✅ Verificada | 2026-09-29 | **Antes, en producción** (`medir_caida.py` en modo `saludo` contra `https://maxpizzapp.tech`): *"latido cada 25000 ms, espera 20000 ms: una red colgada se nota en 45000 ms como maximo"*. **El cambio:** el canal anuncia `pingInterval` 4000 y `pingTimeout` 3000; `usuarioDelToken` devuelve cuándo vence el token (`venceEn`), que la ruta `/sesion` no expone; y cada conexión programa su corte para esa hora, con `socket.disconnect(true)`, y lo cancela si se cierra antes. **`npm test`: 273 de 273** (269 anteriores y **4 nuevas**): el saludo trae 4000 y 3000; con un token de 2 s la conexión se corta a los 1,85 s por `io server disconnect`, es decir, la corta el servidor; con un token de 60 minutos sigue abierta pasados 2,5 s; y con un reloj simulado, el corte queda programado entre 59 y 60 minutos y se cancela al cerrarse la conexión. **Contra la API local en Docker, con el token real de cocina** (`medir_caida.py`, 10 cortes con el tapón TCP, cada uno en un momento al azar del ciclo del latido): **mínimo 3,04 s, mediana 6,13 s, máximo 6,89 s**. Los 10 se detectaron por el latido (`ping timeout`) y todos bajo 10 s, dentro de los 3 a 7 s que da la teoría. El modo `saludo` en local dice 7000 ms. **Sin regresiones, contra la API local:** `probar_pedidos.py` **76 de 76**; el aviso en vivo, mediana 19 ms a cocina, 15 ms a recepción y 17 ms de lo agregado; 0 reinicios. **Lo que salió:** (1) **esta fase no puede llegar sola a producción.** El servidor ahora corta cada conexión al vencer su token, y la app publicada no se reconecta después de un corte del servidor (es lo que arregla la fase B): a los 60 minutos, las pantallas quedarían en "Conectando…". El servidor se actualiza en la fase D, con la app de las fases B y C ya publicada. (2) Docker Desktop no arrancaba: otra vez E-010, ahora en `docker-secrets-engine`. Se resolvió renombrando las dos carpetas, como dice el registro |
 | B — La sesión y la reconexión | ⬜ Pendiente | | |
 | C — El aviso de canal caído | ⬜ Pendiente | | |
 | D — En producción | ⬜ Pendiente | | |

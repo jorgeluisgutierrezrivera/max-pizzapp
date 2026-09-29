@@ -6,11 +6,14 @@
 // /socket.io/ a la vez y el proceso se caia.
 // Que el aviso salga despues del COMMIT, y nunca si la operacion falla, lo comprueban
 // pedidos.test.js y estados.test.js; la latencia real, pruebas/tiempo-real/.
+// Al final, lo que hace resistente al canal (tarjeta 07): el latido corto y la conexion que
+// se corta cuando vence su token.
+const http = require('node:http');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { io: conectar } = require('socket.io-client');
 const { crearServidor } = require('../src/servidor');
-const { SIN_AVISOS } = require('../src/tiempo-real');
+const { SIN_AVISOS, crearCanal } = require('../src/tiempo-real');
 const { firmar, ajena, deRecepcion, deCocina, sinRol, levantarEmisor } = require('./soporte/emisor');
 
 let emisor;
@@ -188,4 +191,56 @@ test('el aviso llega en mucho menos de 2 segundos', async () => {
   assert.equal((await llegada).id, 44);
   const ms = Number(process.hrtime.bigint() - inicio) / 1e6;
   assert.ok(ms < 2000, `tardo ${ms} ms`);
+});
+
+// --- el latido y la vida de la conexion (tarjeta 07) ---------------------------------------
+
+test('el saludo trae el latido corto: un ping cada 4 s y 3 s de espera, 7 s para notar un corte (D-44)', async () => {
+  const r = await fetch(`${url}/socket.io/?EIO=4&transport=polling`);
+  const saludo = JSON.parse((await r.text()).slice(1)); // "0{...}": el paquete de apertura
+  assert.equal(saludo.pingInterval, 4000);
+  assert.equal(saludo.pingTimeout, 3000);
+});
+
+test('una conexion se corta cuando vence su token, y la corta el servidor (D-47)', async () => {
+  // exp va en segundos enteros: un token de 2 s vence entre 1 y 2 s despues de firmarlo.
+  const { socket, conectado } = await entrar(firmar(deCocina, { expiresIn: 2 }));
+  assert.equal(conectado, true);
+  const inicio = Date.now();
+  const motivo = await esperar(socket, 'disconnect', 4000);
+  const ms = Date.now() - inicio;
+  assert.equal(motivo, 'io server disconnect');
+  assert.ok(ms <= 2100, `se corto a los ${ms} ms`);
+});
+
+test('una conexion con un token de 60 minutos no se corta antes de tiempo', async () => {
+  const { socket } = await entrar(firmar(deCocina));
+  assert.equal(await esperar(socket, 'disconnect', 2500), null);
+  assert.equal(socket.connected, true);
+});
+
+test('el corte se programa a la hora en que vence el token, y se cancela si la conexion se cierra antes', async () => {
+  const programados = [];
+  const cancelados = [];
+  const reloj = {
+    setTimeout: (accion, ms) => { const corte = { accion, ms }; programados.push(corte); return corte; },
+    clearTimeout: (corte) => cancelados.push(corte),
+  };
+  const otroServidor = http.createServer();
+  const otroCanal = crearCanal(otroServidor, { usuarioDelToken: emisor.autenticar.usuarioDelToken, reloj });
+  await new Promise((listo) => otroServidor.listen(0, '127.0.0.1', listo));
+  const socket = conectar(`http://127.0.0.1:${otroServidor.address().port}`, {
+    auth: { token: firmar(deCocina) }, transports: ['websocket'], reconnection: false,
+  });
+  await new Promise((listo) => socket.on('connect', listo));
+
+  assert.equal(programados.length, 1);
+  assert.ok(programados[0].ms > 59 * 60 * 1000 && programados[0].ms <= 60 * 60 * 1000,
+    `programado a ${programados[0].ms} ms`);
+
+  socket.close();
+  const fin = Date.now() + 2000;
+  while (cancelados.length === 0 && Date.now() < fin) await new Promise((r) => setTimeout(r, 10));
+  assert.deepEqual(cancelados, programados);
+  await new Promise((listo) => otroCanal.cerrar(listo));
 });

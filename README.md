@@ -106,14 +106,20 @@ Keycloak y la API reales. Antes de la primera vez: `cd backend && npm ci` y
 `cd frontend && flutter pub get`.
 
 ```bash
-cd backend && npm test            # 269 pruebas: acceso, carta, precio, pedidos, lo agregado, canal en vivo y el contrato OpenAPI, sin base ni Keycloak reales
+cd backend && npm test            # 273 pruebas: acceso, carta, precio, pedidos, lo agregado, canal en vivo (con su latido y el corte al vencer el token) y el contrato OpenAPI, sin base ni Keycloak reales
 cd frontend && flutter test       # 195 pruebas de la app: la venta, los pedidos, la cocina, el acceso y el contraste de colores
 python pruebas/identidad/probar_acceso_pkce.py   # inicio de sesión real con PKCE
 python pruebas/api/probar_salud_y_token.py       # la API con tokens reales del realm
 python pruebas/api/probar_carta.py               # la carta con token real y la base real
 python pruebas/api/probar_pedidos.py             # pedidos: precios, número del día, venta directa, agregar, tres carreras y limpieza, en la base real
 python pruebas/tiempo-real/medir_aviso.py       # cuánto tarda el aviso en vivo: la venta y lo agregado en cocina, el cambio de estado en recepción
+python pruebas/tiempo-real/medir_caida.py       # cuánto tarda una pantalla en notar que la red se colgó (RNF-05: menos de 10 s)
 ```
+
+`medir_caida.py` corta la red "en silencio" con un tapón TCP entre el cliente y la API
+local, así que solo corre en local. Contra el despliegue público, `MODO=saludo` lee el
+latido que anuncia el servidor (un ping cada 4 s y 3 s de espera) sin necesidad de
+contraseña.
 
 Las pruebas de `pruebas/` aceptan `KEYCLOAK_URL` y `API_URL` para ejecutarse contra el
 despliegue público. La tabla completa de casos de prueba está en el apartado 2.8 del

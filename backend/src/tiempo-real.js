@@ -1,15 +1,25 @@
 // El canal en vivo: Socket.IO sobre el mismo servidor HTTP que la API (D-04, D-21).
 //
-// Lo minimo que exige el E2: cocina ve el pedido nuevo en menos de 2 segundos sin recargar,
-// y las dos pantallas se enteran de cada cambio de estado. La robustez (reconectar sola,
-// avisar cuando el canal se cae, renovar el token de una conexion abierta) es la tarjeta 07.
+// Cocina ve el pedido nuevo en menos de 2 segundos sin recargar, y las dos pantallas se
+// enteran de cada cambio de estado.
 //
-// Tres reglas:
+// Cuatro reglas:
 //   1. Sin token valido no hay conexion. Se valida con el MISMO verificador que la API.
 //   2. Cada conexion entra a la sala de su rol, y cada evento va solo a quien le sirve.
 //   3. El canal AVISA; la fuente es la API. Si una pantalla se pierde un aviso, recarga la
 //      lista y queda al dia.
+//   4. Una conexion no dura mas que su token (D-47): se corta cuando vence, y la app se
+//      reconecta con el token que ya renovo.
 const { Server } = require('socket.io');
+
+// El latido (D-44). El servidor manda un ping cada pingInterval, y el cliente da la conexion
+// por perdida si pasa pingInterval + pingTimeout sin recibir ninguno: con estos valores, 7 s.
+// Los de fabrica (25 s + 20 s) tardaban hasta 45 s en notar una red colgada, y RNF-05 pide
+// avisar en menos de 10. Cuesta un paquete de pocos bytes cada 4 s por pantalla.
+const LATIDO = { pingInterval: 4000, pingTimeout: 3000 };
+
+// setTimeout no acepta plazos de mas de ~24,8 dias: uno mayor dispararia en el acto.
+const PLAZO_MAXIMO_MS = 2 ** 31 - 1;
 
 const SALA = { recepcion: 'rol:recepcion', cocina: 'rol:cocina' };
 
@@ -21,10 +31,12 @@ function paraCocina(pedido) {
 // Los estados que cocina tiene en su cola.
 const EN_COCINA = ['pendiente', 'en_preparacion'];
 
-function crearCanal(servidorHttp, { usuarioDelToken }) {
+// El reloj se puede reemplazar en las pruebas, para comprobar que el corte programado se
+// cancela cuando la conexion se cierra antes.
+function crearCanal(servidorHttp, { usuarioDelToken, reloj = { setTimeout, clearTimeout } }) {
   // Mismo origen que la app: Caddy sirve las dos cosas desde el mismo dominio, asi que no
   // hace falta abrir CORS. La ruta es la de siempre, /socket.io/, que Caddy ya reenvia.
-  const io = new Server(servidorHttp, { serveClient: false });
+  const io = new Server(servidorHttp, { serveClient: false, ...LATIDO });
 
   // El token viaja en el saludo (handshake.auth), no en la direccion: una direccion con el
   // token quedaria escrita en los registros de cualquier proxy.
@@ -46,7 +58,17 @@ function crearCanal(servidorHttp, { usuarioDelToken }) {
   });
 
   io.on('connection', (socket) => {
-    for (const rol of socket.data.usuario.roles) socket.join(SALA[rol]);
+    const { usuario } = socket.data;
+    for (const rol of usuario.roles) socket.join(SALA[rol]);
+
+    // D-47: el token se comprueba al conectarse, y sin esto la conexion seguiria recibiendo
+    // pedidos despues de que venciera. Se corta a esa hora; la app, que renueva el token a
+    // los 48 minutos, se reconecta en el acto con el nuevo.
+    if (Number.isFinite(usuario.venceEn)) {
+      const restante = Math.min(Math.max(usuario.venceEn - Date.now(), 0), PLAZO_MAXIMO_MS);
+      const corte = reloj.setTimeout(() => socket.disconnect(true), restante);
+      socket.on('disconnect', () => reloj.clearTimeout(corte));
+    }
   });
 
   return {

@@ -57,6 +57,8 @@ function crearAutenticador({ emisor, audiencia, jwksUri }) {
       nombre: carga.name || carga.preferred_username || '',
       usuario: carga.preferred_username || '',
       roles: rolesDelToken.filter((r) => ROLES_DEL_SISTEMA.includes(r)),
+      // Cuando vence, en milisegundos. El canal en vivo corta la conexion a esa hora (D-47).
+      venceEn: typeof carga.exp === 'number' ? carga.exp * 1000 : null,
     };
   }
 
