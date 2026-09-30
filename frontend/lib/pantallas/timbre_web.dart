@@ -10,7 +10,9 @@ import 'timbre.dart';
 ///
 /// Se activa solo (pedido del autor, 25-sep): al abrir la página lo intenta, y si el
 /// navegador todavía no lo permite, lo vuelve a intentar con el primer toque o tecla en
-/// cualquier parte de la pantalla, que sí cuenta como uso de la persona.
+/// cualquier parte de la pantalla, que sí cuenta como uso de la persona. Iniciar sesión
+/// recarga la página, así que después de entrar hace falta ese primer toque: mientras
+/// tanto, la pantalla lo dice con una franja, y al activarse suena una vez para confirmarlo.
 class TimbreWeb implements Timbre {
   TimbreWeb() {
     _intentar();
@@ -21,10 +23,17 @@ class TimbreWeb implements Timbre {
   final _activo = ValueNotifier(false);
   JSFunction? _alTocar;
 
+  /// Si la persona ya tocó la pantalla: el sonido de confirmación solo suena cuando la
+  /// activación se debe a un toque, nunca al cargar la página.
+  bool _huboToque = false;
+
   static const _eventos = ['pointerdown', 'keydown', 'touchstart'];
 
   @override
   bool get habilitado => _contexto?.state == 'running';
+
+  @override
+  bool get pendienteDeActivar => !_activo.value;
 
   @override
   Listenable get cambios => _activo;
@@ -43,14 +52,20 @@ class TimbreWeb implements Timbre {
   }
 
   void _escucharPrimerToque() {
-    _alTocar = ((web.Event _) => _intentar()).toJS;
+    _alTocar = ((web.Event _) {
+      _huboToque = true;
+      _intentar();
+    }).toJS;
     for (final evento in _eventos) {
       web.document.addEventListener(evento, _alTocar, web.AddEventListenerOptions(capture: true));
     }
   }
 
+  /// Una sola vez: da igual si llegó primero la promesa del arranque o la del toque.
   void _alActivarse() {
+    if (_activo.value) return;
     _activo.value = true;
+    if (_huboToque) sonar(); // para que se sepa que ya suena
     final alTocar = _alTocar;
     if (alTocar == null) return;
     for (final evento in _eventos) {
@@ -61,10 +76,10 @@ class TimbreWeb implements Timbre {
 
   @override
   Future<void> habilitar() async {
+    _huboToque = true;
     final contexto = _contexto ??= web.AudioContext();
     await contexto.resume().toDart;
-    if (habilitado) _alActivarse();
-    sonar(); // para que la persona sepa cómo suena
+    if (habilitado) _alActivarse(); // y suena una vez, para que se sepa cómo suena
   }
 
   @override

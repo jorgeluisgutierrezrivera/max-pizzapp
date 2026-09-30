@@ -8,6 +8,7 @@ import '../api/usuario.dart';
 import '../pedidos/pedido.dart';
 import '../tema.dart';
 import 'aviso_sin_conexion.dart';
+import 'aviso_sin_sonido.dart';
 import 'boton_de_sonido.dart';
 import 'esqueleto_rol.dart';
 import 'red.dart';
@@ -245,6 +246,7 @@ class _PantallaCocinaState extends State<PantallaCocina> {
             listenable: _vigia,
             builder: (context, _) => _vigia.mostrar ? AvisoSinConexion(alRecargar: _cargar) : const SizedBox.shrink(),
           ),
+          AvisoSinSonido(timbre: widget.timbre),
           Expanded(child: _cuerpo(context)),
         ],
       ),

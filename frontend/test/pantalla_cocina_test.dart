@@ -39,8 +39,13 @@ class CanalDePrueba implements CanalEnVivo {
 class TimbreDePrueba implements Timbre {
   var sonidos = 0;
   final activo = ValueNotifier(false);
+
+  /// Como el navegador recién cargado, que todavía no deja sonar.
+  var pendiente = false;
   @override
   bool get habilitado => activo.value;
+  @override
+  bool get pendienteDeActivar => pendiente && !activo.value;
   @override
   Listenable get cambios => activo;
   @override
@@ -433,6 +438,47 @@ void main() {
       expect(banda, findsOneWidget);
       expect(t.takeException(), isNull);
       expect(t.getRect(find.byKey(const Key('boton-recargar'))).right, lessThanOrEqualTo(320));
+    });
+  });
+
+  group('el sonido apagado al entrar (hallazgo de la prueba del autor, tarjeta 07)', () {
+    final franja = find.byKey(const Key('aviso-sin-sonido'));
+
+    Future<Escena> abrirSinSonido(WidgetTester t, {double ancho = 1400}) async {
+      tamano(t, ancho, 900);
+      final e = Escena()
+        ..cola = [json(1)]
+        ..timbre.pendiente = true;
+      await t.pumpWidget(e.app());
+      await t.pumpAndSettle();
+      return e;
+    }
+
+    testWidgets('si el navegador todavía no deja sonar, una franja lo dice', (t) async {
+      await abrirSinSonido(t);
+      expect(franja, findsOneWidget);
+      expect(
+        find.text('El sonido está apagado. Tocá en cualquier parte de la pantalla para activarlo.'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('en cuanto el sonido se activa, la franja se va', (t) async {
+      final e = await abrirSinSonido(t);
+      e.timbre.activo.value = true;
+      await t.pumpAndSettle();
+      expect(franja, findsNothing);
+    });
+
+    testWidgets('con el sonido activo, o donde no hay cómo sonar, no hay franja', (t) async {
+      await abrir(t, [json(1)]);
+      expect(franja, findsNothing);
+    });
+
+    testWidgets('en el celular, a 320 px, la franja no desborda nada', (t) async {
+      await abrirSinSonido(t, ancho: 320);
+      expect(franja, findsOneWidget);
+      expect(t.takeException(), isNull);
     });
   });
 

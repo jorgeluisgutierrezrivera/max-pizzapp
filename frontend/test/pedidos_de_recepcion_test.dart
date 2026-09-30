@@ -42,8 +42,13 @@ class CanalDePrueba implements CanalEnVivo {
 class TimbreDePrueba implements Timbre {
   var sonidos = 0;
   final activo = ValueNotifier(false);
+
+  /// Como el navegador recién cargado, que todavía no deja sonar.
+  var pendiente = false;
   @override
   bool get habilitado => activo.value;
+  @override
+  bool get pendienteDeActivar => pendiente && !activo.value;
   @override
   Listenable get cambios => activo;
   @override
@@ -338,6 +343,23 @@ void main() {
       e.canal.estados.add(true);
       await t.pumpAndSettle();
       expect(banda, findsNothing);
+    });
+  });
+
+  group('el sonido apagado al entrar (tarjeta 07)', () {
+    testWidgets('la franja está sobre las dos pestañas hasta que el sonido se activa', (t) async {
+      tamano(t, 1400, 1000);
+      final e = Escena()..timbre.pendiente = true;
+      await t.pumpWidget(e.app());
+      await t.pumpAndSettle();
+      final franja = find.byKey(const Key('aviso-sin-sonido'));
+      expect(franja, findsOneWidget);
+      await t.tap(find.byKey(const Key('pestana-pedidos')));
+      await t.pumpAndSettle();
+      expect(franja, findsOneWidget);
+      e.timbre.activo.value = true;
+      await t.pumpAndSettle();
+      expect(franja, findsNothing);
     });
   });
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:maxpizzapp/api/usuario.dart';
 import 'package:maxpizzapp/carta/producto.dart';
+import 'package:maxpizzapp/pantallas/aviso_sin_sonido.dart';
 import 'package:maxpizzapp/pantallas/pantalla_acceso.dart';
 import 'package:maxpizzapp/pantallas/segun_rol.dart';
 import 'package:maxpizzapp/tema.dart';
@@ -54,6 +55,11 @@ void main() {
     test('el rojo de los botones de contorno y de los enlaces se lee sobre el crema', () {
       expect(contraste(rojoLadrillo, cremaFondo), greaterThanOrEqualTo(4.5));
       expect(contraste(rojoLadrillo, Colors.white), greaterThanOrEqualTo(4.5));
+    });
+
+    test('las franjas de aviso se leen: canal caído sobre amarillo, sonido apagado sobre rojo suave', () {
+      expect(contraste(textoSobreAmarillo, amarilloSuave), greaterThanOrEqualTo(4.5));
+      expect(contraste(AvisoSinSonido.letra, rojoSuave), greaterThanOrEqualTo(4.5));
     });
 
     test('el texto secundario y los errores cumplen el mínimo para texto normal', () {

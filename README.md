@@ -110,7 +110,7 @@ Keycloak y la API reales. Antes de la primera vez: `cd backend && npm ci` y
 
 ```bash
 cd backend && npm test            # 273 pruebas: acceso, carta, precio, pedidos, lo agregado, canal en vivo (con su latido y el corte al vencer el token) y el contrato OpenAPI, sin base ni Keycloak reales
-cd frontend && flutter test       # 236 pruebas de la app: la venta, los pedidos, la cocina, el acceso, la sesión, el canal en vivo (cortes, rechazos y el aviso de canal caído) y el contraste de colores
+cd frontend && flutter test       # 242 pruebas de la app: la venta, los pedidos, la cocina, el acceso, la sesión, el canal en vivo (cortes, rechazos y el aviso de canal caído), el aviso de sonido apagado y el contraste de colores
 python pruebas/identidad/probar_acceso_pkce.py   # inicio de sesión real con PKCE
 python pruebas/api/probar_salud_y_token.py       # la API con tokens reales del realm
 python pruebas/api/probar_carta.py               # la carta con token real y la base real

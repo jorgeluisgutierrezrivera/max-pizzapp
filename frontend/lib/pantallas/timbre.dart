@@ -10,6 +10,11 @@ import 'package:flutter/foundation.dart';
 abstract class Timbre {
   bool get habilitado;
 
+  /// El dispositivo puede sonar, pero el navegador todavía no lo deja: falta que la persona
+  /// toque la pantalla. Mientras sea así, la pantalla lo dice con una franja, porque un pedido
+  /// que llega en ese momento no suena.
+  bool get pendienteDeActivar;
+
   /// Avisa cuando el sonido se activa solo, para que la barra lo muestre.
   Listenable get cambios;
 
@@ -24,6 +29,8 @@ abstract class Timbre {
 class TimbreMudo implements Timbre {
   @override
   bool get habilitado => false;
+  @override
+  bool get pendienteDeActivar => false;
   @override
   Listenable get cambios => const _SinCambios();
   @override

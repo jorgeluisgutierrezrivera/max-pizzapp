@@ -12,6 +12,7 @@ import '../pedidos/pedido.dart';
 import '../pedidos/pedidos_en_vivo.dart';
 import '../tema.dart';
 import 'aviso_sin_conexion.dart';
+import 'aviso_sin_sonido.dart';
 import 'boton_de_sonido.dart';
 import 'esqueleto_rol.dart';
 import 'pedidos_de_recepcion.dart';
@@ -315,6 +316,7 @@ class _PantallaRecepcionState extends State<PantallaRecepcion> with SingleTicker
             builder: (context, _) =>
                 _vigia.mostrar ? AvisoSinConexion(alRecargar: _pedidos.leer) : const SizedBox.shrink(),
           ),
+          AvisoSinSonido(timbre: _timbre),
           // Las dos pestañas quedan vivas: la venta a medio armar no se pierde al ir a entregar.
           Expanded(
             child: IndexedStack(

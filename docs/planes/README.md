@@ -44,7 +44,7 @@ siguiente hasta cerrar la actual.
 | 09 | Endurecimiento de seguridad | Cabeceras, límite de intentos y repaso de validaciones | Por hacer |
 | 10 | Pruebas end-to-end y documentación técnica | Suite en verde y plan de pruebas documentado | Por hacer |
 | 11 | Identidad visual del acceso | Tema de Keycloak con la estética de la app y del local (colores, tipografía, marca), solo con estilos | Por hacer — después del E2 |
-| 12 | App Android para cocina | El mismo código de Flutter compilado como APK para el rol cocina (D-43): inicio de sesión en Android, sonido, pantalla encendida, firma y descarga. Recepción sigue en la web | Por hacer — E3, después de la 07 |
+| 12 | App Android para cocina | El mismo código de Flutter compilado como APK para el rol cocina (D-43): inicio de sesión en Android, sonido **desde el arranque, sin esperar un toque** (lo que la web no puede, visto en la prueba de la 07), pantalla encendida, firma y descarga. Recepción sigue en la web | Por hacer — E3, después de la 07 |
 
 > **Orden modificado el 22-sep.** La tarjeta 02 era *Identidad y roles con Keycloak* y el
 > despliegue público estaba al final, en la 09. Se fundieron y se adelantaron: la dirección
