@@ -197,6 +197,20 @@ void main() {
       expect(sesion.mensaje, contains('expiró'));
     });
 
+    test('una sesion que el servidor rechaza vuelve al acceso, avisa y olvida los tokens (D-46)', () async {
+      final sesion = await sesionIniciada();
+      expect(sesion.tokenAcceso, 'acceso-1');
+      peticiones.clear();
+
+      sesion.terminarSesionRechazada();
+
+      expect(sesion.estado, EstadoSesion.sinSesion);
+      expect(sesion.mensaje, 'Tu sesión expiró. Inicia sesión de nuevo.');
+      expect(sesion.tokenAcceso, isNull);
+      expect(await sesion.renovar(), isFalse, reason: 'tampoco queda un token de renovación');
+      expect(peticiones, isEmpty);
+    });
+
     test('cerrar sesion cierra tambien la de Keycloak y olvida el token', () async {
       final sesion = await sesionIniciada();
       sesion.cerrarSesion();

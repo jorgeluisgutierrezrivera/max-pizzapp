@@ -21,12 +21,14 @@ class ErrorApi implements Exception {
 }
 
 /// Cliente de la API. Agrega el token a cada peticion y, ante un 401, renueva el token una
-/// vez y reintenta: un token vencido no deberia sacar a nadie de la pantalla.
+/// vez y reintenta: un token vencido no deberia sacar a nadie de la pantalla. Si el token
+/// nuevo tampoco sirve, la sesion no se puede recuperar y la app vuelve al acceso (D-46).
 class ClienteApi {
   ClienteApi({
     required this.base,
     required this.token,
     required this.renovar,
+    required this.alRechazarSesion,
     http.Client? cliente,
     this.plazo = const Duration(seconds: 15),
   }) : _cliente = cliente ?? http.Client();
@@ -35,6 +37,7 @@ class ClienteApi {
   final Uri base;
   final String? Function() token;
   final Future<bool> Function() renovar;
+  final void Function() alRechazarSesion;
   final Duration plazo;
   final http.Client _cliente;
 
@@ -61,6 +64,7 @@ class ClienteApi {
     // repite ninguna operacion.
     if (respuesta.statusCode == 401 && await renovar()) {
       respuesta = await _enviarUnaVez(metodo, ruta, cuerpo, consulta);
+      if (respuesta.statusCode == 401) alRechazarSesion();
     }
     return _interpretar(respuesta);
   }

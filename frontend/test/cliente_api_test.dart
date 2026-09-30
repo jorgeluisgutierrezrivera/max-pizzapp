@@ -16,6 +16,7 @@ void main() {
     late http.Request vista;
     final api = ClienteApi(
       base: base,
+      alRechazarSesion: () {},
       token: () => 'token-1',
       renovar: () async => true,
       cliente: MockClient((p) async {
@@ -32,6 +33,7 @@ void main() {
     late http.Request vista;
     final api = ClienteApi(
       base: base,
+      alRechazarSesion: () {},
       token: () => 't',
       renovar: () async => true,
       cliente: MockClient((p) async {
@@ -48,6 +50,7 @@ void main() {
     final vistas = <http.Request>[];
     final api = ClienteApi(
       base: base,
+      alRechazarSesion: () {},
       token: () => 'token-1',
       renovar: () async => true,
       cliente: MockClient((p) async {
@@ -68,6 +71,7 @@ void main() {
     final cuerpos = <String>[];
     final api = ClienteApi(
       base: base,
+      alRechazarSesion: () {},
       token: () => token,
       renovar: () async {
         token = 'nuevo';
@@ -87,6 +91,7 @@ void main() {
   test('los datos extra de un error llegan en el ErrorApi: el total correcto, el producto agotado', () async {
     final api = ClienteApi(
       base: base,
+      alRechazarSesion: () {},
       token: () => 't',
       renovar: () async => true,
       cliente: MockClient((_) async => json(409, {
@@ -108,6 +113,7 @@ void main() {
   test('el formato unico de error se convierte en ErrorApi con el mensaje del servidor', () async {
     final api = ClienteApi(
       base: base,
+      alRechazarSesion: () {},
       token: () => 't',
       renovar: () async => true,
       cliente: MockClient((_) async => json(403, {
@@ -128,6 +134,7 @@ void main() {
     final vistos = <String?>[];
     final api = ClienteApi(
       base: base,
+      alRechazarSesion: () {},
       token: () => token,
       renovar: () async {
         token = 'nuevo';
@@ -144,10 +151,68 @@ void main() {
     expect(vistos, ['Bearer vencido', 'Bearer nuevo']);
   });
 
+  test('si el token renovado tambien recibe 401, la sesion termina (D-46)', () async {
+    var token = 'vencido';
+    var rechazos = 0;
+    final vistos = <String?>[];
+    final api = ClienteApi(
+      base: base,
+      token: () => token,
+      renovar: () async {
+        token = 'nuevo';
+        return true;
+      },
+      alRechazarSesion: () => rechazos++,
+      cliente: MockClient((p) async {
+        vistos.add(p.headers['Authorization']);
+        return json(401, {'error': {'codigo': 'TOKEN_INVALIDO', 'mensaje': 'No se pudo verificar tu sesion.'}});
+      }),
+    );
+    await expectLater(api.obtener('/pedidos'),
+        throwsA(isA<ErrorApi>().having((e) => e.estado, 'estado', 401)));
+    expect(vistos, ['Bearer vencido', 'Bearer nuevo'], reason: 'un solo reintento');
+    expect(rechazos, 1);
+  });
+
+  test('si el reintento con el token renovado pasa, la sesion sigue', () async {
+    var token = 'vencido';
+    var rechazos = 0;
+    final api = ClienteApi(
+      base: base,
+      token: () => token,
+      renovar: () async {
+        token = 'nuevo';
+        return true;
+      },
+      alRechazarSesion: () => rechazos++,
+      cliente: MockClient((p) async => p.headers['Authorization'] == 'Bearer nuevo'
+          ? json(200, {'ok': true})
+          : json(401, {'error': {'codigo': 'TOKEN_EXPIRADO', 'mensaje': 'Tu sesion expiro.'}})),
+    );
+    expect(await api.obtener('/sesion'), {'ok': true});
+    expect(rechazos, 0);
+  });
+
+  test('un 403 no termina la sesion: el token es valido, el rol no alcanza', () async {
+    var rechazos = 0;
+    final api = ClienteApi(
+      base: base,
+      token: () => 't',
+      renovar: () async => true,
+      alRechazarSesion: () => rechazos++,
+      cliente: MockClient((_) async => json(403, {
+            'error': {'codigo': 'ROL_SIN_PERMISO', 'mensaje': 'Tu rol no permite esta operacion.'}
+          })),
+    );
+    await expectLater(api.enviar('/pedidos', {}), throwsA(isA<ErrorApi>()));
+    expect(rechazos, 0);
+  });
+
   test('si la renovacion falla no reintenta, y el 401 llega como error', () async {
     var llamadas = 0;
     final api = ClienteApi(
       base: base,
+      alRechazarSesion: () {},
       token: () => 't',
       renovar: () async => false,
       cliente: MockClient((_) async {
@@ -163,6 +228,7 @@ void main() {
   test('sin red: un mensaje para la persona, no una excepcion tecnica', () async {
     final api = ClienteApi(
       base: base,
+      alRechazarSesion: () {},
       token: () => 't',
       renovar: () async => true,
       cliente: MockClient((_) async => throw http.ClientException('fallo de red')),
@@ -174,6 +240,7 @@ void main() {
   test('una respuesta que no es el JSON esperado no rompe la app', () async {
     final api = ClienteApi(
       base: base,
+      alRechazarSesion: () {},
       token: () => 't',
       renovar: () async => true,
       cliente: MockClient((_) async => http.Response('<html>502 Bad Gateway</html>', 502)),

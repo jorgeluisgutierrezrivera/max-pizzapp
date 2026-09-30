@@ -163,6 +163,10 @@ class ServicioSesion extends ChangeNotifier {
     _cambiar(EstadoSesion.conSesion);
   }
 
+  /// El servidor rechazo la sesion aunque el token se acababa de renovar, en la API o en el
+  /// canal en vivo (D-46). No se puede recuperar: vuelve al acceso.
+  void terminarSesionRechazada() => _quedarSinSesion('Tu sesión expiró. Inicia sesión de nuevo.');
+
   /// Cierra la sesion en Keycloak, no solo en la app: si no, al volver a entrar Keycloak
   /// reconoceria su sesion y dejaria pasar con la misma cuenta sin pedir nada (RF-08).
   void cerrarSesion() {

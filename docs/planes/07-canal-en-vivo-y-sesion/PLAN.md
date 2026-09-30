@@ -167,17 +167,18 @@ Cada fase se prueba y se sube por separado.
 - [x] `pruebas/tiempo-real/medir-caida.js`, contra la API local: 10 repeticiones bajo 10 s.
 
 ### Fase B — La app: la sesión y la reconexión
-- [ ] El canal distingue por qué se cortó:
+- [x] El canal distingue por qué se cortó:
   - si el corte fue del servidor, reconecta en el acto con el token vigente;
   - si rechazó el token, pide renovarlo una vez y reconecta;
   - si lo vuelve a rechazar, o si la cuenta no tiene rol, avisa que la sesión terminó.
-- [ ] El cliente de la API: un 401 que persiste después de renovar cierra la sesión.
-- [ ] La sesión, cerrada por cualquiera de los dos, vuelve al acceso con "Tu sesión expiró.
+- [x] El cliente de la API: un 401 que persiste después de renovar cierra la sesión.
+- [x] La sesión, cerrada por cualquiera de los dos, vuelve al acceso con "Tu sesión expiró.
       Inicia sesión de nuevo."
-- [ ] Pruebas de la lógica del canal con un socket simulado, del cliente de la API y de la
+- [x] Pruebas de la lógica del canal con un socket simulado, del cliente de la API y de la
       sesión.
-- [ ] En local, con la vigencia del token bajada a **2 minutos solo en el Keycloak de
-      desarrollo**: el canal se corta a los 2 minutos y la app se reconecta sola, sin banda.
+- [x] En local, con la vigencia del token bajada a **2 minutos solo en el Keycloak de
+      desarrollo**: el canal se corta a los 2 minutos y la app se reconecta sola. *(Con el
+      cliente real fuera del navegador; la banda llega en la fase C.)*
 
 ### Fase C — La app: el aviso de canal caído
 - [ ] La banda con *Recargar* (D-45), en las dos pestañas de recepción y en cocina.
@@ -288,7 +289,7 @@ No cambia la base de datos, el contrato HTTP de la API ni el realm de producció
 | Fase | Estado | Fecha | Evidencia de la prueba |
 |---|---|---|---|
 | A — El servidor | ✅ Verificada | 2026-09-29 | **Antes, en producción** (`medir_caida.py` en modo `saludo` contra `https://maxpizzapp.tech`): *"latido cada 25000 ms, espera 20000 ms: una red colgada se nota en 45000 ms como maximo"*. **El cambio:** el canal anuncia `pingInterval` 4000 y `pingTimeout` 3000; `usuarioDelToken` devuelve cuándo vence el token (`venceEn`), que la ruta `/sesion` no expone; y cada conexión programa su corte para esa hora, con `socket.disconnect(true)`, y lo cancela si se cierra antes. **`npm test`: 273 de 273** (269 anteriores y **4 nuevas**): el saludo trae 4000 y 3000; con un token de 2 s la conexión se corta a los 1,85 s por `io server disconnect`, es decir, la corta el servidor; con un token de 60 minutos sigue abierta pasados 2,5 s; y con un reloj simulado, el corte queda programado entre 59 y 60 minutos y se cancela al cerrarse la conexión. **Contra la API local en Docker, con el token real de cocina** (`medir_caida.py`, 10 cortes con el tapón TCP, cada uno en un momento al azar del ciclo del latido): **mínimo 3,04 s, mediana 6,13 s, máximo 6,89 s**. Los 10 se detectaron por el latido (`ping timeout`) y todos bajo 10 s, dentro de los 3 a 7 s que da la teoría. El modo `saludo` en local dice 7000 ms. **Sin regresiones, contra la API local:** `probar_pedidos.py` **76 de 76**; el aviso en vivo, mediana 19 ms a cocina, 15 ms a recepción y 17 ms de lo agregado; 0 reinicios. **Lo que salió:** (1) **esta fase no puede llegar sola a producción.** El servidor ahora corta cada conexión al vencer su token, y la app publicada no se reconecta después de un corte del servidor (es lo que arregla la fase B): a los 60 minutos, las pantallas quedarían en "Conectando…". El servidor se actualiza en la fase D, con la app de las fases B y C ya publicada. (2) Docker Desktop no arrancaba: otra vez E-010, ahora en `docker-secrets-engine`. Se resolvió renombrando las dos carpetas, como dice el registro |
-| B — La sesión y la reconexión | ⬜ Pendiente | | |
+| B — La sesión y la reconexión | ✅ Verificada | 2026-09-30 | **El canal** (`lib/api/canal_en_vivo.dart`) deja el socket detrás de una interfaz mínima (`SocketDelCanal`), para poder simular cortes y rechazos, y decide por el motivo: un corte del servidor (`io server disconnect`) reconecta en el acto con el token vigente; un rechazo por el token (`TOKEN_AUSENTE`, `TOKEN_EXPIRADO`, `TOKEN_INVALIDO`) lo renueva **una vez** y reconecta; un segundo rechazo, o uno por otro motivo (`ROL_SIN_PERMISO`), termina la sesión; y una caída de la red o del servidor queda en manos de la reconexión del propio cliente. **El cliente de la API:** si el reintento con el token renovado vuelve a dar 401, termina la sesión; un 403 no, porque el token es válido y lo que no alcanza es el rol. **La sesión** suma `terminarSesionRechazada()`: vuelve al acceso con *"Tu sesión expiró. Inicia sesión de nuevo."* y olvida los tokens, también el de renovación. **`flutter test`: 214 de 214** (195 anteriores y **19 nuevas**): 15 del canal con el socket simulado (el corte del servidor reconecta sin renovar; tres motivos de caída de la red no tocan nada; los tres rechazos del token renuevan una vez y reconectan con el token nuevo; el segundo rechazo termina la sesión; después de volver a entrar, un rechazo futuro tiene otra vez su renovación; sin rol termina sin renovar; si la renovación falla no reconecta; un error sin código no hace nada; si la pantalla cerró el canal mientras renovaba, no se reabre; y los avisos siguen llegando), 3 del cliente de la API (el 401 que persiste termina la sesión con un solo reintento; el reintento que pasa no; un 403 no) y 1 de la sesión. `flutter analyze` sin observaciones. **Con el cliente real, contra la API y el Keycloak locales** (verificación fuera del repositorio, con la vigencia del token bajada a 120 s solo en el Keycloak de desarrollo y devuelta después a 3600): un token inválido es rechazado por el servidor, el canal lo renueva una vez y entra; un rechazo que se repite termina la sesión; y **el servidor cortó la conexión a la hora exacta en que vencía el token (5 ms antes) y el canal volvió a entrar 15 ms después**, con el token que ya tenía renovado, sin renovar ni terminar la sesión, y el pedido nuevo que se vendió enseguida le llegó por el canal. **Lo que salió:** el payload del rechazo que llega al cliente de Flutter es `{message, data: {codigo}}`, el mismo que arma el servidor, así que el código se lee sin adivinar el texto. Docker Desktop estaba cerrado tras reiniciar la máquina, sin error; solo hizo falta abrirlo |
 | C — El aviso de canal caído | ⬜ Pendiente | | |
 | D — En producción | ⬜ Pendiente | | |
 | E — La prueba del autor | ⬜ Pendiente | | |

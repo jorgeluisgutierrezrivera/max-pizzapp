@@ -34,9 +34,15 @@ void main() {
     base: configuracion.origen.replace(path: Configuracion.rutaApi),
     token: () => sesion.tokenAcceso,
     renovar: sesion.renovar,
+    alRechazarSesion: sesion.terminarSesionRechazada,
   );
   final timbre = TimbreWeb();
-  CanalEnVivo crearCanal() => CanalSocketIo(origen: configuracion.origen, token: () => sesion.tokenAcceso);
+  CanalEnVivo crearCanal() => CanalSocketIo(
+        origen: configuracion.origen,
+        token: () => sesion.tokenAcceso,
+        renovar: sesion.renovar,
+        alRechazarSesion: sesion.terminarSesionRechazada,
+      );
   runApp(
     _App(
       inicio: _SegunSesion(sesion: sesion, api: api, crearCanal: crearCanal, timbre: timbre),
