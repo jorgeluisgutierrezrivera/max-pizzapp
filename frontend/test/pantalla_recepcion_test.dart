@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:maxpizzapp/api/canal_en_vivo.dart';
 import 'package:maxpizzapp/api/cliente_api.dart';
 import 'package:maxpizzapp/api/usuario.dart';
 import 'package:maxpizzapp/carta/producto.dart';
@@ -12,6 +13,25 @@ import 'package:maxpizzapp/pantallas/venta/comunes.dart';
 import 'package:maxpizzapp/pantallas/venta/formulario_de_venta.dart';
 import 'package:maxpizzapp/pantallas/venta/pedido_enviado.dart';
 import 'package:maxpizzapp/tema.dart';
+
+/// Un canal que ya está conectado y no avisa nada: la venta se prueba en el caso normal, sin
+/// la banda de canal caído, que tiene sus propias pruebas.
+class CanalConectado implements CanalEnVivo {
+  @override
+  Stream<Map<String, dynamic>> get pedidosNuevos => const Stream.empty();
+  @override
+  Stream<Map<String, dynamic>> get cambiosDeEstado => const Stream.empty();
+  @override
+  Stream<Map<String, dynamic>> get pedidosActualizados => const Stream.empty();
+  @override
+  Stream<bool> get conexion => const Stream.empty();
+  @override
+  bool get conectado => true;
+  @override
+  void conectar() {}
+  @override
+  void cerrar() {}
+}
 
 var _id = 0;
 Producto producto(String nombre, String categoria, num precio, {bool disponible = true, String? descripcion}) =>
@@ -67,6 +87,7 @@ Widget app(Future<Carta> Function() cargar, {Enviar? enviar}) => MaterialApp(
     cargarCarta: cargar,
     imagen: (ruta, respaldo, ajuste) => respaldo,
     enviarPedido: enviar,
+    crearCanal: CanalConectado.new,
   ),
 );
 

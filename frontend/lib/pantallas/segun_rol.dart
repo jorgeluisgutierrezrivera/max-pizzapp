@@ -9,6 +9,7 @@ import 'pantalla_cargando.dart';
 import 'pantalla_cocina.dart';
 import 'pantalla_error.dart';
 import 'pantalla_recepcion.dart';
+import 'red.dart';
 import 'timbre.dart';
 
 Future<List<Pedido>> _colaVacia() async => const [];
@@ -36,6 +37,7 @@ class PantallaSegunRol extends StatefulWidget {
     this.agregarAlPedido = _sinApi,
     this.crearCanal = _sinCanal,
     this.timbre,
+    this.red = const RedSiempreEnLinea(),
     this.llamar = _sinTelefono,
   });
 
@@ -54,6 +56,7 @@ class PantallaSegunRol extends StatefulWidget {
   final Future<Pedido> Function(Pedido pedido, Map<String, dynamic> cuerpo) agregarAlPedido;
   final CanalEnVivo Function() crearCanal;
   final Timbre? timbre;
+  final Red red;
   final void Function(String numero) llamar;
 
   @override
@@ -104,6 +107,7 @@ class _PantallaSegunRolState extends State<PantallaSegunRol> {
             agregarAlPedido: widget.agregarAlPedido,
             crearCanal: widget.crearCanal,
             timbre: widget.timbre,
+            red: widget.red,
             llamar: widget.llamar,
           ),
           Rol.cocina => PantallaCocina(
@@ -113,6 +117,7 @@ class _PantallaSegunRolState extends State<PantallaSegunRol> {
             cambiarEstado: widget.cambiarEstado,
             crearCanal: widget.crearCanal,
             timbre: widget.timbre ?? TimbreMudo(),
+            red: widget.red,
           ),
           null => PantallaError(
             mensaje:

@@ -11,9 +11,11 @@ import '../carta/venta.dart';
 import '../pedidos/pedido.dart';
 import '../pedidos/pedidos_en_vivo.dart';
 import '../tema.dart';
+import 'aviso_sin_conexion.dart';
 import 'boton_de_sonido.dart';
 import 'esqueleto_rol.dart';
 import 'pedidos_de_recepcion.dart';
+import 'red.dart';
 import 'timbre.dart';
 import 'venta/comunes.dart';
 import 'venta/formulario_de_venta.dart';
@@ -47,6 +49,11 @@ void ponerTituloDeLaPestana(int listos) {
 ///
 /// Las dos quedan vivas al cambiar de pestaña: una venta a medio armar no se pierde por ir a
 /// entregar un pedido.
+///
+/// Si el canal en vivo se cae, una banda sobre las dos pestañas lo dice y ofrece *Recargar*
+/// (D-45): también en *Nueva venta*, porque sin canal no llega el aviso de pedido listo.
+/// *Recargar* vuelve a leer los pedidos, no la carta: recargar la carta reiniciaría la venta
+/// que se está armando.
 class PantallaRecepcion extends StatefulWidget {
   const PantallaRecepcion({
     super.key,
@@ -61,6 +68,7 @@ class PantallaRecepcion extends StatefulWidget {
     this.agregarAlPedido = _sinApi,
     this.crearCanal = _sinCanal,
     this.timbre,
+    this.red = const RedSiempreEnLinea(),
     this.llamar = _sinTelefono,
     this.ponerTitulo = ponerTituloDeLaPestana,
     this.reloj = DateTime.now,
@@ -88,6 +96,7 @@ class PantallaRecepcion extends StatefulWidget {
   final Future<Pedido> Function(Pedido pedido, Map<String, dynamic> cuerpo) agregarAlPedido;
   final CanalEnVivo Function() crearCanal;
   final Timbre? timbre;
+  final Red red;
 
   /// Abre el marcador del teléfono con ese número.
   final void Function(String numero) llamar;
@@ -108,6 +117,7 @@ class _PantallaRecepcionState extends State<PantallaRecepcion> with SingleTicker
 
   late final TabController _pestanas = TabController(length: 2, vsync: this);
   late final PedidosEnVivo _pedidos = PedidosEnVivo(cargar: widget.cargarPedidos, canal: widget.crearCanal());
+  late final VigiaDelCanal _vigia;
   late final Timbre _timbre = widget.timbre ?? TimbreMudo();
   StreamSubscription<Pedido>? _listos;
   int _listosEnElTitulo = 0;
@@ -119,12 +129,15 @@ class _PantallaRecepcionState extends State<PantallaRecepcion> with SingleTicker
     _pestanas.addListener(() => setState(() {}));
     _listos = _pedidos.quedaronListos.listen(_alQuedarListo);
     _pedidos.addListener(_alCambiarPedidos);
+    // Antes de iniciar, que es cuando se conecta el canal: así no se pierde el primer "conectado".
+    _vigia = VigiaDelCanal(conexion: _pedidos.canal.conexion, conectado: _pedidos.canal.conectado, red: widget.red);
     _pedidos.iniciar();
   }
 
   @override
   void dispose() {
     _listos?.cancel();
+    _vigia.dispose();
     _pedidos.removeListener(_alCambiarPedidos);
     _pedidos.dispose();
     _pestanas.dispose();
@@ -294,20 +307,32 @@ class _PantallaRecepcionState extends State<PantallaRecepcion> with SingleTicker
           ),
         ],
       ),
-      // Las dos pestañas quedan vivas: la venta a medio armar no se pierde al ir a entregar.
-      cuerpo: IndexedStack(
-        index: _pestanas.index,
+      cuerpo: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _venta(),
-          PedidosDeRecepcion(
-            pedidos: _pedidos,
-            cambiarEstado: widget.cambiarEstado,
-            cancelar: widget.cancelarPedido,
-            agregar: widget.agregarAlPedido,
-            llamar: widget.llamar,
-            carta: _cartaCargada,
-            imagen: widget.imagen,
-            reloj: widget.reloj,
+          ListenableBuilder(
+            listenable: _vigia,
+            builder: (context, _) =>
+                _vigia.mostrar ? AvisoSinConexion(alRecargar: _pedidos.leer) : const SizedBox.shrink(),
+          ),
+          // Las dos pestañas quedan vivas: la venta a medio armar no se pierde al ir a entregar.
+          Expanded(
+            child: IndexedStack(
+              index: _pestanas.index,
+              children: [
+                _venta(),
+                PedidosDeRecepcion(
+                  pedidos: _pedidos,
+                  cambiarEstado: widget.cambiarEstado,
+                  cancelar: widget.cancelarPedido,
+                  agregar: widget.agregarAlPedido,
+                  llamar: widget.llamar,
+                  carta: _cartaCargada,
+                  imagen: widget.imagen,
+                  reloj: widget.reloj,
+                ),
+              ],
+            ),
           ),
         ],
       ),

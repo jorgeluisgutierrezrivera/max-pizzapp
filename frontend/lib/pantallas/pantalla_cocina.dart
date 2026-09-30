@@ -7,8 +7,10 @@ import '../api/cliente_api.dart';
 import '../api/usuario.dart';
 import '../pedidos/pedido.dart';
 import '../tema.dart';
+import 'aviso_sin_conexion.dart';
 import 'boton_de_sonido.dart';
 import 'esqueleto_rol.dart';
+import 'red.dart';
 import 'timbre.dart';
 
 /// La cola de cocina (RF-06, RF-07): los pedidos por preparar, en orden de llegada, que
@@ -18,7 +20,8 @@ import 'timbre.dart';
 /// Cuando un pedido queda listo, sale de la cola: lo entrega recepción.
 ///
 /// La lista la da la API; el canal en vivo solo avisa. Si la conexión se corta y vuelve, la
-/// lista se vuelve a leer: mientras estuvo cortada pudo perderse algún aviso.
+/// lista se vuelve a leer: mientras estuvo cortada pudo perderse algún aviso. Mientras está
+/// cortada, una banda lo dice y ofrece *Recargar* (D-45).
 ///
 /// Cada pedido se canta con su número del día (D-35). Lo que recepción agrega a un pedido
 /// en cocina aparece marcado y suena (D-37); y al avanzar un pedido se manda la versión que
@@ -32,6 +35,7 @@ class PantallaCocina extends StatefulWidget {
     required this.cambiarEstado,
     required this.crearCanal,
     required this.timbre,
+    this.red = const RedSiempreEnLinea(),
     this.reloj = DateTime.now,
   });
 
@@ -46,6 +50,7 @@ class PantallaCocina extends StatefulWidget {
   final Future<Pedido> Function(Pedido pedido, EstadoPedido hacia) cambiarEstado;
   final CanalEnVivo Function() crearCanal;
   final Timbre timbre;
+  final Red red;
   final DateTime Function() reloj;
 
   @override
@@ -54,6 +59,7 @@ class PantallaCocina extends StatefulWidget {
 
 class _PantallaCocinaState extends State<PantallaCocina> {
   late final CanalEnVivo _canal = widget.crearCanal();
+  late final VigiaDelCanal _vigia;
   final List<StreamSubscription<dynamic>> _suscripciones = [];
   Timer? _minutero;
   final List<Timer> _marcas = [];
@@ -82,6 +88,8 @@ class _PantallaCocinaState extends State<PantallaCocina> {
       ..add(_canal.cambiosDeEstado.listen(_alCambiarEstado))
       ..add(_canal.pedidosActualizados.listen(_alActualizarPedido))
       ..add(_canal.conexion.listen(_alCambiarConexion));
+    // Antes de conectar: así no se pierde el primer "conectado".
+    _vigia = VigiaDelCanal(conexion: _canal.conexion, conectado: _canal.conectado, red: widget.red);
     _canal.conectar();
     _cargar();
     // Cada 30 s se redibuja "hace N min".
@@ -99,6 +107,7 @@ class _PantallaCocinaState extends State<PantallaCocina> {
     for (final s in _suscripciones) {
       s.cancel();
     }
+    _vigia.dispose();
     _canal.cerrar();
     super.dispose();
   }
@@ -229,7 +238,16 @@ class _PantallaCocinaState extends State<PantallaCocina> {
       usuario: widget.usuario,
       alCerrarSesion: widget.alCerrarSesion,
       acciones: [BotonDeSonido(timbre: widget.timbre)],
-      cuerpo: _cuerpo(context),
+      cuerpo: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ListenableBuilder(
+            listenable: _vigia,
+            builder: (context, _) => _vigia.mostrar ? AvisoSinConexion(alRecargar: _cargar) : const SizedBox.shrink(),
+          ),
+          Expanded(child: _cuerpo(context)),
+        ],
+      ),
     );
   }
 

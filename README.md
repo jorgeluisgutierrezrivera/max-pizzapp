@@ -21,6 +21,9 @@ Un flujo acotado y **desplegable**, priorizando profundidad sobre cantidad de m�
 - **Recepción** crea el pedido a partir de la carta y lo envía a cocina.
 - **Cocina** (tablet/PC) ve los pedidos entrantes en vivo y cambia su estado.
 - Cuando el pedido está **listo**, recepción recibe el aviso y lo entrega.
+- Si el canal en vivo se cae, las dos pantallas lo dicen con una banda en menos de 10 s y
+  ofrecen **Recargar**, que vuelve a leer el estado desde la API. Mientras tanto se sigue
+  trabajando: las acciones van por la API, no por el canal.
 
 ## Roles
 
@@ -107,7 +110,7 @@ Keycloak y la API reales. Antes de la primera vez: `cd backend && npm ci` y
 
 ```bash
 cd backend && npm test            # 273 pruebas: acceso, carta, precio, pedidos, lo agregado, canal en vivo (con su latido y el corte al vencer el token) y el contrato OpenAPI, sin base ni Keycloak reales
-cd frontend && flutter test       # 214 pruebas de la app: la venta, los pedidos, la cocina, el acceso, la sesión y el canal en vivo (cortes y rechazos) y el contraste de colores
+cd frontend && flutter test       # 236 pruebas de la app: la venta, los pedidos, la cocina, el acceso, la sesión, el canal en vivo (cortes, rechazos y el aviso de canal caído) y el contraste de colores
 python pruebas/identidad/probar_acceso_pkce.py   # inicio de sesión real con PKCE
 python pruebas/api/probar_salud_y_token.py       # la API con tokens reales del realm
 python pruebas/api/probar_carta.py               # la carta con token real y la base real

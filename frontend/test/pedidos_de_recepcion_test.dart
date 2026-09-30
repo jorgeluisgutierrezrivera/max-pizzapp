@@ -304,6 +304,43 @@ void main() {
     });
   });
 
+  group('el canal caído (CA-03.2, D-45)', () {
+    final banda = find.byKey(const Key('aviso-sin-conexion'));
+
+    testWidgets('la banda está sobre las dos pestañas: también en Nueva venta, donde no llegaría el aviso de listo', (
+      t,
+    ) async {
+      await abrir(t, [jsonPedido(1)], irAPedidos: false);
+      await t.pump(const Duration(seconds: 5));
+      expect(banda, findsOneWidget);
+      await t.tap(find.byKey(const Key('pestana-pedidos')));
+      await t.pumpAndSettle();
+      expect(banda, findsOneWidget);
+    });
+
+    testWidgets('Recargar vuelve a leer los pedidos y no toca la venta que se estaba armando', (t) async {
+      final e = await abrir(t, [jsonPedido(1)], irAPedidos: false);
+      await t.enterText(find.byKey(const Key('cliente-nombre')), 'Ana Prueba');
+      await t.pump(const Duration(seconds: 5));
+      e.pedidos = [jsonPedido(1), jsonPedido(2, estado: 'listo')];
+      final lecturas = e.lecturas;
+      await t.tap(find.byKey(const Key('boton-recargar')));
+      await t.pumpAndSettle();
+      expect(e.lecturas, lecturas + 1);
+      expect(t.widget<TextField>(find.byKey(const Key('cliente-nombre'))).controller!.text, 'Ana Prueba');
+      expect(find.byKey(const Key('contador-listos')), findsOneWidget);
+    });
+
+    testWidgets('cuando el canal vuelve, la banda se va sola', (t) async {
+      final e = await abrir(t, [jsonPedido(1)]);
+      await t.pump(const Duration(seconds: 5));
+      expect(banda, findsOneWidget);
+      e.canal.estados.add(true);
+      await t.pumpAndSettle();
+      expect(banda, findsNothing);
+    });
+  });
+
   group('lo que muestra cada pedido', () {
     testWidgets('número del día, cliente, para llevar, celular, líneas, lo agregado con su hora, total y estado', (
       t,

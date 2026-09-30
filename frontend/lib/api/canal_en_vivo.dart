@@ -43,6 +43,14 @@ SocketDelCanal abrirSocketIo(Uri origen, String? Function() token) => _SocketIo(
           // sondeo por HTTP que Socket.IO usa de respaldo.
           .setTransports(['websocket'])
           .setAuthFn((entregar) => entregar({'token': token()}))
+          // Entre intentos de reconexión se esperan hasta 3 s (de fábrica, 5).
+          //
+          // El tiempo de cada intento se deja en el de fábrica (20 s) a propósito. En la web,
+          // este cliente abandona el intento que vence sin cerrar el WebSocket que el
+          // navegador está abriendo, y Chrome admite uno solo abriéndose por servidor: los
+          // siguientes esperan en fila detrás del colgado. Con 5 s, la vuelta tras una red
+          // colgada pasó de 10-15 s a 28-31 s en Chrome, aunque fuera del navegador mejoraba.
+          .setReconnectionDelayMax(3000)
           .enableReconnection()
           .enableForceNew()
           .disableAutoConnect()

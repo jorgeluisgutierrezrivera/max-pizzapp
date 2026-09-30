@@ -8,6 +8,7 @@ import 'package:maxpizzapp/api/canal_en_vivo.dart';
 import 'package:maxpizzapp/api/cliente_api.dart';
 import 'package:maxpizzapp/api/usuario.dart';
 import 'package:maxpizzapp/pantallas/pantalla_cocina.dart';
+import 'package:maxpizzapp/pantallas/red.dart';
 import 'package:maxpizzapp/pantallas/timbre.dart';
 import 'package:maxpizzapp/pedidos/pedido.dart';
 import 'package:maxpizzapp/tema.dart';
@@ -46,6 +47,19 @@ class TimbreDePrueba implements Timbre {
   Future<void> habilitar() async => activo.value = true;
   @override
   void sonar() => sonidos++;
+}
+
+class RedDePrueba implements Red {
+  final _cambios = StreamController<bool>.broadcast();
+  bool _enLinea = true;
+  @override
+  bool get enLinea => _enLinea;
+  @override
+  Stream<bool> get cambios => _cambios.stream;
+  void cambiar(bool enLinea) {
+    _enLinea = enLinea;
+    _cambios.add(enLinea);
+  }
 }
 
 final ahora = DateTime.utc(2026, 9, 24, 20, 30);
@@ -110,6 +124,7 @@ final usuario = Usuario.desdeJson({
 class Escena {
   final canal = CanalDePrueba();
   final timbre = TimbreDePrueba();
+  final red = RedDePrueba();
   final cambios = <(int, EstadoPedido)>[];
   final versiones = <int>[];
   var lecturas = 0;
@@ -135,6 +150,7 @@ class Escena {
       },
       crearCanal: () => canal,
       timbre: timbre,
+      red: red,
       reloj: () => ahora,
     ),
   );
@@ -352,6 +368,71 @@ void main() {
       expect(find.text('En vivo'), findsOneWidget);
       expect(e.lecturas, lecturas + 1);
       expect(find.byKey(const Key('pedido-4')), findsOneWidget);
+    });
+  });
+
+  group('el canal caído (CA-03.2, D-45)', () {
+    final banda = find.byKey(const Key('aviso-sin-conexion'));
+
+    testWidgets('si el canal no entra en 5 s, la banda lo dice; al entrar, se va y la cola se relee', (t) async {
+      final e = await abrir(t, [json(1)]);
+      expect(banda, findsNothing);
+      await t.pump(const Duration(seconds: 5));
+      expect(banda, findsOneWidget);
+      final lecturas = e.lecturas;
+      e.canal.estados.add(true);
+      await t.pumpAndSettle();
+      expect(banda, findsNothing);
+      expect(e.lecturas, lecturas + 1);
+    });
+
+    testWidgets('un corte en vivo: la banda al segundo, y Recargar trae la cola sin recargar la página', (t) async {
+      final e = await abrir(t, [json(1)]);
+      e.canal.estados.add(true);
+      await t.pumpAndSettle();
+      e.canal.estados.add(false);
+      await t.pump(const Duration(milliseconds: 900));
+      expect(banda, findsNothing);
+      await t.pump(const Duration(milliseconds: 200));
+      expect(banda, findsOneWidget);
+      expect(find.text('Conectando…'), findsOneWidget);
+
+      e.cola = [json(1), json(5)];
+      final lecturas = e.lecturas;
+      await t.tap(find.byKey(const Key('boton-recargar')));
+      await t.pumpAndSettle();
+      expect(e.lecturas, lecturas + 1);
+      expect(find.byKey(const Key('pedido-5')), findsOneWidget);
+      expect(banda, findsOneWidget, reason: 'el canal sigue caído: la vista puede volver a quedar vieja');
+    });
+
+    testWidgets('con el canal caído se sigue trabajando: Empezar va por la API', (t) async {
+      final e = await abrir(t, [json(1)]);
+      await t.pump(const Duration(seconds: 5));
+      expect(banda, findsOneWidget);
+      await t.tap(enTarjeta(1, find.text('Empezar')));
+      await t.pumpAndSettle();
+      expect(e.cambios, [(1, EstadoPedido.enPreparacion)]);
+    });
+
+    testWidgets('sin red del dispositivo, la banda aparece en el acto', (t) async {
+      final e = await abrir(t, [json(1)]);
+      e.canal.estados.add(true);
+      await t.pumpAndSettle();
+      e.red.cambiar(false);
+      await t.pumpAndSettle();
+      expect(banda, findsOneWidget);
+      e.red.cambiar(true);
+      await t.pumpAndSettle();
+      expect(banda, findsNothing);
+    });
+
+    testWidgets('en el celular, a 320 px, la banda no desborda nada', (t) async {
+      await abrir(t, [json(1)], ancho: 320, alto: 700);
+      await t.pump(const Duration(seconds: 5));
+      expect(banda, findsOneWidget);
+      expect(t.takeException(), isNull);
+      expect(t.getRect(find.byKey(const Key('boton-recargar'))).right, lessThanOrEqualTo(320));
     });
   });
 

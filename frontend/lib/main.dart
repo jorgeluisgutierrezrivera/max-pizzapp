@@ -10,6 +10,7 @@ import 'autenticacion/servicio_sesion.dart';
 import 'configuracion.dart';
 import 'pantallas/pantalla_acceso.dart';
 import 'pantallas/pantalla_cargando.dart';
+import 'pantallas/red_web.dart';
 import 'pantallas/segun_rol.dart';
 import 'pantallas/telefono_web.dart';
 import 'pantallas/timbre_web.dart';
@@ -37,6 +38,7 @@ void main() {
     alRechazarSesion: sesion.terminarSesionRechazada,
   );
   final timbre = TimbreWeb();
+  final red = RedWeb();
   CanalEnVivo crearCanal() => CanalSocketIo(
         origen: configuracion.origen,
         token: () => sesion.tokenAcceso,
@@ -45,7 +47,7 @@ void main() {
       );
   runApp(
     _App(
-      inicio: _SegunSesion(sesion: sesion, api: api, crearCanal: crearCanal, timbre: timbre),
+      inicio: _SegunSesion(sesion: sesion, api: api, crearCanal: crearCanal, timbre: timbre, red: red),
     ),
   );
   sesion.arrancar();
@@ -70,12 +72,19 @@ class _App extends StatelessWidget {
 
 /// Muestra la pantalla que corresponde al estado de la sesion.
 class _SegunSesion extends StatelessWidget {
-  const _SegunSesion({required this.sesion, required this.api, required this.crearCanal, required this.timbre});
+  const _SegunSesion({
+    required this.sesion,
+    required this.api,
+    required this.crearCanal,
+    required this.timbre,
+    required this.red,
+  });
 
   final ServicioSesion sesion;
   final ClienteApi api;
   final CanalEnVivo Function() crearCanal;
   final TimbreWeb timbre;
+  final RedWeb red;
 
   @override
   Widget build(BuildContext context) {
@@ -120,6 +129,7 @@ class _SegunSesion extends StatelessWidget {
           llamar: llamarPorTelefono,
           crearCanal: crearCanal,
           timbre: timbre,
+          red: red,
           alCerrarSesion: sesion.cerrarSesion,
         ),
       },
