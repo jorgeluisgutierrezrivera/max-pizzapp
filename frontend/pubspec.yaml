@@ -20,6 +20,9 @@ dependencies:
   web: 1.1.1
   # El canal en vivo con la API: Socket.IO 4, el mismo protocolo que el servidor.
   socket_io_client: 3.1.6
+  # Solo en el APK de cocina (D-49): abre Keycloak en el navegador del sistema y trae el
+  # codigo con PKCE. La web sigue con su propia redireccion.
+  flutter_appauth: 12.1.0
 
 dev_dependencies:
   flutter_test:

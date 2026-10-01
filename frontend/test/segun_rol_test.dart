@@ -10,11 +10,12 @@ import 'package:maxpizzapp/pantallas/segun_rol.dart';
 Usuario usuarioCon(List<String> roles, {String nombre = 'Persona de prueba'}) =>
     Usuario.desdeJson({'sub': 'x', 'nombre': nombre, 'usuario': 'cuenta', 'roles': roles});
 
-Widget app(Future<Usuario> Function() cargar, {VoidCallback? alCerrar}) => MaterialApp(
+Widget app(Future<Usuario> Function() cargar, {VoidCallback? alCerrar, Uri? webDeRecepcion}) => MaterialApp(
   home: PantallaSegunRol(
     cargarUsuario: cargar,
     cargarCarta: () async => Carta(const []),
     alCerrarSesion: alCerrar ?? () {},
+    webDeRecepcion: webDeRecepcion,
   ),
 );
 
@@ -94,5 +95,37 @@ void main() {
     await t.pumpAndSettle();
     expect(find.byTooltip('Cerrar sesión'), findsOneWidget);
     expect(find.text('Cerrar sesión'), findsNothing);
+  });
+
+  group('en el APK de cocina (D-48)', () {
+    final web = Uri.parse('https://maxpizzapp.tech');
+
+    testWidgets('una cuenta de recepcion ve que la app es para cocina y puede salir', (t) async {
+      var cerro = false;
+      await t.pumpWidget(app(() async => usuarioCon(['recepcion']), alCerrar: () => cerro = true, webDeRecepcion: web));
+      await t.pumpAndSettle();
+      expect(find.text('Esta app es para cocina. Recepción trabaja en la web: maxpizzapp.tech'), findsOneWidget);
+      expect(find.text('Recepción'), findsNothing);
+      expect(find.text('Reintentar'), findsNothing, reason: 'reintentar no cambia nada');
+      await t.tap(find.text('Cerrar sesión'));
+      expect(cerro, isTrue);
+    });
+
+    testWidgets('cocina entra a su pantalla, igual que en la web', (t) async {
+      await t.pumpWidget(app(() async => usuarioCon(['cocina']), webDeRecepcion: web));
+      await t.pumpAndSettle();
+      expect(find.text('Cocina'), findsOneWidget);
+      expect(find.textContaining('Esta app es para cocina'), findsNothing);
+    });
+
+    testWidgets('el aviso cabe en un celular angosto', (t) async {
+      t.view.physicalSize = const Size(320, 640);
+      t.view.devicePixelRatio = 1;
+      addTearDown(t.view.reset);
+      await t.pumpWidget(app(() async => usuarioCon(['recepcion']), webDeRecepcion: web));
+      await t.pumpAndSettle();
+      expect(t.takeException(), isNull);
+      expect(find.textContaining('Esta app es para cocina'), findsOneWidget);
+    });
   });
 }

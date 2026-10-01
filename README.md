@@ -66,7 +66,7 @@ Versiones tomadas del entorno de desarrollo real. Las imágenes se fijan por ver
 |---|---|---|---|
 | Node.js | 24.15.0 (LTS) | Ejecuta la API REST (Express) y el canal en vivo (Socket.IO) | imagen `node:24-alpine` |
 | npm | 11.12.1 | Instala las librerías de la API | incluido en la imagen de Node |
-| Flutter | 3.44.8 (stable) | La app web de recepción y cocina | SDK local; se declara en `frontend/pubspec.yaml` |
+| Flutter | 3.44.8 (stable) | La app web de recepción y cocina, y el APK de cocina | SDK local; se declara en `frontend/pubspec.yaml` |
 | Dart | 3.12.2 | El lenguaje de la app | incluido en el SDK de Flutter |
 | PostgreSQL | 17.11 | La base de datos, única fuente de verdad | imagen `postgres:17-alpine` |
 | Keycloak | 26.7.4 | Identidad y roles (OIDC, con PKCE) | imagen `quay.io/keycloak/keycloak:26.7` |
@@ -99,6 +99,7 @@ Paquetes de la app Flutter, fijados sin rangos en `frontend/pubspec.yaml` y con
 | crypto | 3.0.7 | SHA-256 del desafío PKCE |
 | web | 1.1.1 | Acceso al navegador: redirección, dirección actual y `sessionStorage` |
 | socket_io_client | 3.1.6 | El canal en vivo en la app: pedidos nuevos, lo agregado y los cambios de estado |
+| flutter_appauth | 12.1.0 | Solo en el APK de cocina: abre Keycloak en el navegador del teléfono y trae el código con PKCE |
 | flutter_lints | 6.0.0 | Reglas de análisis estático (solo desarrollo) |
 
 
@@ -110,7 +111,7 @@ Keycloak y la API reales. Antes de la primera vez: `cd backend && npm ci` y
 
 ```bash
 cd backend && npm test            # 273 pruebas: acceso, carta, precio, pedidos, lo agregado, canal en vivo (con su latido y el corte al vencer el token) y el contrato OpenAPI, sin base ni Keycloak reales
-cd frontend && flutter test       # 242 pruebas de la app: la venta, los pedidos, la cocina, el acceso, la sesión, el canal en vivo (cortes, rechazos y el aviso de canal caído), el aviso de sonido apagado y el contraste de colores
+cd frontend && flutter test       # 265 pruebas de la app: la venta, los pedidos, la cocina, el acceso en la web y en el APK, la sesión, el canal en vivo (cortes, rechazos y el aviso de canal caído), el aviso de sonido apagado y el contraste de colores
 python pruebas/identidad/probar_acceso_pkce.py   # inicio de sesión real con PKCE
 python pruebas/api/probar_salud_y_token.py       # la API con tokens reales del realm
 python pruebas/api/probar_carta.py               # la carta con token real y la base real
@@ -138,7 +139,7 @@ curso y entregas incrementales). No se usan sprints.
 ```
 max-pizzapp/
 ├── backend/      API Node/Express + Socket.IO
-├── frontend/     App Flutter
+├── frontend/     App Flutter: la web (lib/main.dart) y el APK de cocina (lib/main_cocina.dart, android/)
 ├── docker/       Compose, Postgres (init SQL), Keycloak (realm), Caddy
 ├── pruebas/      Pruebas de extremo a extremo contra Keycloak y la API reales
 ├── scripts/      Publicar la app, preparar las fotos de la carta y dibujar las bebidas
@@ -295,6 +296,24 @@ La app queda en `http://localhost:8090`. Su servidor de desarrollo reenvía `/ap
 backend local (`frontend/web_dev_config.yaml`), así que para el navegador la app y la API
 comparten origen, igual que en producción. El puerto 8090 es fijo: Keycloak lo tiene
 declarado como origen permitido del cliente `frontend-web`.
+
+### El APK de cocina en desarrollo
+
+Es el mismo código, con su propia entrada (`lib/main_cocina.dart`): abre solo la pantalla
+de cocina. Como en el teléfono no hay página de la que deducir la dirección del servidor,
+llega al compilar con `ORIGEN`. Para probarlo en el emulador de Android contra el entorno
+local, primero se le abren los puertos de la API y de Keycloak, así el emulador los ve en su
+propio `localhost` y el emisor del token coincide con el que espera la API:
+
+```bash
+adb reverse tcp:3001 tcp:3001 && adb reverse tcp:8082 tcp:8082
+cd frontend
+flutter run -t lib/main_cocina.dart --dart-define=ORIGEN=http://localhost:3001 --dart-define=KEYCLOAK_URL=http://localhost:8082
+```
+
+El acceso se abre en el navegador del teléfono, no dentro de la app, y vuelve por
+`tech.maxpizzapp.cocina:/callback`, que el cliente `frontend-web` del realm tiene declarada.
+Solo la compilación de desarrollo acepta `http`.
 
 ## Despliegue en el servidor
 

@@ -5,7 +5,7 @@
 
 - **Tarjeta:** 12 — App Android para cocina
 - **Incremento:** tiempo real completo (E3)
-- **Estado:** 🟢 **Aprobado** — 2026-09-30, sin cambios
+- **Estado:** 🔵 **En curso** — aprobado el 2026-09-30, sin cambios
 - **Entrada al tablero:** 2026-09-28 (tutoría T3, D-43)
 - **Cierre:** —
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
@@ -147,18 +147,18 @@ pública o enlace al APK)"*.
 Cada fase se prueba y se sube por separado.
 
 ### Fase A — El acceso en Android
-- [ ] La plataforma Android en el proyecto (`flutter create --platforms=android`), con
+- [x] La plataforma Android en el proyecto (`flutter create --platforms=android`), con
       `applicationId` `tech.maxpizzapp.cocina` y el nombre *Max Pizzapp Cocina*.
-- [ ] `ServicioSesion` separado en dos partes: cómo se obtiene el código (web: la
+- [x] `ServicioSesion` separado en dos partes: cómo se obtiene el código (web: la
       redirección de hoy; Android: AppAuth) y qué se hace con los tokens (común). **La web se
       comporta igual.**
-- [ ] `lib/main_cocina.dart`, con la configuración desde `ORIGEN`.
-- [ ] El aviso para una cuenta de recepción.
-- [ ] El realm del repositorio con la dirección de retorno del APK; aplicada también en el
+- [x] `lib/main_cocina.dart`, con la configuración desde `ORIGEN`.
+- [x] El aviso para una cuenta de recepción.
+- [x] El realm del repositorio con la dirección de retorno del APK; aplicada también en el
       Keycloak de desarrollo.
-- [ ] Pruebas: la sesión con un autorizador simulado (entrar, cancelar, error, cerrar
+- [x] Pruebas: la sesión con un autorizador simulado (entrar, cancelar, error, cerrar
       sesión y renovar) y el aviso de recepción. `flutter test` y `flutter analyze`.
-- [ ] **En el emulador**, contra la API y el Keycloak locales (con `adb reverse`, para que
+- [x] **En el emulador**, contra la API y el Keycloak locales (con `adb reverse`, para que
       el emulador los vea en `localhost`): entrar con la cuenta de cocina de desarrollo, ver
       la cola, recibir un pedido en vivo y cerrar sesión.
 
@@ -206,11 +206,13 @@ Cada fase se prueba y se sube por separado.
 - **App:**
   - `frontend/android/` *(nuevo)*: la plataforma, con la dirección de retorno de AppAuth, el
     permiso de pantalla encendida y la firma leída desde fuera del repositorio;
-  - `frontend/lib/main_cocina.dart` *(nuevo)*;
+  - `frontend/lib/main_cocina.dart` *(nuevo)* y `frontend/lib/app.dart` *(nuevo)*: lo que
+    comparten las dos entradas, sacado de `main.dart` sin cambiarlo;
   - `frontend/lib/autenticacion/servicio_sesion.dart` y un autorizador por plataforma
     *(nuevos: `autorizador_web.dart` y `autorizador_android.dart`)*;
   - `frontend/lib/configuracion.dart`: la configuración a partir de `ORIGEN`;
-  - `frontend/lib/pantallas/timbre_android.dart` *(nuevo)* y el aviso de "app para cocina";
+  - `frontend/lib/pantallas/timbre_android.dart` *(nuevo)* y el aviso de "app para cocina",
+    en `segun_rol.dart` con `pantalla_error.dart`;
   - `frontend/pubspec.yaml` y `pubspec.lock`: `flutter_appauth`, `audioplayers` y
     `wakelock_plus`, con versión exacta, y el ícono.
 - **Pruebas de la app:** `servicio_sesion_test.dart` y las nuevas del timbre y del aviso.
@@ -271,7 +273,7 @@ No cambia la API, la base de datos ni el contrato HTTP. La web se publica igual 
 
 | Fase | Estado | Fecha | Evidencia de la prueba |
 |---|---|---|---|
-| A — El acceso en Android | ⬜ | | |
+| A — El acceso en Android | ✅ Verificada | 2026-09-30 | **La plataforma:** `flutter create --platforms=android` sumó `android/`, con `applicationId` `tech.maxpizzapp.cocina`, el nombre *Max Pizzapp Cocina*, el permiso de Internet, el esquema de retorno de AppAuth y, solo en la compilación de desarrollo, `http` para el entorno local. Del manifiesto se quitó `taskAffinity=""`, que según `flutter_appauth` impide volver a la app después del acceso. `flutter create` también dejó archivos de plantilla que el proyecto no usa (`.idea/`, dos `.iml`, un README y una prueba de ejemplo): se borraron, y en `.metadata` se volvió a declarar la web junto a Android. **El acceso:** `ServicioSesion` delega en un `Autorizador` cómo se obtiene el código. `AutorizadorWeb` es la redirección de siempre, movida sin cambios. `AutorizadorAndroid` usa `flutter_appauth` 12.1.0 y solo trae el código y el verificador. El canje, la renovación y el cierre por sesión rechazada siguen en `ServicioSesion`. **Las 15 pruebas de la sesión web pasan sin tocarlas.** Lo que comparten las dos entradas pasó de `main.dart` a `app.dart`. **`flutter test`: 265 de 265** (242 anteriores y **23 nuevas**): 10 del autorizador de Android con AppAuth simulado (el pedido al cliente público con la dirección de la app y por https, el código con su verificador, volverse atrás sin error, la falla de AppAuth, una respuesta sin código, el cierre de sesión y su falla, y `http` solo en desarrollo); 6 de la sesión con ese autorizador (al abrir no pide nada, el canje con la dirección de la app, volverse atrás, el canje rechazado, cerrar sesión y el aviso si Keycloak no llega a cerrar); 4 de la configuración con `ORIGEN`; y 3 del aviso de recepción. `flutter analyze` sin observaciones y `flutter build web` igual que antes. **El realm** suma `tech.maxpizzapp.cocina:/callback` al cliente `frontend-web`, como dirección de retorno y de salida, y lo mismo se aplicó en el Keycloak de desarrollo. **En el emulador** (Pixel 7, compilación de desarrollo contra la API y el Keycloak locales, con `adb reverse`): la app abre en la pantalla de acceso; *Iniciar sesión* abre Keycloak en el navegador del sistema, no en la app; con la cuenta de cocina de desarrollo, **entra a la cola con "En vivo"**; una venta hecha como recepción contra la API local (*Gabriel Cantante · 60000001*) **aparece sola, "Nuevo · recién llegado", en menos de 2 s**; *Cerrar sesión* vuelve al acceso y **Keycloak vuelve a pedir la contraseña**; y la cuenta de recepción ve *"Esta app es para cocina. Recepción trabaja en la web: localhost"* con *Cerrar sesión*. Cerrar la pestaña de Keycloak devuelve al acceso sin mensaje de error, como se probó. La venta de prueba se canceló. **Lo que salió:** (1) una prueba nueva encontró que, al cerrar sesión, `ServicioSesion` descartaba el aviso de que Keycloak no llegó a cerrar: corregido. (2) En el emulador, Chrome mostró su bienvenida la primera vez (el autor la aceptó) y el teclado abrió un tutorial de lápiz que se comía lo escrito; son cosas del emulador, no de la app. (3) `android/.gitignore` no excluía `.kotlin/`, que genera la compilación: se sumó |
 | B — El timbre y la pantalla | ⬜ | | |
 | C — Firma y descarga | ⬜ | | |
 | D — En producción | ⬜ | | |

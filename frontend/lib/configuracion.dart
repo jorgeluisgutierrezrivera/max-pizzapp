@@ -68,6 +68,27 @@ class Configuracion {
     );
   }
 
+  /// En el APK de cocina no hay pagina de la que deducir nada (D-48): la direccion del
+  /// servidor llega al compilar con --dart-define=ORIGEN=https://maxpizzapp.tech, y de ahi en
+  /// adelante se deduce todo igual que en la web.
+  factory Configuracion.paraApp({
+    required String origenDefinido,
+    String keycloakDefinido = '',
+  }) {
+    final texto = origenDefinido.trim();
+    if (texto.isEmpty) {
+      throw const ErrorDeConfiguracion(
+        'Falta la direccion del servidor: hay que compilar la app con '
+        '--dart-define=ORIGEN=https://maxpizzapp.tech',
+      );
+    }
+    final uri = Uri.tryParse(texto.replaceAll(RegExp(r'/+$'), ''));
+    if (uri == null || !(uri.isScheme('http') || uri.isScheme('https')) || uri.host.isEmpty) {
+      throw ErrorDeConfiguracion('ORIGEN no es una direccion valida: "$texto".');
+    }
+    return Configuracion.deducir(paginaActual: uri, keycloakDefinido: keycloakDefinido);
+  }
+
   static bool _esLocal(String host) =>
       host == 'localhost' || host == '127.0.0.1' || host == '::1' || host == '[::1]';
 }

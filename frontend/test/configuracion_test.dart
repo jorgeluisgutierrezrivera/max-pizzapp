@@ -64,4 +64,34 @@ void main() {
   test('la API se llama por ruta relativa, en el mismo origen', () {
     expect(Configuracion.rutaApi, '/api/v1');
   });
+
+  group('en el APK de cocina la direccion llega al compilar (D-48)', () {
+    test('con ORIGEN, todo se deduce como en la web', () {
+      final c = Configuracion.paraApp(origenDefinido: 'https://maxpizzapp.tech/');
+      expect(c.origen.toString(), 'https://maxpizzapp.tech');
+      expect(c.keycloak.toString(), 'https://auth.maxpizzapp.tech');
+    });
+
+    test('sin ORIGEN, error claro en vez de adivinar', () {
+      expect(
+        () => Configuracion.paraApp(origenDefinido: ''),
+        throwsA(isA<ErrorDeConfiguracion>().having((e) => e.mensaje, 'mensaje', contains('ORIGEN='))),
+      );
+    });
+
+    test('un ORIGEN que no es http ni https se rechaza', () {
+      expect(() => Configuracion.paraApp(origenDefinido: 'maxpizzapp.tech'), throwsA(isA<ErrorDeConfiguracion>()));
+      expect(() => Configuracion.paraApp(origenDefinido: 'ftp://maxpizzapp.tech'), throwsA(isA<ErrorDeConfiguracion>()));
+    });
+
+    test('en desarrollo, contra el entorno local, Keycloak tambien se define', () {
+      final c = Configuracion.paraApp(
+        origenDefinido: 'http://localhost:3001',
+        keycloakDefinido: 'http://localhost:8082',
+      );
+      expect(c.origen.toString(), 'http://localhost:3001');
+      expect(c.keycloak.toString(), 'http://localhost:8082');
+      expect(() => Configuracion.paraApp(origenDefinido: 'http://localhost:3001'), throwsA(isA<ErrorDeConfiguracion>()));
+    });
+  });
 }

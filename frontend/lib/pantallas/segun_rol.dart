@@ -39,6 +39,7 @@ class PantallaSegunRol extends StatefulWidget {
     this.timbre,
     this.red = const RedSiempreEnLinea(),
     this.llamar = _sinTelefono,
+    this.webDeRecepcion,
   });
 
   final Future<Usuario> Function() cargarUsuario;
@@ -58,6 +59,10 @@ class PantallaSegunRol extends StatefulWidget {
   final Timbre? timbre;
   final Red red;
   final void Function(String numero) llamar;
+
+  /// Solo en el APK de cocina (D-48): la web a la que tiene que ir una cuenta de recepción.
+  /// En la web es null y entran los dos roles.
+  final Uri? webDeRecepcion;
 
   @override
   State<PantallaSegunRol> createState() => _PantallaSegunRolState();
@@ -95,6 +100,15 @@ class _PantallaSegunRolState extends State<PantallaSegunRol> {
           );
         }
         final usuario = estado.requireData;
+        final webDeRecepcion = widget.webDeRecepcion;
+        if (webDeRecepcion != null && usuario.rol == Rol.recepcion) {
+          // El servidor ya la limita por rol; esto es para que se entienda por qué no ve nada.
+          return PantallaError(
+            icono: Icons.info_outline,
+            mensaje: 'Esta app es para cocina. Recepción trabaja en la web: ${webDeRecepcion.host}',
+            alCerrarSesion: widget.alCerrarSesion,
+          );
+        }
         return switch (usuario.rol) {
           Rol.recepcion => PantallaRecepcion(
             usuario: usuario,

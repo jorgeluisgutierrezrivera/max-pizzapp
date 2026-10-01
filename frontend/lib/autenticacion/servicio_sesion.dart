@@ -6,38 +6,42 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 import '../configuracion.dart';
+import 'autorizador.dart';
+import 'autorizador_web.dart';
 import 'navegador.dart';
-import 'pkce.dart';
 
 enum EstadoSesion { iniciando, sinSesion, conSesion }
 
 /// Inicio de sesion con Authorization Code + PKCE contra Keycloak.
 ///
-/// Los tokens viven SOLO en memoria. Al recargar la pagina se pierden, y la app los recupera
-/// preguntandole a Keycloak con prompt=none: si su sesion sigue abierta, vuelve con un codigo
-/// nuevo sin pedir la contrasena. Solo el verificador y el state pasan por sessionStorage, y
-/// unicamente durante la ida y vuelta a Keycloak.
+/// Como se obtiene el codigo depende de la plataforma y lo resuelve el [Autorizador] (D-49):
+/// en la web, la redireccion de la pagina ([AutorizadorWeb], el que se usa si se pasa un
+/// [Navegador]); en el APK de cocina, AppAuth. Lo que sigue es comun: el canje del codigo, la
+/// renovacion y el cierre de la sesion que el servidor rechaza.
+///
+/// Los tokens viven SOLO en memoria. En la web, al recargar la pagina se pierden y la app los
+/// recupera preguntandole a Keycloak con prompt=none; en el APK, al cerrar la app se vuelve a
+/// entrar.
 class ServicioSesion extends ChangeNotifier {
   ServicioSesion({
     required this.configuracion,
-    required this.navegador,
+    Navegador? navegador,
+    Autorizador? autorizador,
     http.Client? cliente,
     Random? azar,
-  })  : _cliente = cliente ?? http.Client(),
-        _clientePropio = cliente == null,
-        _azar = azar ?? Random.secure();
+  })  : assert((navegador == null) != (autorizador == null), 'Un navegador (web) o un autorizador'),
+        autorizador =
+            autorizador ?? AutorizadorWeb(configuracion: configuracion, navegador: navegador!, azar: azar),
+        _cliente = cliente ?? http.Client(),
+        _clientePropio = cliente == null;
 
-  static const claveVerificador = 'maxpizzapp.pkce.verificador';
-  static const claveEstado = 'maxpizzapp.pkce.estado';
-
-  /// Errores de prompt=none que solo significan "no hay sesion abierta": no son fallos.
-  static const _sinSesionEnKeycloak = {'login_required', 'interaction_required', 'consent_required'};
+  static const claveVerificador = AutorizadorWeb.claveVerificador;
+  static const claveEstado = AutorizadorWeb.claveEstado;
 
   final Configuracion configuracion;
-  final Navegador navegador;
+  final Autorizador autorizador;
   final http.Client _cliente;
   final bool _clientePropio;
-  final Random _azar;
 
   EstadoSesion _estado = EstadoSesion.iniciando;
   String? _mensaje;
@@ -54,66 +58,29 @@ class ServicioSesion extends ChangeNotifier {
   /// El token para llamar a la API, o null si no hay sesion.
   String? get tokenAcceso => _estado == EstadoSesion.conSesion ? _tokenAcceso : null;
 
-  /// Punto de entrada al cargar la pagina.
-  Future<void> arrancar() async {
-    final parametros = navegador.direccionActual.queryParameters;
-    if (parametros.containsKey('code') || parametros.containsKey('error')) {
-      await _procesarRegreso(parametros);
-    } else {
-      // Primera visita o recarga: si Keycloak ya tiene la sesion abierta, entra sin pedir nada.
-      _irAKeycloak(silencioso: true);
-    }
-  }
+  /// Punto de entrada al abrir la app.
+  Future<void> arrancar() async => _seguir(await autorizador.alArrancar());
 
-  void iniciarSesion() => _irAKeycloak(silencioso: false);
-
-  void _irAKeycloak({required bool silencioso}) {
-    final verificador = generarVerificador(_azar);
-    final estado = generarEstado(_azar);
-    navegador.guardar(claveVerificador, verificador);
-    navegador.guardar(claveEstado, estado);
-
+  Future<void> iniciarSesion() async {
     _cambiar(EstadoSesion.iniciando);
-    navegador.irA(configuracion.urlAutorizacion.replace(queryParameters: {
-      'client_id': configuracion.clienteId,
-      'response_type': 'code',
-      'scope': 'openid',
-      'redirect_uri': configuracion.urlRetorno.toString(),
-      'code_challenge': desafioS256(verificador),
-      'code_challenge_method': 'S256',
-      'state': estado,
-      if (silencioso) 'prompt': 'none',
-    }));
+    await _seguir(await autorizador.pedirCodigo());
   }
 
-  Future<void> _procesarRegreso(Map<String, String> parametros) async {
-    final estadoGuardado = navegador.leer(claveEstado);
-    final verificador = navegador.leer(claveVerificador);
-    // Un solo uso: se borran pase lo que pase, y el codigo desaparece de la barra.
-    navegador.borrar(claveEstado);
-    navegador.borrar(claveVerificador);
-    navegador.reemplazarDireccion(configuracion.urlRetorno);
-
-    final error = parametros['error'];
-    if (error != null) {
-      _quedarSinSesion(_sinSesionEnKeycloak.contains(error)
-          ? null
-          : 'Keycloak no completó el inicio de sesión ($error). Intenta de nuevo.');
-      return;
+  Future<void> _seguir(Paso paso) async {
+    switch (paso) {
+      case Saliendo():
+        return; // la pagina se va a Keycloak: el resto pasa cuando vuelva
+      case SinCodigo(:final mensaje):
+        _quedarSinSesion(mensaje);
+      case CodigoRecibido():
+        await _pedirTokens({
+          'grant_type': 'authorization_code',
+          'client_id': configuracion.clienteId,
+          'code': paso.codigo,
+          'redirect_uri': paso.retorno,
+          'code_verifier': paso.verificador,
+        }, siFalla: 'No se pudo completar el inicio de sesión. Intenta de nuevo.');
     }
-
-    if (estadoGuardado == null || verificador == null || parametros['state'] != estadoGuardado) {
-      _quedarSinSesion('No se pudo verificar el regreso desde Keycloak. Intenta de nuevo.');
-      return;
-    }
-
-    await _pedirTokens({
-      'grant_type': 'authorization_code',
-      'client_id': configuracion.clienteId,
-      'code': parametros['code']!,
-      'redirect_uri': configuracion.urlRetorno.toString(),
-      'code_verifier': verificador,
-    }, siFalla: 'No se pudo completar el inicio de sesión. Intenta de nuevo.');
   }
 
   /// Pide un token nuevo con el de renovacion. La API tambien la usa ante un 401.
@@ -169,7 +136,7 @@ class ServicioSesion extends ChangeNotifier {
 
   /// Cierra la sesion en Keycloak, no solo en la app: si no, al volver a entrar Keycloak
   /// reconoceria su sesion y dejaria pasar con la misma cuenta sin pedir nada (RF-08).
-  void cerrarSesion() {
+  Future<void> cerrarSesion() async {
     final identidad = _tokenIdentidad;
     _olvidarTokens();
     if (identidad == null) {
@@ -177,11 +144,10 @@ class ServicioSesion extends ChangeNotifier {
       return;
     }
     _cambiar(EstadoSesion.iniciando);
-    navegador.irA(configuracion.urlCierre.replace(queryParameters: {
-      'client_id': configuracion.clienteId,
-      'id_token_hint': identidad,
-      'post_logout_redirect_uri': configuracion.urlRetorno.toString(),
-    }));
+    final paso = await autorizador.cerrarSesion(identidad);
+    // En la web la pagina ya se fue; en el APK, la app vuelve al acceso, con el aviso si
+    // Keycloak no llego a cerrar.
+    if (paso is! Saliendo) _quedarSinSesion(paso is SinCodigo ? paso.mensaje : null);
   }
 
   void _quedarSinSesion(String? mensaje) {
