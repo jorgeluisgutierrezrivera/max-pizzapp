@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- La pantalla de arranque de Android 12 en adelante: el fondo crema y el logo sobre su
+         circulo carbon, igual que el logo dentro de la app. El amarillo del logo sobre un fondo
+         claro, sin el circulo, no se lee. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@color/crema_fondo</item>
+        <item name="android:windowSplashScreenBackground">@color/crema_fondo</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/ic_launcher_background</item>
+    </style>
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@color/crema_fondo</item>
+    </style>
+</resources>

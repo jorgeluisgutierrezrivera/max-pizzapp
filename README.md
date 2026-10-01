@@ -145,7 +145,7 @@ max-pizzapp/
 ├── frontend/     App Flutter: la web (lib/main.dart) y el APK de cocina (lib/main_cocina.dart, android/)
 ├── docker/       Compose, Postgres (init SQL), Keycloak (realm), Caddy
 ├── pruebas/      Pruebas de extremo a extremo contra Keycloak y la API reales
-├── scripts/      Publicar la app, preparar las fotos de la carta y dibujar las bebidas
+├── scripts/      Publicar la app, compilar el APK, preparar las fotos y dibujar las bebidas
 └── docs/         Documentación técnica: BRIEF de desarrollo, planes de trabajo, el
                   contrato de la API (docs/api/openapi.yaml) y el perfil del proyecto
 ```
@@ -157,6 +157,7 @@ max-pizzapp/
 | Aplicación | **https://maxpizzapp.tech** |
 | Identidad (Keycloak) | https://auth.maxpizzapp.tech |
 | Salud de la API | https://maxpizzapp.tech/api/v1/salud |
+| APK de cocina (Android) | https://github.com/jorgeluisgutierrezrivera/max-pizzapp/releases/latest/download/max-pizzapp-cocina.apk |
 
 Para entrar, las cuentas de prueba del apartado *Credenciales de prueba*.
 
@@ -168,6 +169,61 @@ cada ruta con su rol, sus parámetros, sus cuerpos y todos sus errores, en el fo
 [editor.swagger.io](https://editor.swagger.io). Una prueba del backend (`contrato.test.js`)
 comprueba que el contrato y el servidor tengan exactamente las mismas rutas, y que la única
 pública sea `/salud`.
+
+## El APK de cocina
+
+Cocina puede trabajar en la web o con la app instalada en un teléfono o una tableta Android.
+Es el mismo código que la web, con dos diferencias: **suena desde que se abre**, sin esperar
+un toque, y **no deja apagar la pantalla** mientras la cola está abierta. Recepción sigue en
+la web. No está en Google Play: se descarga del repositorio.
+
+### Instalarlo
+
+1. En el teléfono de cocina, abrir el enlace del APK de la tabla de arriba. Descarga
+   `max-pizzapp-cocina.apk`, siempre la última versión publicada.
+2. Abrir el archivo descargado. La primera vez, Android pide permiso para instalar apps
+   desde el navegador: se da una vez. Si Play Protect avisa que no conoce la app, es porque
+   no viene de Google Play.
+3. Si se quiere comprobar que el archivo es el publicado, su SHA-256 está en la descripción
+   del Release.
+4. Abrir **Max Pizzapp Cocina** y entrar con la cuenta de cocina. La página de acceso es la de
+   Keycloak, en el navegador del teléfono: la app nunca ve la contraseña.
+
+### En la cocina
+
+- **El aviso suena por el volumen de las alarmas**, no por el de la música, y suena aunque
+  el teléfono esté en silencio. Se regula en los ajustes de sonido del teléfono.
+- **El teléfono tiene que estar cargando**: con la cola abierta, la pantalla no se apaga.
+- La sesión no se guarda al cerrar la app, igual que en la web: al volver a abrirla se
+  entra de nuevo. Si la sesión de Keycloak sigue abierta en el navegador del teléfono, entra
+  sin pedir la contraseña.
+- Una cuenta de recepción no opera en el APK: ve un aviso de que la app es para cocina.
+
+### Compilar y publicar una versión nueva
+
+El APK se firma con una **llave propia que no está en el repositorio**: vive al lado de él,
+en `../llaves-android/` (`key.properties`, con la contraseña, y el `.jks`). Un teléfono solo
+instala una versión encima de otra si las dos tienen la misma llave, así que **hay que
+respaldarla**: sin ella no se puede actualizar el APK publicado.
+
+```bash
+bash scripts/compilar-apk.sh
+```
+
+El script se niega a compilar sin la llave. Compila el APK universal contra
+`https://maxpizzapp.tech`, verifica que esté firmado con la llave propia y no con la de
+depuración, y lo deja en `frontend/build/max-pizzapp-cocina.apk` con su SHA-256. Un
+`flutter build apk` hecho a mano sin la llave sale firmado con la llave de depuración: sirve
+para probar, no para publicar.
+
+Para una versión nueva, antes de compilar se sube el número que va después del `+` en la
+línea `version:` de `frontend/pubspec.yaml`: Android no instala encima una versión con el
+mismo número o uno menor. Después se crea un **Release** en GitHub con el APK adjunto,
+llamado exactamente `max-pizzapp-cocina.apk`, y su SHA-256 en la descripción. El enlace de
+la tabla apunta siempre al último Release.
+
+El APK no lleva secretos: el cliente de Keycloak es público (con PKCE) y la dirección del
+servidor no es secreta.
 
 ## La carta
 

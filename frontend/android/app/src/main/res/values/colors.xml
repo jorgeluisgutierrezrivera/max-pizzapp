@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="ic_launcher_background">#141414</color>
+    <!-- El fondo crema de la app y de la web (D-29): con el que arranca el APK. -->
+    <color name="crema_fondo">#FBF6EE</color>
 </resources>

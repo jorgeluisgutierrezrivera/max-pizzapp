@@ -12,6 +12,8 @@
 *.p12
 *.keystore
 *.jks
+# La contraseña de la llave del APK (D-51): vive en ../llaves-android/, nunca aquí.
+key.properties
 credentials.json
 serviceAccount*.json
 
