@@ -1,6 +1,7 @@
 // La cola de cocina (RF-06, RF-07): lo que ve y lo que hace el cocinero, con un canal en
 // vivo y un timbre de mentira que la prueba controla.
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,8 +9,10 @@ import 'package:maxpizzapp/api/canal_en_vivo.dart';
 import 'package:maxpizzapp/api/cliente_api.dart';
 import 'package:maxpizzapp/api/usuario.dart';
 import 'package:maxpizzapp/pantallas/pantalla_cocina.dart';
+import 'package:maxpizzapp/pantallas/pantalla_encendida.dart';
 import 'package:maxpizzapp/pantallas/red.dart';
 import 'package:maxpizzapp/pantallas/timbre.dart';
+import 'package:maxpizzapp/pantallas/timbre_android.dart';
 import 'package:maxpizzapp/pedidos/pedido.dart';
 import 'package:maxpizzapp/tema.dart';
 
@@ -52,6 +55,25 @@ class TimbreDePrueba implements Timbre {
   Future<void> habilitar() async => activo.value = true;
   @override
   void sonar() => sonidos++;
+}
+
+/// El reproductor del timbre del APK (D-50), contado.
+class ReproductorQueCuenta implements ReproductorDelTimbre {
+  var sonidos = 0;
+  @override
+  Future<void> preparar(Uint8List wav) async {}
+  @override
+  Future<void> reproducir(Uint8List wav) async => sonidos++;
+}
+
+/// La pantalla siempre encendida del APK (D-50), contada.
+class PantallaDePrueba implements PantallaEncendida {
+  var mantenida = 0;
+  var soltada = 0;
+  @override
+  void mantener() => mantenida++;
+  @override
+  void soltar() => soltada++;
 }
 
 class RedDePrueba implements Red {
@@ -130,6 +152,10 @@ class Escena {
   final canal = CanalDePrueba();
   final timbre = TimbreDePrueba();
   final red = RedDePrueba();
+  final pantalla = PantallaDePrueba();
+
+  /// El timbre del APK, en vez del de prueba.
+  Timbre? timbreDelApk;
   final cambios = <(int, EstadoPedido)>[];
   final versiones = <int>[];
   var lecturas = 0;
@@ -154,8 +180,9 @@ class Escena {
         return Pedido.desdeJson({...original, 'estado': hacia.nombreApi});
       },
       crearCanal: () => canal,
-      timbre: timbre,
+      timbre: timbreDelApk ?? timbre,
       red: red,
+      pantallaEncendida: pantalla,
       reloj: () => ahora,
     ),
   );
@@ -563,6 +590,39 @@ void main() {
       expect(e.timbre.habilitado, isTrue);
       expect(find.text('Activar sonido'), findsNothing);
       expect(find.byTooltip('Sonido activado'), findsOneWidget);
+    });
+  });
+
+  group('en el APK de cocina (D-50)', () {
+    testWidgets('la pantalla queda encendida mientras la cola está abierta y se suelta al cerrarla', (t) async {
+      final e = await abrir(t, [json(1)]);
+      expect(e.pantalla.mantenida, 1);
+      expect(e.pantalla.soltada, 0);
+      // Cerrar sesión saca la cola de la pantalla.
+      await t.pumpWidget(const SizedBox());
+      expect(e.pantalla.soltada, 1);
+    });
+
+    testWidgets('un pedido nuevo suena sin que nadie haya tocado la pantalla, y no hay franja', (t) async {
+      tamano(t, 412, 915);
+      final reproductor = ReproductorQueCuenta();
+      final e = Escena()
+        ..cola = [json(1)]
+        ..timbreDelApk = TimbreAndroid(reproductor: reproductor);
+      await t.pumpWidget(e.app());
+      await t.pumpAndSettle();
+      expect(find.byKey(const Key('aviso-sin-sonido')), findsNothing);
+      expect(find.byTooltip('Sonido activado'), findsOneWidget);
+
+      e.canal.nuevos.add(json(2, minutos: 0));
+      await t.pumpAndSettle();
+      expect(find.byKey(const Key('pedido-2')), findsOneWidget);
+      expect(reproductor.sonidos, 1);
+
+      // Lo que recepción agrega también suena.
+      e.canal.actualizados.add(json(2, minutos: 0, agregadas: [pizzaAgregada]));
+      await t.pumpAndSettle();
+      expect(reproductor.sonidos, 2);
     });
   });
 }

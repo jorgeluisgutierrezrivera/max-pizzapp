@@ -7,6 +7,7 @@ import 'autenticacion/servicio_sesion.dart';
 import 'carta/producto.dart';
 import 'pantallas/pantalla_acceso.dart';
 import 'pantallas/pantalla_cargando.dart';
+import 'pantallas/pantalla_encendida.dart';
 import 'pantallas/red.dart';
 import 'pantallas/segun_rol.dart';
 import 'pantallas/timbre.dart';
@@ -46,6 +47,7 @@ class SegunSesion extends StatelessWidget {
     required this.crearCanal,
     required this.timbre,
     required this.red,
+    this.pantallaEncendida = const PantallaSegunElSistema(),
     this.llamar = _sinTelefono,
     this.webDeRecepcion,
   });
@@ -55,6 +57,7 @@ class SegunSesion extends StatelessWidget {
   final CanalEnVivo Function() crearCanal;
   final Timbre timbre;
   final Red red;
+  final PantallaEncendida pantallaEncendida;
   final void Function(String numero) llamar;
 
   /// Solo en el APK de cocina: la web a la que tiene que ir una cuenta de recepción.
@@ -104,6 +107,7 @@ class SegunSesion extends StatelessWidget {
           crearCanal: crearCanal,
           timbre: timbre,
           red: red,
+          pantallaEncendida: pantallaEncendida,
           alCerrarSesion: sesion.cerrarSesion,
           webDeRecepcion: webDeRecepcion,
         ),

@@ -7,6 +7,7 @@ import '../carta/producto.dart';
 import '../pedidos/pedido.dart';
 import 'pantalla_cargando.dart';
 import 'pantalla_cocina.dart';
+import 'pantalla_encendida.dart';
 import 'pantalla_error.dart';
 import 'pantalla_recepcion.dart';
 import 'red.dart';
@@ -38,6 +39,7 @@ class PantallaSegunRol extends StatefulWidget {
     this.crearCanal = _sinCanal,
     this.timbre,
     this.red = const RedSiempreEnLinea(),
+    this.pantallaEncendida = const PantallaSegunElSistema(),
     this.llamar = _sinTelefono,
     this.webDeRecepcion,
   });
@@ -58,6 +60,9 @@ class PantallaSegunRol extends StatefulWidget {
   final CanalEnVivo Function() crearCanal;
   final Timbre? timbre;
   final Red red;
+
+  /// Solo la cola de cocina la usa (D-50).
+  final PantallaEncendida pantallaEncendida;
   final void Function(String numero) llamar;
 
   /// Solo en el APK de cocina (D-48): la web a la que tiene que ir una cuenta de recepción.
@@ -132,6 +137,7 @@ class _PantallaSegunRolState extends State<PantallaSegunRol> {
             crearCanal: widget.crearCanal,
             timbre: widget.timbre ?? TimbreMudo(),
             red: widget.red,
+            pantallaEncendida: widget.pantallaEncendida,
           ),
           null => PantallaError(
             mensaje:

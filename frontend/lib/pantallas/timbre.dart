@@ -25,6 +25,9 @@ abstract class Timbre {
   void sonar();
 }
 
+/// Para un timbre que nunca cambia de estado: el mudo, y el de Android, que siempre suena.
+const Listenable sinCambios = _SinCambios();
+
 /// Un timbre mudo: para las pruebas y para donde no hay navegador.
 class TimbreMudo implements Timbre {
   @override
@@ -32,7 +35,7 @@ class TimbreMudo implements Timbre {
   @override
   bool get pendienteDeActivar => false;
   @override
-  Listenable get cambios => const _SinCambios();
+  Listenable get cambios => sinCambios;
   @override
   Future<void> habilitar() async {}
   @override

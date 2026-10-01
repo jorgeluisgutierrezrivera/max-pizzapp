@@ -5,19 +5,35 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:maxpizzapp/api/cliente_api.dart';
 import 'package:maxpizzapp/api/usuario.dart';
 import 'package:maxpizzapp/carta/producto.dart';
+import 'package:maxpizzapp/pantallas/pantalla_encendida.dart';
 import 'package:maxpizzapp/pantallas/segun_rol.dart';
 
 Usuario usuarioCon(List<String> roles, {String nombre = 'Persona de prueba'}) =>
     Usuario.desdeJson({'sub': 'x', 'nombre': nombre, 'usuario': 'cuenta', 'roles': roles});
 
-Widget app(Future<Usuario> Function() cargar, {VoidCallback? alCerrar, Uri? webDeRecepcion}) => MaterialApp(
+Widget app(
+  Future<Usuario> Function() cargar, {
+  VoidCallback? alCerrar,
+  Uri? webDeRecepcion,
+  PantallaEncendida pantallaEncendida = const PantallaSegunElSistema(),
+}) => MaterialApp(
   home: PantallaSegunRol(
     cargarUsuario: cargar,
     cargarCarta: () async => Carta(const []),
     alCerrarSesion: alCerrar ?? () {},
     webDeRecepcion: webDeRecepcion,
+    pantallaEncendida: pantallaEncendida,
   ),
 );
+
+/// La pantalla siempre encendida del APK (D-50), contada.
+class PantallaDePrueba implements PantallaEncendida {
+  var mantenida = 0;
+  @override
+  void mantener() => mantenida++;
+  @override
+  void soltar() {}
+}
 
 void main() {
   testWidgets('mientras el servidor responde, muestra que esta verificando', (t) async {
@@ -116,6 +132,18 @@ void main() {
       await t.pumpAndSettle();
       expect(find.text('Cocina'), findsOneWidget);
       expect(find.textContaining('Esta app es para cocina'), findsNothing);
+    });
+
+    testWidgets('la pantalla encendida es de la cola de cocina: el aviso de recepcion no la pide', (t) async {
+      final pantalla = PantallaDePrueba();
+      await t.pumpWidget(app(() async => usuarioCon(['cocina']), webDeRecepcion: web, pantallaEncendida: pantalla));
+      await t.pumpAndSettle();
+      expect(pantalla.mantenida, 1);
+
+      final otra = PantallaDePrueba();
+      await t.pumpWidget(app(() async => usuarioCon(['recepcion']), webDeRecepcion: web, pantallaEncendida: otra));
+      await t.pumpAndSettle();
+      expect(otra.mantenida, 0);
     });
 
     testWidgets('el aviso cabe en un celular angosto', (t) async {

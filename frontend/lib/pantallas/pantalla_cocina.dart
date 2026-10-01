@@ -11,6 +11,7 @@ import 'aviso_sin_conexion.dart';
 import 'aviso_sin_sonido.dart';
 import 'boton_de_sonido.dart';
 import 'esqueleto_rol.dart';
+import 'pantalla_encendida.dart';
 import 'red.dart';
 import 'timbre.dart';
 
@@ -27,6 +28,8 @@ import 'timbre.dart';
 /// Cada pedido se canta con su número del día (D-35). Lo que recepción agrega a un pedido
 /// en cocina aparece marcado y suena (D-37); y al avanzar un pedido se manda la versión que
 /// se tiene a la vista, para que nadie lo marque listo sin haber visto lo último.
+///
+/// En el APK, mientras la cola está abierta, la pantalla no se apaga (D-50).
 class PantallaCocina extends StatefulWidget {
   const PantallaCocina({
     super.key,
@@ -37,6 +40,7 @@ class PantallaCocina extends StatefulWidget {
     required this.crearCanal,
     required this.timbre,
     this.red = const RedSiempreEnLinea(),
+    this.pantallaEncendida = const PantallaSegunElSistema(),
     this.reloj = DateTime.now,
   });
 
@@ -52,6 +56,7 @@ class PantallaCocina extends StatefulWidget {
   final CanalEnVivo Function() crearCanal;
   final Timbre timbre;
   final Red red;
+  final PantallaEncendida pantallaEncendida;
   final DateTime Function() reloj;
 
   @override
@@ -93,6 +98,7 @@ class _PantallaCocinaState extends State<PantallaCocina> {
     _vigia = VigiaDelCanal(conexion: _canal.conexion, conectado: _canal.conectado, red: widget.red);
     _canal.conectar();
     _cargar();
+    widget.pantallaEncendida.mantener();
     // Cada 30 s se redibuja "hace N min".
     _minutero = Timer.periodic(const Duration(seconds: 30), (_) {
       if (mounted) setState(() {});
@@ -101,6 +107,7 @@ class _PantallaCocinaState extends State<PantallaCocina> {
 
   @override
   void dispose() {
+    widget.pantallaEncendida.soltar();
     _minutero?.cancel();
     for (final m in _marcas) {
       m.cancel();

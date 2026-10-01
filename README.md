@@ -100,7 +100,10 @@ Paquetes de la app Flutter, fijados sin rangos en `frontend/pubspec.yaml` y con
 | web | 1.1.1 | Acceso al navegador: redirección, dirección actual y `sessionStorage` |
 | socket_io_client | 3.1.6 | El canal en vivo en la app: pedidos nuevos, lo agregado y los cambios de estado |
 | flutter_appauth | 12.1.0 | Solo en el APK de cocina: abre Keycloak en el navegador del teléfono y trae el código con PKCE |
+| audioplayers | 6.8.1 | Solo en el APK de cocina: el timbre de dos notas por el canal de alarma del teléfono |
+| wakelock_plus | 1.8.1 | Solo en el APK de cocina: la pantalla no se apaga mientras la cola está abierta |
 | flutter_lints | 6.0.0 | Reglas de análisis estático (solo desarrollo) |
+| flutter_launcher_icons | 0.14.4 | Arma el ícono del APK desde el logo (solo desarrollo) |
 
 
 ## Pruebas
@@ -111,7 +114,7 @@ Keycloak y la API reales. Antes de la primera vez: `cd backend && npm ci` y
 
 ```bash
 cd backend && npm test            # 273 pruebas: acceso, carta, precio, pedidos, lo agregado, canal en vivo (con su latido y el corte al vencer el token) y el contrato OpenAPI, sin base ni Keycloak reales
-cd frontend && flutter test       # 265 pruebas de la app: la venta, los pedidos, la cocina, el acceso en la web y en el APK, la sesión, el canal en vivo (cortes, rechazos y el aviso de canal caído), el aviso de sonido apagado y el contraste de colores
+cd frontend && flutter test       # 280 pruebas de la app: la venta, los pedidos, la cocina, el acceso en la web y en el APK, la sesión, el canal en vivo (cortes, rechazos y el aviso de canal caído), el aviso de sonido apagado, el timbre y la pantalla encendida del APK, y el contraste de colores
 python pruebas/identidad/probar_acceso_pkce.py   # inicio de sesión real con PKCE
 python pruebas/api/probar_salud_y_token.py       # la API con tokens reales del realm
 python pruebas/api/probar_carta.py               # la carta con token real y la base real
@@ -314,6 +317,19 @@ flutter run -t lib/main_cocina.dart --dart-define=ORIGEN=http://localhost:3001 -
 El acceso se abre en el navegador del teléfono, no dentro de la app, y vuelve por
 `tech.maxpizzapp.cocina:/callback`, que el cliente `frontend-web` del realm tiene declarada.
 Solo la compilación de desarrollo acepta `http`.
+
+A diferencia de la web, el APK **suena desde que se abre**, sin esperar un toque, y por el
+canal de **alarma** del teléfono: se regula con el volumen de las alarmas, no con el de la
+música. Mientras la cola está abierta, la pantalla no se apaga. Las dos notas se arman en el
+código (`lib/pantallas/sonido_del_timbre.dart`), las mismas de la web; no hay archivos de
+sonido.
+
+El ícono sale del logo (`assets/marca/logo-mp.png`) y solo toca `android/`. Si cambia el
+logo, se rehace con:
+
+```bash
+cd frontend && dart run flutter_launcher_icons
+```
 
 ## Despliegue en el servidor
 

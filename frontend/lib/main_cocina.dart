@@ -7,8 +7,9 @@ import 'autenticacion/autorizador_android.dart';
 import 'autenticacion/servicio_sesion.dart';
 import 'configuracion.dart';
 import 'pantallas/pantalla_acceso.dart';
+import 'pantallas/pantalla_encendida_android.dart';
 import 'pantallas/red.dart';
-import 'pantallas/timbre.dart';
+import 'pantallas/timbre_android.dart';
 
 /// La entrada del APK de cocina (D-48): el mismo código que la web, con las piezas de
 /// Android. Recepción sigue en la web.
@@ -49,6 +50,8 @@ void main() {
         renovar: sesion.renovar,
         alRechazarSesion: sesion.terminarSesionRechazada,
       );
+  // Suena desde que se abre, sin esperar un toque, por el canal de alarma (D-50).
+  final timbre = TimbreAndroid();
   runApp(
     AppMaxPizzapp(
       titulo: _titulo,
@@ -56,13 +59,17 @@ void main() {
         sesion: sesion,
         api: api,
         crearCanal: crearCanal,
-        timbre: TimbreMudo(),
+        timbre: timbre,
         // Sin paquete de red (D-50): al perderla, Android cierra las conexiones y el latido
         // del canal cubre el resto.
         red: const RedSiempreEnLinea(),
+        pantallaEncendida: const PantallaEncendidaAndroid(),
         webDeRecepcion: configuracion.origen,
       ),
     ),
   );
   sesion.arrancar();
+  // Después de runApp, cuando ya se puede hablar con Android: el sonido queda cargado antes
+  // del primer pedido.
+  timbre.preparar();
 }

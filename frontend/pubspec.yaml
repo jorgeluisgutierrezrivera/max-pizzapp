@@ -23,14 +23,36 @@ dependencies:
   # Solo en el APK de cocina (D-49): abre Keycloak en el navegador del sistema y trae el
   # codigo con PKCE. La web sigue con su propia redireccion.
   flutter_appauth: 12.1.0
+  # Solo en el APK de cocina (D-50): el timbre por el canal de alarma y la pantalla
+  # encendida mientras la cola esta abierta. La web no los usa.
+  audioplayers: 6.8.1
+  wakelock_plus: 1.8.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: 6.0.0
+  # Arma los iconos del APK desde el logo: dart run flutter_launcher_icons
+  flutter_launcher_icons: 0.14.4
 
 flutter:
   uses-material-design: true
   # El logo de Max's Pizzas, con autorización del local (D-29).
   assets:
     - assets/marca/
+
+# El icono del APK de cocina: el logo de Max's Pizzas sobre el carbon de la marca (D-29).
+# Solo toca android/: los iconos de la web quedan como estan.
+flutter_launcher_icons:
+  android: true
+  ios: false
+  web:
+    generate: false
+  # El de Android 7, un cuadrado entero: el mismo de la web.
+  image_path: web/icons/Icon-512.png
+  min_sdk_android: 24
+  # El adaptable, de Android 8 en adelante: cada telefono lo recorta con su forma, asi que
+  # el logo va mas adentro para que el circulo no lo corte.
+  adaptive_icon_background: "#141414"
+  adaptive_icon_foreground: assets/marca/logo-mp.png
+  adaptive_icon_foreground_inset: 22
