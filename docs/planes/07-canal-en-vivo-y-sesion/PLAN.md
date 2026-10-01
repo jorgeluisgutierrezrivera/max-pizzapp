@@ -5,9 +5,10 @@
 
 - **Tarjeta:** 07 — El canal en vivo y la sesión
 - **Incremento:** tiempo real completo (E3)
-- **Estado:** 🔵 **En curso** — aprobado el 2026-09-29, sin cambios (propuesto el 2026-09-28)
+- **Estado:** ✅ **Hecho** — en producción desde el 2026-09-30 y probada por el autor con dos
+  dispositivos. Aprobado el 2026-09-29, sin cambios (propuesto el 2026-09-28)
 - **Entrada al tablero:** 2026-09-28
-- **Cierre:** —
+- **Cierre:** 2026-09-30
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
 
 ---
@@ -214,8 +215,9 @@ Cada fase se prueba y se sube por separado.
 - [x] **Hallazgo de la prueba:** después de iniciar sesión, cocina quedaba con el sonido
       apagado hasta el primer toque, y un pedido llegó sin sonar. Se suma la franja de
       sonido apagado.
-- [ ] La franja, en producción, vista por el autor.
-- [ ] Evidencia en la sección 9 y cierre.
+- [x] La franja, en producción, revisada por el autor: esta vez el navegador ya dejaba
+      sonar al entrar, así que no hizo falta *(ver la sección 9)*.
+- [x] Evidencia en la sección 9 y cierre.
 
 ---
 
@@ -236,8 +238,10 @@ Cada fase se prueba y se sube por separado.
   - `frontend/lib/pantallas/aviso_sin_sonido.dart` *(nuevo, hallazgo de la fase E)*,
     `timbre.dart` y `timbre_web.dart`: la franja de sonido apagado;
   - `frontend/lib/pantallas/pantalla_recepcion.dart`, `pantalla_cocina.dart` y
-    `frontend/lib/pedidos/pedidos_en_vivo.dart`.
-- **Pruebas de la app:** `frontend/test/canal_en_vivo_test.dart` *(nuevo)*,
+    `segun_rol.dart`. *(`pedidos_en_vivo.dart`, previsto en el plan, no hizo falta tocarlo:
+    la relectura al reconectar ya estaba.)*
+- **Pruebas de la app:** `frontend/test/canal_en_vivo_test.dart` y
+  `aviso_sin_conexion_test.dart` *(nuevos)*, `identidad_test.dart`,
   `cliente_api_test.dart`, `servicio_sesion_test.dart`, `pantalla_cocina_test.dart`,
   `pantalla_recepcion_test.dart` y `pedidos_de_recepcion_test.dart`.
 - **Documentación:** `README.md` (qué pasa si se cae el canal y la medición nueva).
@@ -299,7 +303,7 @@ No cambia la base de datos, el contrato HTTP de la API ni el realm de producció
 | B — La sesión y la reconexión | ✅ Verificada | 2026-09-30 | **El canal** (`lib/api/canal_en_vivo.dart`) deja el socket detrás de una interfaz mínima (`SocketDelCanal`), para poder simular cortes y rechazos, y decide por el motivo: un corte del servidor (`io server disconnect`) reconecta en el acto con el token vigente; un rechazo por el token (`TOKEN_AUSENTE`, `TOKEN_EXPIRADO`, `TOKEN_INVALIDO`) lo renueva **una vez** y reconecta; un segundo rechazo, o uno por otro motivo (`ROL_SIN_PERMISO`), termina la sesión; y una caída de la red o del servidor queda en manos de la reconexión del propio cliente. **El cliente de la API:** si el reintento con el token renovado vuelve a dar 401, termina la sesión; un 403 no, porque el token es válido y lo que no alcanza es el rol. **La sesión** suma `terminarSesionRechazada()`: vuelve al acceso con *"Tu sesión expiró. Inicia sesión de nuevo."* y olvida los tokens, también el de renovación. **`flutter test`: 214 de 214** (195 anteriores y **19 nuevas**): 15 del canal con el socket simulado (el corte del servidor reconecta sin renovar; tres motivos de caída de la red no tocan nada; los tres rechazos del token renuevan una vez y reconectan con el token nuevo; el segundo rechazo termina la sesión; después de volver a entrar, un rechazo futuro tiene otra vez su renovación; sin rol termina sin renovar; si la renovación falla no reconecta; un error sin código no hace nada; si la pantalla cerró el canal mientras renovaba, no se reabre; y los avisos siguen llegando), 3 del cliente de la API (el 401 que persiste termina la sesión con un solo reintento; el reintento que pasa no; un 403 no) y 1 de la sesión. `flutter analyze` sin observaciones. **Con el cliente real, contra la API y el Keycloak locales** (verificación fuera del repositorio, con la vigencia del token bajada a 120 s solo en el Keycloak de desarrollo y devuelta después a 3600): un token inválido es rechazado por el servidor, el canal lo renueva una vez y entra; un rechazo que se repite termina la sesión; y **el servidor cortó la conexión a la hora exacta en que vencía el token (5 ms antes) y el canal volvió a entrar 15 ms después**, con el token que ya tenía renovado, sin renovar ni terminar la sesión, y el pedido nuevo que se vendió enseguida le llegó por el canal. **Lo que salió:** el payload del rechazo que llega al cliente de Flutter es `{message, data: {codigo}}`, el mismo que arma el servidor, así que el código se lee sin adivinar el texto. Docker Desktop estaba cerrado tras reiniciar la máquina, sin error; solo hizo falta abrirlo |
 | C — El aviso de canal caído | ✅ Verificada · **revisada por el autor** | 2026-09-30 | **La lógica** (`VigiaDelCanal`, en `lib/pantallas/aviso_sin_conexion.dart`, sin pantalla): al abrir espera 5 s la primera conexión; ante un corte, 1 s, para que la reconexión tras el vencimiento del token (15 ms, fase B) no haga parpadear nada; y si el dispositivo pierde la red, avisa en el acto, con los eventos `online` y `offline` del navegador (`red_web.dart`, cargado solo desde `main.dart`, como el sonido). **La banda** (`AvisoSinConexion`), amarilla y anunciada a los lectores de pantalla, dice *"Sin conexión en vivo. Lo que ves puede no estar al día."* con **Recargar**, que muestra "Recargando…" y no se puede tocar dos veces. En cocina va sobre la cola y relee la cola. En recepción va **sobre las dos pestañas**, también *Nueva venta*, y relee los pedidos **sin tocar la venta en curso**. **`flutter test`: 236 de 236** (214 anteriores y **22 nuevas**): 7 de la lógica (los 5 s al abrir, conectar antes, arrancar conectado, el corte al segundo y la vuelta, el corte por vencimiento que no parpadea, la red del dispositivo y la red que vuelve con el canal todavía caído); 7 de la banda (el texto, *Recargar* con su espera y sin doble toque, una lectura que falla, y 320, 360, 768 y 1366 px sin desbordes); 5 en cocina (la banda a los 5 s, que se va y relee al conectar; el corte al segundo y *Recargar* que trae un pedido nuevo; seguir trabajando con *Empezar*; la red del dispositivo; 320 px); y 3 en recepción (la banda en las dos pestañas; *Recargar* relee los pedidos y conserva el nombre escrito en la venta; se va sola al volver). Las pruebas de la venta arrancan con un canal conectado, que es el caso normal. `flutter analyze` sin observaciones. **Lo que se vio en el navegador** (build de producción en local, con un servidor de revisión que congela el canal sin cerrarlo): el autor vio aparecer la banda **a los 4 s** y, en otra vuelta, **a los 3 s en cocina y 5 s en recepción**, bajo los 8 s del peor caso. **Lo que salió:** (1) el tema de la app estira los `FilledButton` a todo el ancho, y dentro de la fila de la banda eso era un ancho infinito: el botón lleva su propio tamaño mínimo. (2) **La vuelta del canal en Chrome tarda de 10 a 30 s** tras una red colgada, por el defecto del cliente de Flutter en la web contado en las revisiones del plan. Medido con el mismo tapón: cliente de JavaScript en Chrome, de 1,4 a 7,7 s; cliente de Flutter fuera del navegador, de 0,3 a 6,4 s; cliente de Flutter en Chrome, de 10 a 15 s con los valores de fábrica y de 28 a 31 s con un intento de 5 s, que por eso se descartó. No afecta al aviso ni a *Recargar*. El arreglo de fondo queda para la semana del E4 (E-014) |
 | D — En producción | ✅ Verificada | 2026-09-30 | **El modo avión, del autor, en su celular con cocina abierta en `https://maxpizzapp.tech`** (dos capturas de las 11:27, sin datos personales): antes, "En vivo"; con el modo avión, **la banda en el mismo minuto**, con *Recargar* y el indicador en "Conectando…", sin desbordes en el ancho del celular. El aviso lo dispara el evento `offline` del navegador, sin esperar al latido. **Lo que midió el agente:** **Antes** (11:16, 30-sep): la API corría desde el 25-sep con 0 reinicios y anunciaba el latido viejo, *"cada 25000 ms, espera 20000 ms: una red colgada se nota en 45000 ms como maximo"*. **El orden, para que nadie quede con la app vieja frente al servidor nuevo** (la app vieja no se reconectaba tras el corte al vencer el token): primero se publicó la app, versión `20260930-111556`, que funciona igual con el servidor viejo; después, **el autor** trajo el código y reconstruyó solo la API, sin migraciones. **Después, contra `https://maxpizzapp.tech`:** el saludo anuncia **4000 y 3000 ms**, así que una red colgada se nota en 7 s como máximo. Solo se recreó `maxpizzapp-backend`: Keycloak y la base siguieron en pie desde hacía 7 días, es decir, sin el problema de E-013. La API tiene **0 reinicios** y ninguna línea de error en su registro, y `/salud` responde 200 con la base. Con las cuentas reales: el acceso con PKCE, **correcto**; `probar_pedidos.py`, **76 de 76**; y el aviso en vivo, 10 mediciones de cada uno: **pedido nuevo a cocina, mediana 176 ms y peor caso 240 ms; cambio de estado a recepción, 198 ms y 375 ms; lo agregado a cocina, 172 ms y 749 ms**. Al terminar, ningún pedido activo (63 entregados y 90 cancelados, todos de pruebas) y la API todavía con 0 reinicios |
-| E — La prueba del autor | 🟡 El canal, verificado; la franja de sonido, por ver en producción | 2026-09-30 | **En producción, con recepción en la computadora y cocina en el celular del autor** (datos ficticios: *Gabriel Cantante · 60000001*; capturas `e1` a `e5` del celular, de 11:32 a 11:34). (1) Cocina en vivo, sin pedidos. (2) **Modo avión: la banda en el acto.** (3) Con cocina sin red, recepción vende el **pedido 44** (Champiñones y una gaseosa, para llevar, "Bien cocida"); cocina no lo ve, que es lo correcto. (4) Sin el modo avión, la banda sigue unos segundos mientras el canal vuelve. (5) **El pedido 44 aparece solo**, "recién llegado", con su observación resaltada, **a los 5 a 7 s de volver la red y sin tocar *Recargar***. **Ningún corte falso:** la banda solo apareció cuando se cortó la red (riesgo de D-44, sin observarse). **Hallazgo:** en las capturas, el ícono de sonido aparece tachado: el pedido 44 **llegó sin sonar**. El navegador no deja sonar una página hasta que la persona la toca, e iniciar sesión recarga la página; el sonido se activaba recién con el primer toque (fase I de la tarjeta 06), y si nadie tocaba la cocina, el primer pedido llegaba mudo. **Corrección:** una **franja** *"El sonido está apagado. Tocá en cualquier parte de la pantalla para activarlo."*, en recepción y en cocina, mientras el navegador no deje sonar. Al primer toque en cualquier parte, el sonido se activa, **suena una vez para confirmarlo** y la franja se va. Nunca suena al cargar la página, y si el toque cae sobre el botón del parlante no suena dos veces. `flutter test`: **242 de 242** (236 anteriores y **6 nuevas**: la franja aparece, se va al activarse, no está si el sonido ya anda, 320 px en cocina, las dos pestañas de recepción, y su contraste). **El arreglo de fondo para cocina es el APK** (tarjeta 12): una app instalada no tiene esa regla del navegador y suena desde que se abre |
+| E — La prueba del autor | ✅ Verificada | 2026-09-30 | **En producción, con recepción en la computadora y cocina en el celular del autor** (datos ficticios: *Gabriel Cantante · 60000001*; capturas `e1` a `e5` del celular, de 11:32 a 11:34). (1) Cocina en vivo, sin pedidos. (2) **Modo avión: la banda en el acto.** (3) Con cocina sin red, recepción vende el **pedido 44** (Champiñones y una gaseosa, para llevar, "Bien cocida"); cocina no lo ve, que es lo correcto. (4) Sin el modo avión, la banda sigue unos segundos mientras el canal vuelve. (5) **El pedido 44 aparece solo**, "recién llegado", con su observación resaltada, **a los 5 a 7 s de volver la red y sin tocar *Recargar***. **Ningún corte falso:** la banda solo apareció cuando se cortó la red (riesgo de D-44, sin observarse). **Hallazgo:** en las capturas, el ícono de sonido aparece tachado: el pedido 44 **llegó sin sonar**. El navegador no deja sonar una página hasta que la persona la toca, e iniciar sesión recarga la página; el sonido se activaba recién con el primer toque (fase I de la tarjeta 06), y si nadie tocaba la cocina, el primer pedido llegaba mudo. **Corrección:** una **franja** *"El sonido está apagado. Tocá en cualquier parte de la pantalla para activarlo."*, en recepción y en cocina, mientras el navegador no deje sonar. Al primer toque en cualquier parte, el sonido se activa, **suena una vez para confirmarlo** y la franja se va. Nunca suena al cargar la página, y si el toque cae sobre el botón del parlante no suena dos veces. `flutter test`: **242 de 242** (236 anteriores y **6 nuevas**: la franja aparece, se va al activarse, no está si el sonido ya anda, 320 px en cocina, las dos pestañas de recepción, y su contraste). **El arreglo de fondo para cocina es el APK** (tarjeta 12): una app instalada no tiene esa regla del navegador y suena desde que se abre **La franja, en producción** (30-sep, con la app `20260930-120338`): el autor cerró la sesión de cocina en el celular y volvió a entrar, y esta vez la pantalla **quedó con sonido desde el arranque**, sin franja. Es el comportamiento correcto: la franja solo aparece mientras el navegador bloquea el sonido, y el navegador no siempre lo bloquea (decide con su propia política, por ejemplo según cuánto se usó el sitio con sonido). El caso en que sí bloquea, el del pedido 44, lo cubren las 6 pruebas de la franja |
 
 ---
 
@@ -319,4 +323,36 @@ No cambia la base de datos, el contrato HTTP de la API ni el realm de producció
 
 ## 11. Cierre
 
-—
+- **Commits de la tarjeta**, uno por fase probada:
+  - `b03a02d` el plan (07-P);
+  - `699e6fa` el servidor: latido corto y corte al vencer el token (A);
+  - `aa96bd4` la app: la sesión y la reconexión (B);
+  - `5ba384a` la app: la banda de canal caído (C);
+  - `2a55599` la franja de sonido apagado (hallazgo de la fase E).
+
+  La fase D no lleva commit: es la publicación de la app y la reconstrucción de la API en el
+  servidor. El cierre (07-E) lleva este apartado y el índice de planes.
+- **Criterios de aceptación (sección 7):** los siete cumplidos.
+  - **La banda con el canal colgado, bajo 10 s:** la caída se detectó a los 6,89 s en el peor
+    de 10 cortes, y la banda aparece 1 s después. En el navegador, el autor la vio a los 3 a
+    5 s. Con el dispositivo sin red, en el acto.
+  - ***Recargar*, sin recargar la página**, y la banda que se va sola al volver el canal.
+  - **Las acciones siguen por la API con el canal caído**, cubierto por las pruebas de cocina.
+  - **Ninguna sesión rechazada sigue operando**, y **ninguna pantalla queda en "Conectando…"
+    para siempre**: fase B, con el socket simulado y con el cliente real.
+  - **Ninguna conexión dura más que su token:** el corte llegó 5 ms antes del vencimiento y la
+    reconexión, 15 ms después, sin que se note.
+  - **Sin regresiones:** `npm test` 273 de 273, `flutter test` 242 de 242 y, contra
+    producción, `probar_pedidos.py` 76 de 76 y el aviso en vivo con medianas de 172 a 198 ms.
+- **Requisitos:** RF-03 (CA-03.2), la segunda mitad de RNF-05, RF-08 (CA-08.2), CU-03 (flujo
+  A2) y RNF-02 durante la conexión en vivo. Con esta tarjeta, **todos los *Must* quedan en
+  producción**, como pide el E3.
+- **Queda abierto, con destino:**
+  - **E-014:** en Chrome, el canal tarda de 10 a 30 s en volver tras una red colgada. No
+    afecta al aviso ni a *Recargar*. El arreglo de fondo, un adaptador propio de WebSocket
+    para la web, va a la semana del E4, con su plan;
+  - **el sonido en cocina desde el arranque** queda como requisito de la tarjeta 12 (APK). En
+    la web, la franja avisa cuando el navegador lo bloquea;
+  - **la vuelta al acceso** no se provocó a mano en producción, porque exigiría invalidar la
+    sesión desde la consola de Keycloak. Quedó verificada en la fase B, con el cliente real.
+- **Fecha de cierre:** 2026-09-30, con la tarjeta en producción y aprobada por el autor.

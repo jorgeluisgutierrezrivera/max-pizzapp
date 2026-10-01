@@ -39,12 +39,12 @@ siguiente hasta cerrar la actual.
 | 04 | App Flutter y acceso por rol | Login end-to-end y navegación según rol | **Hecho** — 23-sep |
 | 05 | La carta y la venta en recepción | La carta real y la venta como recorrido guiado, con la identidad del local | **Hecho** — 24-sep |
 | 06 | Pedidos y cola de cocina | El CRUD del pedido (alta con precio del servidor, estados por rol y cancelación con motivo), la cola de cocina y el aviso en vivo mínimo | **Cerrada** el 25-sep, en producción — revisada con la tutoría (D-36 a D-38) y con el autor al probarla (D-39, D-41) |
-| 07 | El canal en vivo y la sesión | El aviso cuando se cae el canal, con *Recargar* (CA-03.2, RNF-05); el latido que lo detecta en menos de 10 s; la reconexión después de un corte o un rechazo; la sesión rechazada que vuelve al acceso; y ninguna conexión que dure más que su token. La carta al día en todas las pantallas pasa a la 08, con RF-13 | **Aprobado** — 29-sep |
+| 07 | El canal en vivo y la sesión | El aviso cuando se cae el canal, con *Recargar* (CA-03.2, RNF-05); el latido que lo detecta en menos de 10 s; la reconexión después de un corte o un rechazo; la sesión rechazada que vuelve al acceso; y ninguna conexión que dure más que su token. La carta al día en todas las pantallas pasa a la 08, con RF-13 | **Hecho** — 30-sep, en producción. La vuelta rápida del canal en Chrome (E-014) pasa al E4 |
 | 08 | Disponibilidad de productos | Marcar un producto agotado (RF-13). La cancelación (RF-09) se adelantó a la 06 (D-33) | Por hacer |
 | 09 | Endurecimiento de seguridad | Cabeceras, límite de intentos y repaso de validaciones | Por hacer |
 | 10 | Pruebas end-to-end y documentación técnica | Suite en verde y plan de pruebas documentado | Por hacer |
 | 11 | Identidad visual del acceso | Tema de Keycloak con la estética de la app y del local (colores, tipografía, marca), solo con estilos | Por hacer — después del E2 |
-| 12 | App Android para cocina | El mismo código de Flutter compilado como APK para el rol cocina (D-43): inicio de sesión en Android, sonido **desde el arranque, sin esperar un toque** (lo que la web no puede, visto en la prueba de la 07), pantalla encendida, firma y descarga. Recepción sigue en la web | Por hacer — E3, después de la 07 |
+| 12 | App Android para cocina | El mismo código de Flutter compilado como APK para el rol cocina (D-43): inicio de sesión en Android, sonido **desde el arranque, sin esperar un toque** (lo que la web no puede, visto en la prueba de la 07), pantalla encendida, firma y descarga. Recepción sigue en la web | **Aprobado** — 30-sep |
 
 > **Orden modificado el 22-sep.** La tarjeta 02 era *Identidad y roles con Keycloak* y el
 > despliegue público estaba al final, en la 09. Se fundieron y se adelantaron: la dirección
