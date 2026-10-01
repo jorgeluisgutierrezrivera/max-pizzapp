@@ -6,9 +6,9 @@
 - **Tarjeta:** 03 — API base: estado del servicio y validación de token
 - **Incremento:** cimientos (servidor de aplicación)
 - **Estado:** ✅ Hecho — desplegada en `https://maxpizzapp.tech/api/v1` y verificada el
-  2026-09-23, con el monitor del RNF-05 en marcha; a la espera de los commits 12b y 12c
+  2026-09-23, con el monitor del RNF-05 en marcha
 - **Entrada al tablero:** 2026-09-22
-- **Cierre:** —
+- **Cierre:** 2026-09-23
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
 
 ---

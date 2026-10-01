@@ -5,10 +5,9 @@
 
 - **Tarjeta:** 01 — Esquema de datos y PostgreSQL en contenedor
 - **Incremento:** cimientos (persistencia)
-- **Estado:** 🔵 Verificado — pruebas en verde el 2026-09-22; cierra al subir los
-  commits 6P, 6 y 7
+- **Estado:** ✅ Hecho — pruebas en verde el 2026-09-22 y commits 6P, 6 y 7 subidos
 - **Entrada al tablero:** 2026-09-17
-- **Cierre:** —
+- **Cierre:** 2026-09-22
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
 
 ---
@@ -209,7 +208,7 @@ verificación y el ejercicio del flujo se ejecutan dentro del contenedor.
 - **Pruebas:** en verde el **2026-09-22** (sección 9). El guión de verificación completo
   —inventario del esquema, flujo del pedido, restricciones, cascada y limpieza— está
   descrito en la sección 6 y se ejecuta con `psql` dentro del contenedor.
-- **Fecha de cierre:** 2026-09-22, a la espera de los commits.
+- **Fecha de cierre:** 2026-09-22.
 
 ---
 

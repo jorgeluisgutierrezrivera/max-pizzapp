@@ -5,8 +5,7 @@
 
 - **Tarjeta:** 02 — URL pública con HTTPS, proxy e identidad
 - **Incremento:** cimientos (infraestructura e identidad)
-- **Estado:** 🔵 Verificado — pruebas en verde el 2026-09-23; cierra al subir los
-  commits 30, 30b, 30c y 31
+- **Estado:** ✅ Hecho — pruebas en verde el 2026-09-23 y commits 30, 30b, 30c y 31 subidos
 - **Entrada al tablero:** 2026-09-22
 - **Cierre:** 2026-09-23
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
@@ -247,4 +246,4 @@ el sistema es público—, con el navegador y con la terminal:
 - **Queda abierto:** la **captura fechada** de la URL pública para el apartado 2.9, que
   toma el autor; y el **monitor de disponibilidad** del RNF-05, que espera a
   `GET /api/v1/salud` (tarjeta 03).
-- **Fecha de cierre:** 2026-09-23, a la espera de los commits.
+- **Fecha de cierre:** 2026-09-23.

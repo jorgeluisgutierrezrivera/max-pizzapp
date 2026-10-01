@@ -5,11 +5,12 @@
 
 - **Tarjeta:** 06 — Pedidos y cola de cocina
 - **Incremento:** pedidos sobre la URL pública
-- **Estado:** 🔵 **En curso — aprobado** el 2026-09-24, con "para llevar o comer aquí" (D-34);
-  **revisado el mismo día** con la observación de la tutoría: la venta en una sola pantalla,
-  agregar a un pedido ya enviado y la venta directa de bebidas (D-36, D-37 y D-38)
+- **Estado:** ✅ **Hecho** — en producción desde el 2026-09-25 y aprobada por el autor.
+  Aprobado el 2026-09-24, con "para llevar o comer aquí" (D-34), y **revisado el mismo día**
+  con la observación de la tutoría: la venta en una sola pantalla, agregar a un pedido ya
+  enviado y la venta directa de bebidas (D-36, D-37 y D-38)
 - **Entrada al tablero:** 2026-09-24
-- **Cierre:** —
+- **Cierre:** 2026-09-25
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
 
 ---
