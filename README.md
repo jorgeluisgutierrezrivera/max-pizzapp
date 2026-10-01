@@ -183,11 +183,13 @@ la web. No está en Google Play: se descarga del repositorio.
    `max-pizzapp-cocina.apk`, siempre la última versión publicada.
 2. Abrir el archivo descargado. La primera vez, Android pide permiso para instalar apps
    desde el navegador: se da una vez. Si Play Protect avisa que no conoce la app, es porque
-   no viene de Google Play.
+   no viene de Google Play: se elige *Instalar de todas formas*.
 3. Si se quiere comprobar que el archivo es el publicado, su SHA-256 está en la descripción
    del Release.
 4. Abrir **Max Pizzapp Cocina** y entrar con la cuenta de cocina. La página de acceso es la de
    Keycloak, en el navegador del teléfono: la app nunca ve la contraseña.
+
+Probado contra producción en un Honor 50 con Android 13; se instala desde Android 7.
 
 ### En la cocina
 
