@@ -18,6 +18,11 @@ info:
     para resolverlos, por ejemplo `totalCorrecto` o `estadoActual`. Nunca se devuelve la
     traza ni el detalle interno.
 
+    **El cuerpo.** JSON en UTF-8, de hasta 100 KB. Cualquier ruta que reciba un cuerpo
+    responde **400** `JSON_INVALIDO` si no es JSON, **413** `CUERPO_DEMASIADO_GRANDE` si
+    supera el límite y **415** `FORMATO_NO_SOPORTADO` si llega con otro juego de caracteres o
+    con una compresión desconocida. El cuerpo se lee antes de validar el token.
+
     **Límite de peticiones.** La API acepta hasta 600 peticiones por minuto de una misma IP
     (configurable con `LIMITE_PETICIONES_POR_MINUTO`). Pasado el límite, cualquier ruta
     responde **429** `DEMASIADAS_PETICIONES`, con la cabecera `Retry-After` en segundos; las

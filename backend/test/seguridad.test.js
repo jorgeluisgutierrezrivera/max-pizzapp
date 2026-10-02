@@ -212,6 +212,37 @@ test('por la API: el motivo de una cancelacion con caracteres de control respond
   });
 });
 
+// --- los cuerpos que express.json() rechaza ---------------------------------------------
+
+test('un cuerpo de mas de 100 KB responde 413 en el formato unico, sin token y sin tocar la base', async () => {
+  await conApp({}, async (base, pool) => {
+    const r = await fetch(`${base}/pedidos`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ relleno: 'x'.repeat(150 * 1024) }),
+    });
+    assert.equal(r.status, 413);
+    assert.deepEqual(await r.json(), {
+      error: { codigo: 'CUERPO_DEMASIADO_GRANDE', mensaje: 'El cuerpo de la peticion es demasiado grande.' },
+    });
+    comprobarCabeceras(r);
+    assert.deepEqual(pool.consultas, [], 'nada llego a la base');
+  });
+});
+
+test('un cuerpo con un juego de caracteres o una compresion desconocidos responde 415', async () => {
+  await conApp({}, async (base) => {
+    for (const cabeceras of [
+      { 'content-type': 'application/json; charset=latin9' },
+      { 'content-type': 'application/json', 'content-encoding': 'chiflado' },
+    ]) {
+      const r = await fetch(`${base}/pedidos`, { method: 'POST', headers: cabeceras, body: '{}' });
+      assert.equal(r.status, 415, JSON.stringify(cabeceras));
+      assert.equal((await r.json()).error.codigo, 'FORMATO_NO_SOPORTADO');
+    }
+  });
+});
+
 // --- el canal en vivo -------------------------------------------------------------------
 
 test('el canal acepta el saludo con un token real y corta un mensaje mas grande que su limite', async (t) => {

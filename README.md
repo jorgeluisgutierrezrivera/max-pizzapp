@@ -108,6 +108,33 @@ Paquetes de la app Flutter, fijados sin rangos en `frontend/pubspec.yaml` y con
 | flutter_launcher_icons | 0.14.4 | Arma el ícono del APK desde el logo (solo desarrollo) |
 
 
+## Seguridad
+
+| Qué | Cómo |
+|---|---|
+| Acceso | Keycloak, con *Authorization Code* y PKCE. La app nunca ve la contraseña. Contraseñas de 12 caracteres o más, guardadas con **Argon2id**; tras 5 intentos fallidos, la cuenta se bloquea un tiempo |
+| Sesión | Token de 60 minutos, solo en memoria. Un 401 que no se resuelve renovando devuelve al acceso |
+| Rol | La API comprueba el token y el rol en cada ruta, salvo `/salud`. Una cuenta nueva nace **sin ningún rol** y recibe 403 en todo |
+| Datos de entrada | La app valida para avisar y la API vuelve a validar todo, con un solo formato de error. Ningún dato hace responder 500. Las consultas van siempre parametrizadas |
+| Abuso | 600 peticiones por minuto por IP; pasado eso, 429 |
+| Navegador | HTTPS con HSTS, cabeceras de seguridad (Helmet en la API, Caddy en la app) y una política de contenido (CSP) sin scripts de terceros |
+| Secretos | Solo en el `.env`, fuera del repositorio. La llave del APK, fuera también |
+
+La configuración de seguridad de Keycloak la aplica `scripts/endurecer-keycloak.sh`
+(`docker/keycloak/README.md`). Para comprobar desde afuera lo que no necesita una cuenta:
+
+```bash
+curl -sI https://maxpizzapp.tech/ | grep -iE "content-security|strict-transport|x-frame"
+```
+
+```bash
+curl -s https://maxpizzapp.tech/api/v1/pedidos
+```
+
+El segundo responde 401 `TOKEN_AUSENTE`. Los 403 por rol, con las dos cuentas de prueba, los
+comprueba `pruebas/api/probar_pedidos.py`.
+
+
 ## Pruebas
 
 Las del backend y la app corren sin el entorno levantado; las de `pruebas/`, contra
@@ -115,7 +142,7 @@ Keycloak y la API reales. Antes de la primera vez: `cd backend && npm ci` y
 `cd frontend && flutter pub get`.
 
 ```bash
-cd backend && npm test            # 284 pruebas: acceso, carta, precio, pedidos, lo agregado, canal en vivo (con su latido y el corte al vencer el token), seguridad (cabeceras, límite de peticiones, caracteres de control) y el contrato OpenAPI, sin base ni Keycloak reales
+cd backend && npm test            # 288 pruebas: acceso, carta, precio, pedidos, lo agregado, canal en vivo (con su latido y el corte al vencer el token), seguridad (cabeceras, límite de peticiones, caracteres de control, cuerpos rechazados) y el contrato OpenAPI, sin base ni Keycloak reales
 cd frontend && flutter test       # 280 pruebas de la app: la venta, los pedidos, la cocina, el acceso en la web y en el APK, la sesión, el canal en vivo (cortes, rechazos y el aviso de canal caído), el aviso de sonido apagado, el timbre y la pantalla encendida del APK, y el contraste de colores
 python pruebas/identidad/probar_acceso_pkce.py   # inicio de sesión real con PKCE
 python pruebas/api/probar_salud_y_token.py       # la API con tokens reales del realm

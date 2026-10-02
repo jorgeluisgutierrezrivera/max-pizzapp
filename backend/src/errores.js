@@ -47,6 +47,22 @@ function manejadorErrores(err, req, res, next) {
     responderError(res, 400, 'JSON_INVALIDO', 'El cuerpo de la peticion no es JSON valido.');
     return;
   }
+  // Los otros rechazos de express.json(): un cuerpo mas grande que el limite (413), o con un
+  // juego de caracteres o una compresion que no entiende (415). Antes caian en el 500, como
+  // si fueran un fallo nuestro, y se podian provocar sin token (tarjeta 09).
+  if (err.type === 'entity.too.large') {
+    responderError(res, 413, 'CUERPO_DEMASIADO_GRANDE', 'El cuerpo de la peticion es demasiado grande.');
+    return;
+  }
+  if (err.type === 'charset.unsupported' || err.type === 'encoding.unsupported') {
+    responderError(res, 415, 'FORMATO_NO_SOPORTADO', 'El cuerpo de la peticion tiene que ser JSON en UTF-8.');
+    return;
+  }
+  // Cualquier otro error de la peticion que la libreria marca como del cliente (4xx).
+  if (Number.isInteger(err.status) && err.status >= 400 && err.status < 500 && err.expose) {
+    responderError(res, err.status, 'PETICION_INVALIDA', 'La peticion no se pudo leer.');
+    return;
+  }
   // La base no responde: es una dependencia caida, no un fallo del codigo. Un 503 le dice
   // a la app que reintentar tiene sentido; un 500 diria que no.
   if (esBaseNoDisponible(err)) {

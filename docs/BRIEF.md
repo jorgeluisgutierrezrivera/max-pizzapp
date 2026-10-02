@@ -156,9 +156,18 @@ Implementado (tarjetas 02 a 06):
 5. **Autorización por petición:** cada endpoint (salvo el de salud) valida token y rol, y
    los que cambian un pedido, además, la transición de estado.
 
-Previsto (tarjeta 09, todavía **no** implementado):
-6. **Cabeceras de seguridad** (Helmet en Express).
-7. **Límite de peticiones** en la API.
+Implementado en la tarjeta 09 (D-52 a D-55):
+6. **Cabeceras de seguridad** con Helmet en la API, y en Caddy para la app; HSTS lo pone
+   Caddy, que termina TLS.
+7. **Límite de peticiones** en la API: 600 por minuto por IP, con 429 en el formato único.
+8. **Ningún dato de entrada responde 500:** los textos rechazan los caracteres de control,
+   y un cuerpo demasiado grande o con otro juego de caracteres responde 413 o 415.
+9. **Keycloak endurecido con un script versionado** (`scripts/endurecer-keycloak.sh`):
+   direcciones de retorno exactas, contraseñas de 12 caracteres con Argon2, cuentas nuevas
+   sin ningún rol, eventos de acceso por 7 días y la consola protegida contra la fuerza
+   bruta.
+10. **Política de contenido (CSP) en la app**, medida antes de imponerla: ningún script de
+    un tercero (CanvasKit sale del propio dominio).
 
 > **RNF con métrica a cumplir:** propagación de cambios en tiempo real **< 2 s**; token
 > JWT con vigencia **~60 min**; interfaz **responsive**; degradación controlada si cae el
