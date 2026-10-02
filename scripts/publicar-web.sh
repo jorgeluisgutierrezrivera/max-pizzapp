@@ -19,6 +19,11 @@
 # Sin --dart-define: en produccion la app deduce Keycloak del
 # dominio. Ninguna direccion queda escrita en el build.
 #
+# Con --no-web-resources-cdn: CanvasKit, el motor que dibuja la
+# app, sale del propio dominio y no de www.gstatic.com. Asi
+# ningun script viene de un tercero y la politica de contenido
+# (CSP) del Caddyfile puede decir script-src 'self' (D-55).
+#
 # VOLVER A LA VERSION ANTERIOR (en el servidor):
 #   cd /opt/maxpizzapp-web && ls versiones
 #   ln -sfn versiones/<version-anterior> actual.nuevo && mv -T actual.nuevo actual
@@ -32,8 +37,8 @@ CONSERVAR=3
 
 cd "$(dirname "$0")/../frontend"
 
-echo "==> Compilando la app (release)"
-flutter build web --release
+echo "==> Compilando la app (release, CanvasKit propio)"
+flutter build web --release --no-web-resources-cdn
 
 echo "==> Copiando la version $VERSION a $DESTINO"
 tar -C build/web -czf - . | ssh "$DESTINO" "

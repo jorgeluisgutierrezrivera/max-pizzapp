@@ -44,12 +44,9 @@
 {$DOMINIO} {
 	encode zstd gzip
 
-	# Cabeceras de seguridad que no dependen de la aplicacion.
-	#
-	# La politica de contenido (CSP) NO se fija todavia: se define
-	# en la tarjeta de endurecimiento, cuando se sepa que necesita
-	# de verdad el Flutter compilado. Una CSP puesta a ciegas rompe
-	# la aplicacion y eso se descubre el dia de la entrega.
+	# Cabeceras de seguridad que no dependen de la aplicacion. La
+	# politica de contenido (CSP) va mas abajo, en el bloque de la
+	# app: las respuestas de la API llevan la suya, la de Helmet.
 	header {
 		Strict-Transport-Security "max-age=31536000"
 		X-Content-Type-Options "nosniff"
@@ -96,6 +93,27 @@
 			# anterior despues de publicar. "no-cache" no es "no-store":
 			# si el archivo no cambio, Caddy responde 304 sin reenviarlo.
 			header Cache-Control "no-cache"
+
+			# La politica de contenido (CSP) de la app (D-55), medida
+			# con el Flutter compilado: CanvasKit sale del propio dominio
+			# (publicar-web.sh compila con --no-web-resources-cdn), asi
+			# que ningun script viene de un tercero.
+			#   'wasm-unsafe-eval'  CanvasKit es WebAssembly.
+			#   'unsafe-inline'     solo en estilos: el fondo del
+			#                       index.html y los que Flutter inserta.
+			#                       Un estilo no ejecuta codigo.
+			#   fonts.gstatic.com   las fuentes que Flutter descarga
+			#                       cuando el texto las necesita.
+			#   auth.{$DOMINIO}     el canje del codigo por los tokens.
+			#   wss://{$DOMINIO}    el canal en vivo.
+			# Primero en modo informe (Content-Security-Policy-Report-Only):
+			# el navegador avisa en la consola lo que bloquearia, sin
+			# bloquear nada. Se impone cuando no hay avisos.
+			header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' wss://{$DOMINIO} https://auth.{$DOMINIO} https://fonts.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+			# Lo que la app no usa, apagado: ni camara, ni microfono, ni
+			# ubicacion, ni pagos, ni USB.
+			header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+
 			# Una sola pagina: las rutas se resuelven en el cliente.
 			try_files {path} /index.html
 			file_server
