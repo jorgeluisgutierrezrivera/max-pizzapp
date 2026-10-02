@@ -1,0 +1,293 @@
+Max Pizzapp - reporte de la suite de la app
+Fecha:   2026-10-02T15:30:10Z
+Version: Flutter 3.44.8 • channel stable • https://github.com/flutter/flutter.git
+Comando: cd frontend && flutter test   (este reporte: bash scripts/correr-pruebas.sh)
+Sin servidor: la API, Keycloak y el canal en vivo son simulados.
+Resultado: TODO EN VERDE
+------------------------------------------------------------------------------
+
+00:00 +0: loading test/autorizador_android_test.dart
+00:00 +0: test/autorizador_android_test.dart: al abrir no abre nada: espera a que la persona toque "Iniciar sesión"
+00:00 +1: test/autorizador_android_test.dart: pide el código al cliente público, con la dirección propia de la app y por https
+00:00 +2: test/autorizador_android_test.dart: devuelve el código y el verificador de PKCE para que ServicioSesion los canjee
+00:00 +3: test/autorizador_android_test.dart: si la persona se vuelve atrás, no es un error: sin mensaje
+00:00 +4: test/autorizador_android_test.dart: si AppAuth falla (sin red, por ejemplo), lo dice
+00:00 +5: test/autorizador_android_test.dart: una respuesta sin código no se canjea
+00:00 +6: test/autorizador_android_test.dart: cerrar sesión cierra la de Keycloak y vuelve a la app
+00:00 +7: test/autorizador_android_test.dart: si Keycloak no llega a cerrar, avisa que puede no pedir la contraseña
+00:00 +8: test/autorizador_android_test.dart: http solo se permite en desarrollo, contra el Keycloak local
+00:00 +9: test/autorizador_android_test.dart: los errores de la plataforma se capturan como PlatformException
+00:00 +10: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
+00:01 +11: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) si conecta antes de los 5 s, no avisa nunca
+00:01 +12: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) si ya estaba conectado al abrir, no espera ni avisa
+00:01 +13: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) un corte en vivo se avisa al segundo, y el aviso se va cuando vuelve
+00:01 +14: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) el corte por vencimiento del token vuelve en milisegundos: no parpadea (D-47)
+00:01 +15: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) sin red del dispositivo avisa en el acto, aunque el canal figure conectado
+00:01 +16: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) con la red de vuelta pero el canal todavía caído, el aviso sigue
+00:01 +17: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
+00:01 +18: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
+00:01 +19: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
+00:01 +20: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
+00:01 +21: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
+00:01 +22: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
+00:01 +23: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
+00:01 +24: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
+00:01 +25: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
+00:01 +26: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
+00:01 +27: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
+00:01 +28: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
+00:01 +29: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
+00:01 +30: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
+00:01 +31: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
+00:01 +32: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
+00:02 +33: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) Recargar lee de nuevo, dice "Recargando…" y no se puede tocar dos veces
+00:02 +34: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) si la lectura falla, el botón vuelve a estar disponible
+00:02 +35: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 320.0 px no se desborda y el botón queda a la vista
+00:03 +36: test/cliente_api_test.dart: pide la ruta bajo /api/v1 y manda el token como Bearer
+00:03 +37: test/cliente_api_test.dart: pide la ruta bajo /api/v1 y manda el token como Bearer
+00:03 +38: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 768.0 px no se desborda y el botón queda a la vista
+00:03 +39: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 768.0 px no se desborda y el botón queda a la vista
+00:03 +40: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 768.0 px no se desborda y el botón queda a la vista
+00:03 +41: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 768.0 px no se desborda y el botón queda a la vista
+00:03 +42: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 768.0 px no se desborda y el botón queda a la vista
+00:03 +43: test/cliente_api_test.dart: el formato unico de error se convierte en ErrorApi con el mensaje del servidor
+00:03 +44: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 1366.0 px no se desborda y el botón queda a la vista
+00:03 +45: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 1366.0 px no se desborda y el botón queda a la vista
+00:03 +46: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 1366.0 px no se desborda y el botón queda a la vista
+00:03 +47: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 1366.0 px no se desborda y el botón queda a la vista
+00:03 +48: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 1366.0 px no se desborda y el botón queda a la vista
+00:03 +49: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 1366.0 px no se desborda y el botón queda a la vista
+00:03 +50: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 1366.0 px no se desborda y el botón queda a la vista
+00:03 +51: test/cliente_api_test.dart: una respuesta que no es el JSON esperado no rompe la app
+00:03 +52: test/cliente_api_test.dart: Usuario se lee de la respuesta de /sesion
+00:03 +53: test/cliente_api_test.dart: Usuario sin nombre completo se muestra el de la cuenta
+00:03 +54: test/cliente_api_test.dart: Usuario roles ajenos al sistema se ignoran
+00:04 +55: test/configuracion_test.dart: en produccion la direccion de Keycloak se deduce del dominio origen sin ruta ni parametros
+00:04 +56: test/configuracion_test.dart: en produccion la direccion de Keycloak se deduce del dominio Keycloak en el subdominio auth.
+00:04 +57: test/configuracion_test.dart: en produccion la direccion de Keycloak se deduce del dominio los tres endpoints de OpenID Connect
+00:04 +58: test/configuracion_test.dart: en produccion la direccion de Keycloak se deduce del dominio Keycloak devuelve a la raiz de la app
+00:04 +59: test/configuracion_test.dart: otro dominio da otro Keycloak: nada esta escrito a mano
+00:04 +60: test/configuracion_test.dart: en desarrollo se usa la direccion definida al compilar, conservando el puerto
+00:04 +61: test/configuracion_test.dart: en localhost sin direccion definida, error claro en vez de adivinar
+00:04 +62: test/configuracion_test.dart: una direccion definida que no es http ni https se rechaza
+00:04 +63: test/configuracion_test.dart: la API se llama por ruta relativa, en el mismo origen
+00:04 +64: test/configuracion_test.dart: en el APK de cocina la direccion llega al compilar (D-48) con ORIGEN, todo se deduce como en la web
+00:04 +65: test/configuracion_test.dart: en el APK de cocina la direccion llega al compilar (D-48) sin ORIGEN, error claro en vez de adivinar
+00:04 +66: test/configuracion_test.dart: en el APK de cocina la direccion llega al compilar (D-48) un ORIGEN que no es http ni https se rechaza
+00:04 +67: test/configuracion_test.dart: en el APK de cocina la direccion llega al compilar (D-48) en desarrollo, contra el entorno local, Keycloak tambien se define
+00:05 +68: test/identidad_test.dart: el tema es claro, con el rojo ladrillo y el amarillo suave; los colores puros, solo en el logo
+00:05 +69: test/identidad_test.dart: el tema el texto sobre el crema y sobre las tarjetas blancas se lee de sobra (al menos 7 a 1)
+00:05 +70: test/identidad_test.dart: el tema la letra blanca sobre el rojo de los botones cumple el mínimo para texto normal
+00:05 +71: test/identidad_test.dart: el tema los precios, con letra oscura sobre el amarillo suave, se leen de sobra
+00:05 +72: test/identidad_test.dart: el tema la barra superior roja: el título, el nombre y "Cerrar sesión", en blanco
+00:05 +73: test/identidad_test.dart: el tema el rojo de los botones de contorno y de los enlaces se lee sobre el crema
+00:05 +74: test/identidad_test.dart: el tema las franjas de aviso se leen: canal caído sobre amarillo, sonido apagado sobre rojo suave
+00:05 +75: test/identidad_test.dart: el tema el texto secundario y los errores cumplen el mínimo para texto normal
+00:05 +76: test/identidad_test.dart: el tema el botón de Terminar venta lleva texto blanco grande, que así cumple el mínimo
+00:05 +77: test/identidad_test.dart: el logo en la pantalla de acceso, con el nombre del local
+00:07 +78: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
+00:08 +79: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
+00:08 +80: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
+00:08 +81: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
+00:08 +82: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
+00:08 +83: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
+00:08 +84: test/pantalla_recepcion_test.dart: los cuatro estados cargando
+00:08 +85: test/pantalla_recepcion_test.dart: los cuatro estados cargando
+00:08 +86: test/pantalla_recepcion_test.dart: los cuatro estados cargando
+00:08 +87: test/pantalla_recepcion_test.dart: los cuatro estados cargando
+00:09 +88: test/pantalla_recepcion_test.dart: los cuatro estados cargando
+00:09 +89: test/pantalla_recepcion_test.dart: los cuatro estados cargando
+00:09 +90: test/pantalla_recepcion_test.dart: los cuatro estados cargando
+00:09 +91: test/pantalla_recepcion_test.dart: los cuatro estados cargando
+00:09 +92: test/pantalla_recepcion_test.dart: los cuatro estados cargando
+00:09 +93: test/pantalla_recepcion_test.dart: los cuatro estados cargando
+00:09 +94: test/pantalla_recepcion_test.dart: los cuatro estados cargando
+00:09 +95: test/pantalla_recepcion_test.dart: los cuatro estados cargando
+00:09 +96: test/pantalla_recepcion_test.dart: los cuatro estados cargando
+00:10 +97: test/pantalla_recepcion_test.dart: los cuatro estados cargando
+00:10 +98: test/pantalla_recepcion_test.dart: los cuatro estados cargando
+00:10 +99: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
+00:11 +100: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
+00:11 +101: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
+00:11 +102: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
+00:11 +103: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
+00:11 +104: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
+00:11 +105: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
+00:11 +106: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
+00:11 +107: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +108: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +109: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +110: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +111: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +112: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +113: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +114: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +115: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +116: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +117: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +118: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +119: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +120: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +121: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +122: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +123: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +124: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +125: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +126: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +127: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +128: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +129: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +130: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +131: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +132: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +133: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:12 +134: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+00:13 +135: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
+00:13 +136: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
+00:13 +137: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
+00:13 +138: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
+00:13 +139: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
+00:13 +140: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
+00:13 +141: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
+00:13 +142: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
+00:13 +143: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
+00:13 +144: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
+00:13 +145: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
+00:13 +146: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
+00:13 +147: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
+00:13 +148: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
+00:13 +149: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
+00:13 +150: test/segun_rol_test.dart: el error de la API se muestra con su mensaje y se puede reintentar
+00:13 +151: test/segun_rol_test.dart: el error de la API se muestra con su mensaje y se puede reintentar
+00:14 +152: test/segun_rol_test.dart: el error de la API se muestra con su mensaje y se puede reintentar
+00:14 +153: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en la computadora (1024 × 640), el formulario ocupa la pantalla sin desplazarse
+00:14 +154: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:14 +155: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:14 +156: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:14 +157: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:14 +158: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:14 +159: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:14 +160: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:14 +161: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:14 +162: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:15 +163: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:15 +164: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:15 +165: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:15 +166: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:15 +167: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:15 +168: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:15 +169: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:15 +170: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:15 +171: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:15 +172: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:15 +173: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:15 +174: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:16 +174: test/timbre_android_test.dart: si el teléfono no puede sonar, no se cae nada: la cola sigue
+El timbre no pudo sonar: Exception: sin audio
+El timbre no pudo sonar: Exception: sin audio
+00:16 +175: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:16 +176: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:16 +177: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:16 +178: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+00:16 +179: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +180: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +181: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +182: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +183: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +184: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +185: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +186: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +187: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +188: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +189: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +190: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +191: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +192: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +193: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +194: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +195: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +196: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +197: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +198: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +199: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +200: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +201: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +202: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +203: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +204: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +205: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +206: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +207: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +208: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +209: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +210: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +211: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +212: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +213: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +214: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +215: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +216: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +217: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +218: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +219: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +220: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +221: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +222: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +223: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +224: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +225: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +226: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +227: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +228: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +229: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:16 +230: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:17 +231: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:17 +232: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:17 +233: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:18 +234: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:19 +235: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:19 +236: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:19 +237: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:20 +238: test/pedidos_de_recepcion_test.dart: lo que muestra cada pedido el listo ofrece Entregar, Llamar y Agregar bebida; el pendiente, Agregar y Cancelar; el que cocina ya empezó, solo Agregar (D-41)
+00:20 +239: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en el celular, al enviar, el formulario vuelve arriba
+00:20 +240: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en el celular, al enviar, el formulario vuelve arriba
+00:21 +241: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en el celular, al enviar, el formulario vuelve arriba
+00:21 +242: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en el celular, al enviar, el formulario vuelve arriba
+00:22 +243: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en el celular, al enviar, el formulario vuelve arriba
+00:22 +244: test/pedidos_de_recepcion_test.dart: cancelar, con motivo (RF-09, D-33) con un motivo rápido
+00:23 +245: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en el modal, los extras están a la vista sin bajar hasta después de las pizzas
+00:23 +246: test/pedidos_de_recepcion_test.dart: cancelar, con motivo (RF-09, D-33) con otro motivo escrito; y "Volver" no cancela nada
+00:23 +247: test/pedidos_de_recepcion_test.dart: cancelar, con motivo (RF-09, D-33) con otro motivo escrito; y "Volver" no cancela nada
+00:24 +248: test/pedidos_de_recepcion_test.dart: cancelar, con motivo (RF-09, D-33) con otro motivo escrito; y "Volver" no cancela nada
+00:24 +249: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla una venta completa: el cuerpo exacto que se envía, el aviso con el número y el formulario limpio
+00:24 +250: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla una venta completa: el cuerpo exacto que se envía, el aviso con el número y el formulario limpio
+00:25 +251: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla una venta completa: el cuerpo exacto que se envía, el aviso con el número y el formulario limpio
+00:25 +252: test/pedidos_de_recepcion_test.dart: agregar a un pedido ya enviado (RF-14, D-37) a uno en cocina: una pizza y una bebida, con el cuerpo exacto y el total nuevo
+00:27 +253: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla el aviso de la venta se cierra solo, o antes con la X
+00:27 +254: test/pedidos_de_recepcion_test.dart: agregar a un pedido ya enviado (RF-14, D-37) a uno listo: solo bebidas, y lo dice
+00:27 +255: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla confirmar sin lo necesario dice qué falta y no envía nada
+00:27 +256: test/pedidos_de_recepcion_test.dart: agregar a un pedido ya enviado (RF-14, D-37) si mientras tanto cocina lo marcó listo, lo explica y lo elegido queda
+00:28 +257: test/pedidos_de_recepcion_test.dart: agregar a un pedido ya enviado (RF-14, D-37) si mientras tanto cocina lo marcó listo, lo explica y lo elegido queda
+00:28 +258: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla un celular que no es boliviano se marca en el campo y no se envía
+00:29 +259: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla cancelar la venta pregunta antes de borrar
+00:30 +260: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla sin el envío a cocina, Confirmar y Vender bebidas se ven deshabilitados
+00:30 +261: test/pantalla_recepcion_test.dart: las pizzas y su modal entera por defecto; el botón dice qué falta y después tiene un solo precio
+00:31 +262: test/pantalla_recepcion_test.dart: las pizzas y su modal mitad y mitad: cada sabor muestra la mitad de su precio y las mitades se marcan 1 y 2
+00:31 +263: test/pantalla_recepcion_test.dart: las pizzas y su modal en mitad y mitad, una pizza que se vende solo entera se ve pero no se elige (D-39)
+00:32 +264: test/pantalla_recepcion_test.dart: las pizzas y su modal una pizza agotada no responde
+00:32 +265: test/pantalla_recepcion_test.dart: las pizzas y su modal cerrar el modal no agrega nada
+00:32 +266: test/pantalla_recepcion_test.dart: las pizzas y su modal tocar una línea la abre para corregirla, y "Quitar esta pizza" la saca
+00:33 +267: test/pantalla_recepcion_test.dart: las pizzas y su modal − y + de una línea cambian su cantidad, y en cero la línea sale
+00:34 +268: test/pantalla_recepcion_test.dart: las pizzas y su modal la misma pizza agregada dos veces queda en una sola línea
+00:35 +269: test/pantalla_recepcion_test.dart: enviar la venta mientras viaja dice "Enviando" y no se puede tocar dos veces
+00:36 +270: test/pantalla_recepcion_test.dart: enviar la venta un producto agotado: la venta queda como estaba y el mensaje dice cuál
+00:36 +271: test/pantalla_recepcion_test.dart: enviar la venta sin conexión la venta sigue ahí, y al reintentar se envía
+00:37 +272: test/pantalla_recepcion_test.dart: enviar la venta si la carta cambió, dice el total correcto y que no se guardó nada
+00:37 +273: test/pantalla_recepcion_test.dart: la venta directa de bebidas (D-38) sin nombre ni preguntas: cobra, y el aviso dice que se registró
+00:38 +274: test/pantalla_recepcion_test.dart: la venta directa de bebidas (D-38) no toca la venta que se estaba armando
+00:39 +275: test/pantalla_recepcion_test.dart: la venta directa de bebidas (D-38) si falla, las bebidas quedan elegidas y dice por qué
+00:39 +276: test/pantalla_recepcion_test.dart: la venta directa de bebidas (D-38) cerrarla no vende nada
+00:39 +277: test/pantalla_recepcion_test.dart: según el ancho en la computadora, el pedido va a la derecha y la venta no pasa de 1280 px
+00:40 +278: test/pantalla_recepcion_test.dart: según el ancho en el celular: el total y Confirmar quedan abajo, y el modal ocupa toda la pantalla
+00:40 +279: test/pantalla_recepcion_test.dart: según el ancho en 320 px, el más angosto, nada se desborda
+00:41 +280: All tests passed!

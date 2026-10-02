@@ -1,0 +1,32 @@
+Max Pizzapp - reporte de la sonda errores
+Fecha:    2026-10-02T15:27:44+00:00 (duro 13.3 s)
+API:      https://maxpizzapp.tech/api/v1
+Keycloak: https://auth.maxpizzapp.tech
+Comando:  python pruebas/api/probar_errores.py   (todas: python pruebas/correr_sondas.py)
+Cuentas de prueba reales por PKCE; la contrasena y los tokens no se imprimen.
+Resultado: TODO CORRECTO
+------------------------------------------------------------------------------
+API: https://maxpizzapp.tech/api/v1
+Keycloak: https://auth.maxpizzapp.tech
+
+| Esperado | Caso | Peticion | Obtenido | Resultado |
+|---|---|---|---|---|
+| 401 TOKEN_AUSENTE | Sin token | `GET /pedidos` | 401 TOKEN_AUSENTE | OK |
+| 401 TOKEN_INVALIDO | Token con la firma alterada | `GET /pedidos` | 401 TOKEN_INVALIDO | OK |
+| 403 ROL_SIN_PERMISO | Cocina intenta vender | `POST /pedidos` | 403 ROL_SIN_PERMISO | OK |
+| 403 ROL_SIN_PERMISO | Cocina intenta cancelar | `POST /pedidos/1/cancelacion` | 403 ROL_SIN_PERMISO | OK |
+| 403 ROL_SIN_PERMISO | Cocina intenta agregar a un pedido | `POST /pedidos/1/lineas` | 403 ROL_SIN_PERMISO | OK |
+| 400 VENTA_INVALIDA | Celular que no es boliviano | `POST /pedidos` | 400 VENTA_INVALIDA | OK |
+| 400 VENTA_INVALIDA | Nombre con un caracter nulo | `POST /pedidos` | 400 VENTA_INVALIDA | OK |
+| 400 VENTA_INVALIDA | Venta sin productos (CA-02.2) | `POST /pedidos` | 400 VENTA_INVALIDA | OK |
+| 400 VENTA_INVALIDA | Cantidad fuera de rango (1000) | `POST /pedidos` | 400 VENTA_INVALIDA | OK |
+| 400 JSON_INVALIDO | Cuerpo que no es JSON | `POST /pedidos` | 400 JSON_INVALIDO | OK |
+| 400 FILTRO_INVALIDO | Filtro de estado que no existe | `GET /pedidos?estado=quemado` | 400 FILTRO_INVALIDO | OK |
+| 400 ID_INVALIDO | Numero de pedido que no es valido | `GET /pedidos/abc` | 400 ID_INVALIDO | OK |
+| 400 MOTIVO_INVALIDO | Cancelar sin motivo | `POST /pedidos/1/cancelacion` | 400 MOTIVO_INVALIDO | OK |
+| 413 CUERPO_DEMASIADO_GRANDE | Cuerpo de 150 KB, sin token | `POST /pedidos` | 413 CUERPO_DEMASIADO_GRANDE | OK |
+| 415 FORMATO_NO_SOPORTADO | Cuerpo con otro juego de caracteres, sin token | `POST /pedidos` | 415 FORMATO_NO_SOPORTADO | OK |
+| sin token | Acceso con la contrasena equivocada (CA-01.2) | Keycloak, recepcion.demo | el acceso no se completo: credenciales rechazadas | OK |
+
+16 de 16 como se esperaba
+TODO CORRECTO

@@ -10,7 +10,8 @@
   },
   "scripts": {
     "start": "node src/index.js",
-    "test": "node --test test/*.test.js"
+    "test": "node --test test/*.test.js",
+    "test:reporte": "node scripts/reporte-de-pruebas.js"
   },
   "dependencies": {
     "express": "5.2.1",

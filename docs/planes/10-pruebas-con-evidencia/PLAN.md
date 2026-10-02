@@ -138,16 +138,16 @@ Lo que falta, revisado el 2-oct:
 Cada fase se prueba y se sube por separado.
 
 ### Fase A — La suite con su reporte, y el plan de pruebas
-- [ ] `npm run test:reporte` en la API: el texto en la consola y en `api.txt`, y el JUnit en
+- [x] `npm run test:reporte` en la API: el texto en la consola y en `api.txt`, y el JUnit en
       `api-junit.xml`. `npm test` sigue igual.
-- [ ] La app: `flutter test --file-reporter expanded:…` deja `app.txt`.
-- [ ] `pruebas/api/probar_errores.py` *(nuevo)*: la matriz de 401, 403 y 400, y un acceso con
+- [x] La app: `flutter test --file-reporter expanded:…` deja `app.txt`.
+- [x] `pruebas/api/probar_errores.py` *(nuevo)*: la matriz de 401, 403 y 400, y un acceso con
       la contraseña equivocada.
-- [ ] Las sondas contra producción, con su salida en `reportes/`: el acceso, la carta, los
+- [x] Las sondas contra producción, con su salida en `reportes/`: el acceso, la carta, los
       pedidos y los errores.
-- [ ] `docs/pruebas/README.md`: los niveles de prueba, las herramientas, cómo se corre cada
+- [x] `docs/pruebas/README.md`: los niveles de prueba, las herramientas, cómo se corre cada
       una y dónde queda su reporte. La tabla de casos, con su estructura.
-- [ ] El README del repositorio: el comando de la sexta línea y la ruta del reporte.
+- [x] El README del repositorio: el comando de la sexta línea y la ruta del reporte.
 
 ### Fase B — La integración continua
 - [ ] `.github/workflows/pruebas.yml`, con las versiones fijadas.
@@ -250,7 +250,7 @@ No cambia el código de la API, de la app ni la base: solo pruebas, *scripts* y 
 
 | Fase | Estado | Fecha | Evidencia de la prueba |
 |---|---|---|---|
-| A — La suite con su reporte | ⬜ | | |
+| A — La suite con su reporte | ✅ Verificada | 2026-10-02 | **La API:** `npm run test:reporte` (`backend/scripts/reporte-de-pruebas.js`) corre la misma suite que `npm test` con dos reportes del propio `node --test`: `api.txt`, que empieza con la fecha, la versión, Node, el sistema, el comando y el resultado, y `api-junit.xml`, con los **288 casos**. **288 de 288.** Sin códigos de color, y con las rutas relativas a la raíz del repositorio: las trazas que imprimen a propósito las pruebas que provocan errores, y el atributo `file` de cada caso del JUnit, traían la ruta absoluta de la máquina (`E:\Max Pizzapp v2\…`). `npm test` no cambió. **Las dos suites:** `bash scripts/correr-pruebas.sh` deja además `app.txt`, con la misma cabecera: **280 de 280**, Flutter 3.44.8. El reporte de Flutter también traía las rutas absolutas: se dejan relativas (`test/…`), con una expresión que sirve igual en Windows y en Linux. **La sonda de errores** (`pruebas/api/probar_errores.py`, nueva): los 15 casos de 401, 403, 400, 413 y 415 de la tarjeta 09, más **un acceso con la contraseña equivocada (CA-01.2)**, el último y uno solo, para no activar el bloqueo por intentos rápidos. **16 de 16**, en local y en producción. La sonda de acceso reconoce ahora el mensaje de Keycloak en español (*"Usuario o contraseña incorrectos"*): antes, la contraseña equivocada salía como *"no hubo redirección"* en lugar de *"credenciales rechazadas"*. **Las sondas, con su reporte:** `pruebas/correr_sondas.py` corre las cinco (acceso, salud, carta, pedidos y errores) y deja `sonda-*.txt`, con la fecha, la API y Keycloak al principio. En local, todas correctas. **En producción** (2-oct, 11:25, fuera del horario de atención): acceso en 4,1 s, salud en 7,3 s, carta en 7,4 s, pedidos en 107,6 s y errores en 13,3 s, **TODAS CORRECTAS**; la de pedidos cerró los pedidos que creó. Ningún reporte contiene la contraseña (buscada con su valor real) ni un token. **El plan de pruebas** (`docs/pruebas/README.md`): la sexta línea, los niveles de prueba con su herramienta, su comando y su reporte, y **la tabla de casos**. De los 14 casos de los *Must*, 12 ya tienen su evidencia; CP-05 y CP-11 (menos de 2 s) esperan las 30 propagaciones de la fase C. Los 8 de seguridad, completos. De los 6 de los RNF, el de RNF-02; los demás, en las fases C, D y E. Cada nombre de prueba citado se verificó contra el código. **El README** del repositorio: la sexta línea, la ruta del reporte y los dos comandos nuevos |
 | B — La integración continua | ⬜ | | |
 | C — RNF-01 en producción | ⬜ | | |
 | D — RNF-03 y RNF-04 | ⬜ | | |

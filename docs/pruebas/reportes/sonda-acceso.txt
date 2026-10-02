@@ -1,0 +1,30 @@
+Max Pizzapp - reporte de la sonda acceso
+Fecha:    2026-10-02T15:25:38+00:00 (duro 4.1 s)
+API:      https://maxpizzapp.tech/api/v1
+Keycloak: https://auth.maxpizzapp.tech
+Comando:  python pruebas/identidad/probar_acceso_pkce.py   (todas: python pruebas/correr_sondas.py)
+Cuentas de prueba reales por PKCE; la contrasena y los tokens no se imprimen.
+Resultado: TODO CORRECTO
+------------------------------------------------------------------------------
+
+=== recepcion.demo ===
+  1. pantalla de acceso servida por Keycloak
+  2. credenciales aceptadas, codigo de autorizacion recibido
+  3. codigo canjeado por token (verificador de PKCE aceptado)
+  emisor    : https://auth.maxpizzapp.tech/realms/maxpizzapp
+  audiencia : ['backend-api']
+  roles     : ['recepcion']
+  vigencia  : 60 minutos
+  RESULTADO: correcto
+
+=== cocina.demo ===
+  1. pantalla de acceso servida por Keycloak
+  2. credenciales aceptadas, codigo de autorizacion recibido
+  3. codigo canjeado por token (verificador de PKCE aceptado)
+  emisor    : https://auth.maxpizzapp.tech/realms/maxpizzapp
+  audiencia : ['backend-api']
+  roles     : ['cocina']
+  vigencia  : 60 minutos
+  RESULTADO: correcto
+
+TODO CORRECTO

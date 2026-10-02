@@ -1,0 +1,125 @@
+Max Pizzapp - reporte de la sonda pedidos
+Fecha:    2026-10-02T15:25:56+00:00 (duro 107.6 s)
+API:      https://maxpizzapp.tech/api/v1
+Keycloak: https://auth.maxpizzapp.tech
+Comando:  python pruebas/api/probar_pedidos.py   (todas: python pruebas/correr_sondas.py)
+Cuentas de prueba reales por PKCE; la contrasena y los tokens no se imprimen.
+Resultado: TODO CORRECTO
+------------------------------------------------------------------------------
+API: https://maxpizzapp.tech/api/v1
+Keycloak: https://auth.maxpizzapp.tech
+
+--- las pizzas que se venden solo enteras (D-39) ---
+  OK  la carta marca las tres especialidades armadas por sectores ['Criolla española', 'Dos estaciones', 'Tres estaciones']
+
+--- quien puede crear ---
+  OK  POST /pedidos sin token                                    401  TOKEN_AUSENTE
+  OK  POST /pedidos con el token de cocina                       403  ROL_SIN_PERMISO
+
+--- la tabla del plan 05, seccion 6, guardada en la base real ---
+  OK  1 Peperoni                                                 (201, 50, 'pendiente')  Pedido 2 (#262)
+  OK  1 mitad Salame, mitad Peperoni                             (201, 47.5, 'pendiente')  Pedido 3 (#263)
+  OK  1 mitad Carnívora, mitad Cuatro quesos                     (201, 57.5, 'pendiente')  Pedido 4 (#264)
+  OK  2 mitad Salame, mitad Peperoni                             (201, 95, 'pendiente')  Pedido 5 (#265)
+  OK  1 Hawaiana con extra queso                                 (201, 58, 'pendiente')  Pedido 6 (#266)
+  OK  3 Choclo, cada una con extra choclo                        (201, 150, 'pendiente')  Pedido 7 (#267)
+
+--- el numero del dia (D-35) ---
+  OK  cada pedido lleva su numero del dia                        True  2 3 4 5 6 7
+  OK    seguidos, en el orden en que se vendieron                True
+
+--- lo que devuelve un pedido recien creado ---
+  OK  venta mixta de Bs 189                                      (201, 189)  #268
+  OK    el cliente, con su celular (recepcion lo ve)             {'nombre': 'Ana Prueba', 'celular': '70000001'}
+  OK    para llevar y la observacion                             (True, 'sin cebolla')
+  OK    tres lineas; el extra no es una de ellas                 3
+  OK    la mitad y mitad guarda sus dos sabores y la mitad exacta ('Salame', 'Peperoni', 47.5)
+  OK    el extra viaja dentro de su pizza, con su cantidad       [('Extra queso', 1, 8)]
+  OK    la version: 4 lineas guardadas (3 y el extra), ninguna agregada despues (4, [None, None, None])
+
+--- sin celular y para comer aqui ---
+  OK  cliente sin celular                                        (201, {'nombre': 'Usuario Demo', 'celular': None}, False)
+
+--- un celular que empieza con 5 (D-56) ---
+  OK  la API y la base lo aceptan                                (201, '50000001')
+
+--- la venta directa de bebidas (D-38) ---
+  OK  2 gaseosas, sin nombre: nace entregada                     (201, 'entregado', 36)  #271
+  OK    sin cliente, sin para llevar y sin numero del dia        (None, None, None)
+  OK    queda quien la vendio, en el historial                   [('entregado', False)]
+  OK    y no aparece entre los activos                           False
+  OK  solo bebidas a nombre de un cliente: se rechaza            (400, 'VENTA_INVALIDA')  Un pedido lleva al menos una pizza. Las bebidas solas son una venta directa.
+  OK  venta directa con una pizza: se rechaza                    (400, 'VENTA_INVALIDA')
+  OK  venta directa con nombre: se rechaza                       (400, 'VENTA_INVALIDA')
+  OK  cocina no vende                                            (403, 'ROL_SIN_PERMISO')
+
+--- lo que el servidor rechaza ---
+  OK  el total no coincide                                       (409, 'PRECIO_CAMBIADO')  total correcto: 50
+  OK  celular que no es boliviano                                (400, 'VENTA_INVALIDA')
+  OK  sin decir si es para llevar                                (400, 'VENTA_INVALIDA')
+  OK  la otra mitad es una bebida                                (400, 'VENTA_INVALIDA')
+  OK  un extra vendido solo                                      (400, 'VENTA_INVALIDA')
+  OK  un producto que no existe                                  (400, 'VENTA_INVALIDA')
+  OK  Dos estaciones como mitad: se vende solo entera (D-39)     (400, 'VENTA_INVALIDA')
+  OK  Carnívora con Criolla española: la Criolla se vende solo entera (D-39) (400, 'VENTA_INVALIDA')
+  OK  Tres estaciones como primera mitad (D-39)                  (400, 'VENTA_INVALIDA')
+  OK  una venta vacia                                            (400, 'VENTA_INVALIDA')
+
+--- el ciclo completo, con los dos roles ---
+  OK  cocina lo empieza                                          (200, 'en_preparacion')  #272
+  OK  cocina lo marca listo                                      (200, 'listo')
+  OK  recepcion lo entrega                                       (200, 'entregado')
+  OK    el historial cuenta los cuatro pasos, con quien hizo cada uno [('pendiente', 'recepcion'), ('en_preparacion', 'cocina'), ('listo', 'cocina'), ('entregado', 'recepcion')]
+
+--- lo que cada rol no puede hacer ---
+  OK  recepcion no empieza un pedido                             (403, 'ROL_SIN_PERMISO')
+  OK  no se salta de pendiente a listo                           (409, 'TRANSICION_NO_PERMITIDA')
+  OK  no se entrega lo que no esta listo (D-08)                  (409, 'TRANSICION_NO_PERMITIDA')
+  OK  cocina no cancela                                          (403, 'ROL_SIN_PERMISO')
+  OK  cancelar sin motivo                                        (400, 'MOTIVO_INVALIDO')
+
+--- la baja: cancelar con motivo (D-33) ---
+  OK  recepcion lo cancela                                       (200, 'cancelado')  #273
+  OK    el pedido no se borra: se sigue pudiendo leer            200
+  OK    y el motivo queda en el historial                        ('cancelado', 'El cliente se fue')
+  OK  cancelarlo de nuevo                                        (409, 'TRANSICION_NO_PERMITIDA')
+  OK  uno que cocina ya empezo no se cancela (D-41)              (409, 'TRANSICION_NO_PERMITIDA', 'en_preparacion')
+
+--- la carrera: dos cambios a la vez sobre el mismo pedido ---
+  OK  uno pasa y el otro recibe 409                              [200, 409]  #275
+  OK    y el historial registra un solo "listo"                  1
+
+--- agregar a un pedido ya enviado (D-37) ---
+  OK  una soda a un pedido pendiente                             (200, 68, 2)  #276
+  OK    la soda queda marcada como agregada; la pizza del principio, no [False, True]
+  OK    cocina ve lo agregado, sin el celular                    (2, False)
+  OK  cocina no agrega                                           (403, 'ROL_SIN_PERMISO')
+  OK  lo agregado con otro total                                 (409, 'PRECIO_CAMBIADO')
+  OK  una pizza mitad y mitad con extra, mientras cocina la prepara (200, 123.5, 4)
+  OK    el extra, dentro de la pizza agregada                    ['Extra queso']
+  OK  marcar listo sin haber visto lo ultimo                     (409, 'PEDIDO_CAMBIADO', 4)
+  OK    con la version que se ve, pasa                           (200, 'listo')
+  OK  una pizza a un pedido listo: va en otro pedido             (409, 'AGREGADO_NO_PERMITIDO')
+  OK  una soda a un pedido listo: si                             (200, 141.5)
+  OK  nada a un pedido entregado                                 (409, 'AGREGADO_NO_PERMITIDO')
+
+--- la carrera: muchas ventas a la vez y el numero del dia (D-35) ---
+  OK  12 ventas lanzadas a la vez: todas se guardan              12
+  OK    sin repetir ni saltar un numero                          True  16 a 27
+  OK    y el orden de los numeros es el orden de llegada         True
+
+--- la carrera: "Listo" y "Agregar una pizza" a la vez (D-37) ---
+  OK  8 rondas: siempre pasa uno solo y el otro recibe 409       True  gano agregar 3 veces, gano listo 5
+
+--- la cola ---
+  OK  cocina lee su cola                                         200  25 pedidos
+  OK    sin el celular de nadie (D-31)                           False
+  OK    en orden de llegada                                      True
+  OK    solo los pendientes y los que estan en preparacion       True
+  OK  un estado que no existe                                    (400, 'FILTRO_INVALIDO')
+  OK  un pedido que no existe                                    (404, 'PEDIDO_NO_ENCONTRADO')
+
+--- limpieza: se cierran los pedidos que creo esta prueba ---
+  OK  ningun pedido de la prueba queda activo                    []  31 cerrados
+
+TODO CORRECTO

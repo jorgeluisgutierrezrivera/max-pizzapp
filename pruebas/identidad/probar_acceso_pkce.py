@@ -108,9 +108,11 @@ def obtener_token(usuario, informar=print):
     try:
         cuerpo = abrir(urllib.request.Request(
             html.unescape(formulario.group(1)), data=datos)).read().decode('utf-8', 'replace')
+        # El realm esta en espanol; el texto en ingles queda por si se cambia el idioma.
+        rechazadas = ('Usuario o contraseña incorrectos' in cuerpo
+                      or 'Invalid username or password' in cuerpo)
         sys.exit('  el acceso no se completo: %s' % (
-            'credenciales rechazadas' if 'Invalid username or password' in cuerpo
-            else 'no hubo redireccion'))
+            'credenciales rechazadas' if rechazadas else 'no hubo redireccion'))
     except urllib.error.HTTPError as respuesta:
         destino = respuesta.headers.get('Location') or ''
     codigo = urllib.parse.parse_qs(urllib.parse.urlparse(destino).query).get('code', [None])[0]

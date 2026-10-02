@@ -1,0 +1,34 @@
+Max Pizzapp - reporte de la sonda salud
+Fecha:    2026-10-02T15:25:42+00:00 (duro 7.3 s)
+API:      https://maxpizzapp.tech/api/v1
+Keycloak: https://auth.maxpizzapp.tech
+Comando:  python pruebas/api/probar_salud_y_token.py   (todas: python pruebas/correr_sondas.py)
+Cuentas de prueba reales por PKCE; la contrasena y los tokens no se imprimen.
+Resultado: TODO CORRECTO
+------------------------------------------------------------------------------
+API: https://maxpizzapp.tech/api/v1
+Keycloak: https://auth.maxpizzapp.tech
+
+--- ruta publica ---
+  OK  GET /salud                                                 200  {"estado": "ok", "baseDeDatos": "ok"}
+
+--- sin credenciales ---
+  OK  GET /sesion sin token                                      401  TOKEN_AUSENTE
+  OK  GET /sesion con un token inventado                         401  TOKEN_INVALIDO
+
+--- recepcion.demo, token real ---
+  OK  GET /sesion con su token                                   200
+  OK    el servidor reconoce su rol                              ['recepcion']
+  OK    y su usuario                                             recepcion.demo
+  OK  GET /sesion con la firma manipulada                        401  TOKEN_INVALIDO
+
+--- cocina.demo, token real ---
+  OK  GET /sesion con su token                                   200
+  OK    el servidor reconoce su rol                              ['cocina']
+  OK    y su usuario                                             cocina.demo
+  OK  GET /sesion con la firma manipulada                        401  TOKEN_INVALIDO
+
+--- formato de error ---
+  OK  ruta inexistente                                           404  RUTA_NO_ENCONTRADA
+
+TODO CORRECTO

@@ -1,0 +1,39 @@
+Max Pizzapp - reporte de la sonda carta
+Fecha:    2026-10-02T15:25:49+00:00 (duro 7.4 s)
+API:      https://maxpizzapp.tech/api/v1
+Keycloak: https://auth.maxpizzapp.tech
+Comando:  python pruebas/api/probar_carta.py   (todas: python pruebas/correr_sondas.py)
+Cuentas de prueba reales por PKCE; la contrasena y los tokens no se imprimen.
+Resultado: TODO CORRECTO
+------------------------------------------------------------------------------
+API: https://maxpizzapp.tech/api/v1
+Keycloak: https://auth.maxpizzapp.tech
+
+--- sin credenciales ---
+  OK  GET /productos sin token                                   401  TOKEN_AUSENTE
+
+--- recepcion.demo, token real ---
+  OK  GET /productos                                             200
+
+--- cocina.demo, token real ---
+  OK  GET /productos                                             200
+
+--- la carta que devuelve la base ---
+  OK  hay carta cargada                                          True  22 productos
+  OK  ordenada: primero las pizzas, cada categoria por nombre    True
+  OK  sin gama ni precio de media: solo pizzas enteras (D-27)    True
+  OK  toda pizza trae sus ingredientes en la descripcion         True
+  OK  los precios llegan como numeros                            True
+  OK  la imagen es solo un nombre de archivo                     True
+
+--- los filtros, contra el esquema real ---
+  OK  ?categoria=pizza                                           200
+  OK    devuelve solo pizzas                                     ['pizza', 'pizza', 'pizza', 'pizza', 'pizza', 'pizza', 'pizza', 'pizza', 'pizza', 'pizza', 'pizza', 'pizza', 'pizza', 'pizza', 'pizza']
+  OK  ?categoria=bebida&disponible=true                          200
+  OK    solo bebidas disponibles                                 True
+  OK  ?disponible=false                                          200  0 agotados
+  OK  ?categoria=extra                                           200  4 extras
+  OK    solo extras, y hay al menos uno                          True
+  OK  ?categoria=pasta                                           400  FILTRO_INVALIDO
+
+TODO CORRECTO

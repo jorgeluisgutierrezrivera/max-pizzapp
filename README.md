@@ -137,6 +137,18 @@ comprueba `pruebas/api/probar_pedidos.py`.
 
 ## Pruebas
 
+**El plan de pruebas, los reportes y la tabla de casos** están en
+[`docs/pruebas/`](docs/pruebas/README.md). Para correr la suite de la API en un clon limpio,
+sin base de datos, sin Keycloak y sin `.env`:
+
+```bash
+cd backend && npm ci && npm test
+```
+
+Su reporte queda en `docs/pruebas/reportes/api.txt` (`npm run test:reporte` lo vuelve a
+escribir). Las dos suites con sus reportes: `bash scripts/correr-pruebas.sh`. Las sondas
+contra un entorno real, con su reporte cada una: `python pruebas/correr_sondas.py`.
+
 Las del backend y la app corren sin el entorno levantado; las de `pruebas/`, contra
 Keycloak y la API reales. Antes de la primera vez: `cd backend && npm ci` y
 `cd frontend && flutter pub get`.
@@ -148,6 +160,7 @@ python pruebas/identidad/probar_acceso_pkce.py   # inicio de sesión real con PK
 python pruebas/api/probar_salud_y_token.py       # la API con tokens reales del realm
 python pruebas/api/probar_carta.py               # la carta con token real y la base real
 python pruebas/api/probar_pedidos.py             # pedidos: precios, número del día, venta directa, agregar, tres carreras y limpieza, en la base real
+python pruebas/api/probar_errores.py             # la matriz de 401, 403, 400, 413 y 415, y la contraseña equivocada
 python pruebas/tiempo-real/medir_aviso.py       # cuánto tarda el aviso en vivo: la venta y lo agregado en cocina, el cambio de estado en recepción
 python pruebas/tiempo-real/medir_caida.py       # cuánto tarda una pantalla en notar que la red se colgó (RNF-05: menos de 10 s)
 ```
@@ -158,8 +171,8 @@ latido que anuncia el servidor (un ping cada 4 s y 3 s de espera) sin necesidad 
 contraseña.
 
 Las pruebas de `pruebas/` aceptan `KEYCLOAK_URL` y `API_URL` para ejecutarse contra el
-despliegue público. La tabla completa de casos de prueba está en el apartado 2.8 del
-documento monográfico.
+despliegue público. La tabla de casos está en [`docs/pruebas/README.md`](docs/pruebas/README.md),
+y de ella sale el apartado 2.8 del documento monográfico.
 
 ## Metodología
 
