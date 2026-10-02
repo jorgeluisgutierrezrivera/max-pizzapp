@@ -17,6 +17,7 @@ const { Server } = require('socket.io');
 // Los de fabrica (25 s + 20 s) tardaban hasta 45 s en notar una red colgada, y RNF-05 pide
 // avisar en menos de 10. Cuesta un paquete de pocos bytes cada 4 s por pantalla.
 const LATIDO = { pingInterval: 4000, pingTimeout: 3000 };
+const TAMANO_MAXIMO_DE_MENSAJE = 16 * 1024;
 
 // setTimeout no acepta plazos de mas de ~24,8 dias: uno mayor dispararia en el acto.
 const PLAZO_MAXIMO_MS = 2 ** 31 - 1;
@@ -36,7 +37,9 @@ const EN_COCINA = ['pendiente', 'en_preparacion'];
 function crearCanal(servidorHttp, { usuarioDelToken, reloj = { setTimeout, clearTimeout } }) {
   // Mismo origen que la app: Caddy sirve las dos cosas desde el mismo dominio, asi que no
   // hace falta abrir CORS. La ruta es la de siempre, /socket.io/, que Caddy ya reenvia.
-  const io = new Server(servidorHttp, { serveClient: false, ...LATIDO });
+  // El canal solo emite: los clientes no le mandan mensajes, salvo el saludo con el token.
+  // Por eso el mensaje mas grande que acepta baja de 1 MB, el de fabrica, a 16 KB (D-52).
+  const io = new Server(servidorHttp, { serveClient: false, maxHttpBufferSize: TAMANO_MAXIMO_DE_MENSAJE, ...LATIDO });
 
   // El token viaja en el saludo (handshake.auth), no en la direccion: una direccion con el
   // token quedaria escrita en los registros de cualquier proxy.
@@ -102,4 +105,4 @@ function crearCanal(servidorHttp, { usuarioDelToken, reloj = { setTimeout, clear
 // Para las pruebas y para arrancar sin canal: avisos que no hacen nada.
 const SIN_AVISOS = { pedidoNuevo() {}, pedidoActualizado() {}, estadoCambiado() {} };
 
-module.exports = { crearCanal, SIN_AVISOS };
+module.exports = { crearCanal, SIN_AVISOS, TAMANO_MAXIMO_DE_MENSAJE };

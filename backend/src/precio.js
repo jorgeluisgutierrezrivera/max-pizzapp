@@ -53,11 +53,26 @@ function precioDeDosMitades(a, b) {
   return Math.floor((a + b + 1) / 2);
 }
 
-function textoOpcional(valor, largo, campo) {
+// Los caracteres de control: los C0 (del 0 al 31), DEL y los C1. PostgreSQL no admite el
+// nulo dentro de un texto: sin este filtro, un nombre con \u0000 llegaba a la base, la
+// consulta fallaba y la API respondia 500 en lugar de 400 (tarjeta 09). Los demas no se ven
+// en pantalla y sirven para disfrazar un texto. La observacion admite saltos de linea: su
+// campo en la app tiene dos renglones.
+// eslint-disable-next-line no-control-regex
+const CONTROL = /[\u0000-\u001F\u007F-\u009F]/;
+// eslint-disable-next-line no-control-regex
+const CONTROL_SALVO_SALTOS = /[\u0000-\u0009\u000B\u000C\u000E-\u001F\u007F-\u009F]/;
+
+function tieneControl(texto, { admiteSaltos = false } = {}) {
+  return (admiteSaltos ? CONTROL_SALVO_SALTOS : CONTROL).test(texto);
+}
+
+function textoOpcional(valor, largo, campo, { admiteSaltos = false } = {}) {
   if (valor === undefined || valor === null) return null;
   if (typeof valor !== 'string') throw new VentaInvalida(`${campo} debe ser texto.`);
   const limpio = valor.trim();
   if (limpio.length > largo) throw new VentaInvalida(`${campo} admite hasta ${largo} caracteres.`);
+  if (tieneControl(limpio, { admiteSaltos })) throw new VentaInvalida(`${campo} tiene caracteres no validos.`);
   return limpio === '' ? null : limpio;
 }
 
@@ -114,7 +129,7 @@ function leerVenta(cuerpo) {
     ventaDirecta: false,
     paraLlevar,
     cliente: { nombre, celular },
-    observacion: textoOpcional(observacion, LARGO_OBSERVACION, 'La observacion'),
+    observacion: textoOpcional(observacion, LARGO_OBSERVACION, 'La observacion', { admiteSaltos: true }),
     lineas: leerLineas(lineas),
     totalEsperadoCentavos: leerTotal(totalEsperado),
   };
@@ -278,4 +293,5 @@ function aBolivianos(centavos) {
 module.exports = {
   leerVenta, leerAgregado, idsDeProductos, calcularVenta, calcularLineas, precioDeDosMitades,
   aCentavos, aBolivianos, VentaInvalida, ProductoNoDisponible, MAXIMO_POR_LINEA, LARGO_OBSERVACION,
+  tieneControl,
 };

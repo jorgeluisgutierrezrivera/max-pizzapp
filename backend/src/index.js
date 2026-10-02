@@ -11,11 +11,16 @@ const pool = new Pool({ ...config.bd, max: 10, idleTimeoutMillis: 30000, connect
 pool.on('error', (err) => console.error('[bd] error en un cliente inactivo:', err.message));
 
 // La API y el canal en vivo, en el mismo servidor (ver servidor.js: el orden importa).
-const { servidor, canal } = crearServidor({ pool, autenticar: crearAutenticador(config.identidad) });
+const { servidor, canal } = crearServidor({
+  pool,
+  autenticar: crearAutenticador(config.identidad),
+  limitePorMinuto: config.limitePorMinuto,
+});
 
 servidor.listen(config.puerto, () => {
   console.log(`[api] escuchando en el puerto ${config.puerto}`);
   console.log(`[api] emisor esperado: ${config.identidad.emisor}`);
+  console.log(`[api] limite: ${config.limitePorMinuto} peticiones por minuto por IP`);
 });
 
 // Apagado ordenado: se deja de aceptar peticiones, se cierra el pool y recien entonces se

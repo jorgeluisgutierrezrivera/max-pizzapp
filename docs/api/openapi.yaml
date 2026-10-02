@@ -18,6 +18,15 @@ info:
     para resolverlos, por ejemplo `totalCorrecto` o `estadoActual`. Nunca se devuelve la
     traza ni el detalle interno.
 
+    **Límite de peticiones.** La API acepta hasta 600 peticiones por minuto de una misma IP
+    (configurable con `LIMITE_PETICIONES_POR_MINUTO`). Pasado el límite, cualquier ruta
+    responde **429** `DEMASIADAS_PETICIONES`, con la cabecera `Retry-After` en segundos; las
+    cabeceras `RateLimit` y `RateLimit-Policy` anuncian el límite y lo que queda. El límite
+    se aplica antes de validar el token.
+
+    **Textos libres.** El nombre del cliente, la observación y el motivo de una cancelación
+    no admiten caracteres de control; la observación admite saltos de línea.
+
     **Tiempo real.** Además de estas rutas, el servidor expone un canal Socket.IO en
     `/socket.io`, autenticado con el mismo token. Emite `pedido:nuevo`,
     `pedido:actualizado` y `pedido:estado` después de confirmar cada cambio en la base.
@@ -368,6 +377,18 @@ components:
           schema: { $ref: '#/components/schemas/Error' }
           example:
             error: { codigo: ROL_SIN_PERMISO, mensaje: Tu rol no permite esta operacion. }
+    DemasiadasPeticiones:
+      description: |
+        Se pasó el límite de peticiones por minuto de esta IP: `DEMASIADAS_PETICIONES`. Puede
+        responderlo cualquier ruta; `Retry-After` dice cuántos segundos esperar.
+      headers:
+        Retry-After:
+          schema: { type: integer }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            error: { codigo: DEMASIADAS_PETICIONES, mensaje: Demasiadas peticiones seguidas. Espera un momento e intenta de nuevo. }
     PedidoNoEncontrado:
       description: '`PEDIDO_NO_ENCONTRADO`.'
       content:

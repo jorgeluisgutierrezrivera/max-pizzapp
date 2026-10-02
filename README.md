@@ -88,6 +88,8 @@ Librerías del backend, fijadas sin rangos en `backend/package.json` y con
 | jsonwebtoken | 9.0.3 | Verificación de la firma y de los datos del token |
 | jwks-rsa | 4.1.0 | Lectura y caché de las claves públicas de Keycloak |
 | socket.io | 4.8.3 | El canal en vivo: avisos de pedido nuevo, de lo agregado y de cambio de estado |
+| helmet | 8.3.0 | Las cabeceras de seguridad de cada respuesta de la API |
+| express-rate-limit | 8.7.0 | El límite de peticiones por IP, con 429 |
 | socket.io-client | 4.8.3 | Solo desarrollo: las pruebas del canal y la medición del aviso |
 
 Paquetes de la app Flutter, fijados sin rangos en `frontend/pubspec.yaml` y con
@@ -113,7 +115,7 @@ Keycloak y la API reales. Antes de la primera vez: `cd backend && npm ci` y
 `cd frontend && flutter pub get`.
 
 ```bash
-cd backend && npm test            # 273 pruebas: acceso, carta, precio, pedidos, lo agregado, canal en vivo (con su latido y el corte al vencer el token) y el contrato OpenAPI, sin base ni Keycloak reales
+cd backend && npm test            # 284 pruebas: acceso, carta, precio, pedidos, lo agregado, canal en vivo (con su latido y el corte al vencer el token), seguridad (cabeceras, límite de peticiones, caracteres de control) y el contrato OpenAPI, sin base ni Keycloak reales
 cd frontend && flutter test       # 280 pruebas de la app: la venta, los pedidos, la cocina, el acceso en la web y en el APK, la sesión, el canal en vivo (cortes, rechazos y el aviso de canal caído), el aviso de sonido apagado, el timbre y la pantalla encendida del APK, y el contraste de colores
 python pruebas/identidad/probar_acceso_pkce.py   # inicio de sesión real con PKCE
 python pruebas/api/probar_salud_y_token.py       # la API con tokens reales del realm
@@ -286,6 +288,7 @@ contraseñas se generan en el servidor y no salen de ahí.
 | `POSTGRES_PORT` | No | Puerto del host si se publica la base en desarrollo (5433). Por omisión no se publica |
 | `NODE_ENV` | No | `development` o `production`. La imagen de la API ya trae `production` |
 | `API_PORT` | Solo en desarrollo | Puerto del host para la API (3001) |
+| `LIMITE_PETICIONES_POR_MINUTO` | No | Cuántas peticiones por minuto acepta la API de una misma IP; pasado eso, 429. Por omisión, 600 |
 | `KEYCLOAK_PORT` | Solo en desarrollo | Puerto del host para Keycloak (8082) |
 | `KEYCLOAK_REALM` | Sí | El realm del sistema: `maxpizzapp` |
 | `KEYCLOAK_CLIENT_ID` | No | La audiencia que la API exige en los tokens. Por omisión, `backend-api` |

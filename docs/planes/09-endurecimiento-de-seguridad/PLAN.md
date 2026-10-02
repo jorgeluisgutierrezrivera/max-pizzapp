@@ -192,14 +192,14 @@ Lo que falta, revisado en el código el 1-oct:
 Cada fase se prueba y se sube por separado.
 
 ### Fase A — La API
-- [ ] Helmet 8 y `express-rate-limit` 8, con versión exacta.
-- [ ] Las cabeceras de Helmet en toda respuesta de la API, sin HSTS, con la CSP de JSON.
-- [ ] El límite por IP sobre `/api/v1`, configurable, con 429 en el formato único.
-- [ ] Los caracteres de control rechazados con 400 en el nombre, la observación y el motivo
+- [x] Helmet 8 y `express-rate-limit` 8, con versión exacta.
+- [x] Las cabeceras de Helmet en toda respuesta de la API, sin HSTS, con la CSP de JSON.
+- [x] El límite por IP sobre `/api/v1`, configurable, con 429 en el formato único.
+- [x] Los caracteres de control rechazados con 400 en el nombre, la observación y el motivo
       de cancelación. Primero, la prueba que muestra el 500 de hoy.
-- [ ] El canal en vivo con un mensaje máximo de 16 KB (hoy, 1 MB).
-- [ ] `LIMITE_PETICIONES_POR_MINUTO` en `.env.example`; el 429 en `docs/api/openapi.yaml`.
-- [ ] Pruebas: las cabeceras, el 429 con su formato y sus cabeceras, que el límite cuenta por
+- [x] El canal en vivo con un mensaje máximo de 16 KB (hoy, 1 MB).
+- [x] `LIMITE_PETICIONES_POR_MINUTO` en `.env.example`; el 429 en `docs/api/openapi.yaml`.
+- [x] Pruebas: las cabeceras, el 429 con su formato y sus cabeceras, que el límite cuenta por
       la IP del cliente detrás de Caddy (dos IP distintas no se suman), los caracteres de
       control y que el canal sigue conectando con un token real. `npm test` en verde.
 - [ ] **En producción** (el autor trae el código y reconstruye solo la API): las cabeceras
@@ -321,7 +321,7 @@ dirección de retorno no cambia.
 
 | Fase | Estado | Fecha | Evidencia de la prueba |
 |---|---|---|---|
-| A — La API | ⬜ | | |
+| A — La API | 🟡 Verificada en local; falta producción | 2026-10-01 | **Las dependencias:** `helmet` 8.3.0 y `express-rate-limit` 8.7.0, con versión exacta; `npm audit`: 0 vulnerabilidades. **Las cabeceras** (Helmet, sin HSTS, que lo pone Caddy): `Content-Security-Policy: default-src 'none';frame-ancestors 'none'`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: no-referrer`, `Cross-Origin-Opener-Policy` y `Cross-Origin-Resource-Policy` en `same-origin`, y ningún `X-Powered-By`, tanto en las respuestas correctas como en los errores. En producción, Caddy reemplaza `X-Frame-Options` (por `DENY`) y `Referrer-Policy` con las suyas, iguales o más estrictas. **El límite:** 600 peticiones por minuto por IP, configurable con `LIMITE_PETICIONES_POR_MINUTO` (un valor inválido no deja arrancar la API), aplicado antes de leer el cuerpo y de validar el token. Pasado el límite, 429 `DEMASIADAS_PETICIONES` en el formato único, con `Retry-After` y las cabeceras `RateLimit`. La API anuncia el límite al arrancar. **Los caracteres de control:** el hallazgo se confirmó **antes** de corregirlo, contra la API local con la base real: una venta con `\u0000` en el nombre respondía **500** `ERROR_INTERNO`, y el registro decía `invalid byte sequence for encoding "UTF8": 0x00` (código 22021). Ahora el nombre, la observación y el motivo rechazan los caracteres de control (C0, DEL y C1) con 400, antes de tocar la base. La observación admite saltos de línea, porque su campo en la app tiene dos renglones. La misma venta, con la API local reconstruida: **400** `VENTA_INVALIDA`, *"El nombre tiene caracteres no validos."* **El canal:** mensaje máximo de 16 KB (era 1 MB). **`npm test`: 284 de 284** (273 anteriores y **11 nuevas** en `seguridad.test.js`): las cabeceras en un 200, un 401 y un 404; el 429 con su formato, `Retry-After` y las cabeceras de seguridad; dos IP detrás de Caddy que no se suman; el límite que corta antes del token; el límite por defecto y los valores inválidos; siete caracteres de control en el nombre, y los acentos, la eñe y los emojis que siguen entrando; la observación con saltos de línea sí y con otros controles no; el 400 por la API sin tocar la base, en la venta y en el motivo; y el canal, que acepta el saludo con un token real y corta un mensaje de más de 16 KB. El contrato OpenAPI suma el 429 y la regla de los textos. **Con la API local reconstruida, contra la base y el Keycloak reales:** `probar_pedidos.py` termina en **TODO CORRECTO**, sin ningún 429. Usó **186 de las 600** peticiones del minuto, menos de un tercio del límite |
 | B — Keycloak | ⬜ | | |
 | C — La CSP de la app | ⬜ | | |
 | D — La evidencia | ⬜ | | |

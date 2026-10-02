@@ -1,6 +1,8 @@
 const express = require('express');
+const helmet = require('helmet');
+const { rateLimit } = require('express-rate-limit');
 const { exigirRol, ROLES_DEL_SISTEMA } = require('./autenticacion');
-const { rutaNoEncontrada, manejadorErrores } = require('./errores');
+const { ErrorApi, rutaNoEncontrada, manejadorErrores } = require('./errores');
 const { rutasProductos } = require('./rutas/productos');
 const { rutasPedidos } = require('./rutas/pedidos');
 const { SIN_AVISOS } = require('./tiempo-real');
@@ -9,10 +11,33 @@ const { SIN_AVISOS } = require('./tiempo-real');
 // las pruebas puedan crearla sin una base real ni un Keycloak real.
 // "montarExtra" existe solo para las pruebas: permite colgar rutas antes del 404.
 // "avisos" es el canal en vivo (tiempo-real.js); sin el, la API funciona igual y no avisa.
-function crearApp({ pool, autenticar, avisos = SIN_AVISOS, montarExtra }) {
+// "limitePorMinuto" es cuantas peticiones acepta de una misma IP (D-52).
+function crearApp({ pool, autenticar, avisos = SIN_AVISOS, montarExtra, limitePorMinuto = 600 }) {
   const app = express();
   app.disable('x-powered-by');
+  // Solo se cree en la IP que manda el proxy de la red interna (Caddy). Asi req.ip es la del
+  // cliente, y el limite de peticiones cuenta por cliente y no por Caddy.
   app.set('trust proxy', 'loopback, uniquelocal');
+
+  // Las cabeceras de seguridad (D-52). La API solo devuelve JSON: no carga nada ni se
+  // muestra dentro de un marco. HSTS no va aqui: lo pone Caddy, que es quien termina TLS.
+  app.use(helmet({
+    contentSecurityPolicy: { useDefaults: false, directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"] } },
+    strictTransportSecurity: false,
+  }));
+
+  // El limite de peticiones por IP (D-52), antes de leer el cuerpo y de validar el token:
+  // una avalancha sin token tambien se corta. Generoso, porque todo el local sale a Internet
+  // por la misma IP. Pasado el limite, 429 en el formato unico, con Retry-After.
+  app.use(rateLimit({
+    windowMs: 60 * 1000,
+    limit: limitePorMinuto,
+    standardHeaders: 'draft-8',
+    legacyHeaders: false,
+    handler: (req, res, next) => next(new ErrorApi(429, 'DEMASIADAS_PETICIONES',
+      'Demasiadas peticiones seguidas. Espera un momento e intenta de nuevo.')),
+  }));
+
   app.use(express.json({ limit: '100kb' }));
 
   const api = express.Router();

@@ -16,14 +16,14 @@ const { crearCanal } = require('./tiempo-real');
 // Tiene que haber uno por cada aviso del canal, los mismos de SIN_AVISOS. Faltaba el de lo
 // agregado a un pedido (D-37): recepcion agregaba una pizza y cocina no se enteraba. Lo
 // comprueba tiempo-real.test.js, avisando por aqui, por donde avisa la API.
-function crearServidor({ pool, autenticar }) {
+function crearServidor({ pool, autenticar, limitePorMinuto }) {
   let canal = null;
   const avisos = {
     pedidoNuevo: (pedido) => canal.pedidoNuevo(pedido),
     pedidoActualizado: (pedido) => canal.pedidoActualizado(pedido),
     estadoCambiado: (aviso) => canal.estadoCambiado(aviso),
   };
-  const servidor = http.createServer(crearApp({ pool, autenticar, avisos }));
+  const servidor = http.createServer(crearApp({ pool, autenticar, avisos, limitePorMinuto }));
   canal = crearCanal(servidor, { usuarioDelToken: autenticar.usuarioDelToken });
   return { servidor, canal, avisos };
 }

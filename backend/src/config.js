@@ -9,12 +9,24 @@ function obligatoria(nombre) {
   return valor.trim();
 }
 
+// Cuantas peticiones por minuto acepta la API de una misma IP (D-52). Generoso a proposito:
+// todos los dispositivos del local salen a Internet por la misma IP.
+function limitePorMinuto() {
+  const texto = (process.env.LIMITE_PETICIONES_POR_MINUTO || '600').trim();
+  const limite = Number(texto);
+  if (!/^[1-9][0-9]*$/.test(texto) || limite > 100000) {
+    throw new Error('LIMITE_PETICIONES_POR_MINUTO tiene que ser un entero entre 1 y 100000');
+  }
+  return limite;
+}
+
 function cargarConfig() {
   const realm = process.env.KEYCLOAK_REALM || 'maxpizzapp';
   const keycloakInterno = (process.env.KEYCLOAK_INTERNAL_URL || 'http://keycloak:8080').replace(/\/$/, '');
 
   return {
     puerto: Number(process.env.PORT || 3000),
+    limitePorMinuto: limitePorMinuto(),
     bd: {
       host: process.env.DB_HOST || 'postgres',
       port: Number(process.env.DB_PORT || 5432),
@@ -34,4 +46,4 @@ function cargarConfig() {
   };
 }
 
-module.exports = { cargarConfig };
+module.exports = { cargarConfig, limitePorMinuto };

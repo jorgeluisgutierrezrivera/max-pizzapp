@@ -1,7 +1,7 @@
 const express = require('express');
 const { exigirRol, ROLES_DEL_SISTEMA } = require('../autenticacion');
 const { ErrorApi } = require('../errores');
-const { leerVenta, leerAgregado, VentaInvalida, ProductoNoDisponible } = require('../precio');
+const { leerVenta, leerAgregado, VentaInvalida, ProductoNoDisponible, tieneControl } = require('../precio');
 const { crearPedido } = require('../pedidos/crear');
 const { agregarAlPedido } = require('../pedidos/agregar');
 const { leerPedidos, idsPorEstados, leerHistorial, puedeVerCelular } = require('../pedidos/leer');
@@ -79,6 +79,9 @@ function leerMotivo(cuerpo) {
   }
   if (motivo.length > LARGO_MOTIVO) {
     throw new ErrorApi(400, 'MOTIVO_INVALIDO', `El motivo admite hasta ${LARGO_MOTIVO} caracteres.`);
+  }
+  if (tieneControl(motivo)) {
+    throw new ErrorApi(400, 'MOTIVO_INVALIDO', 'El motivo tiene caracteres no validos.');
   }
   return motivo;
 }
