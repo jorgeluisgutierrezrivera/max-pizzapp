@@ -106,10 +106,12 @@
 			#                       cuando el texto las necesita.
 			#   auth.{$DOMINIO}     el canje del codigo por los tokens.
 			#   wss://{$DOMINIO}    el canal en vivo.
-			# Primero en modo informe (Content-Security-Policy-Report-Only):
-			# el navegador avisa en la consola lo que bloquearia, sin
-			# bloquear nada. Se impone cuando no hay avisos.
-			header Content-Security-Policy-Report-Only "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' wss://{$DOMINIO} https://auth.{$DOMINIO} https://fonts.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+			# Impuesta desde el 2-oct, despues de medirla en modo informe
+			# (Content-Security-Policy-Report-Only), que solo avisa en la
+			# consola: ningun aviso en la replica local, con los dos roles,
+			# ni en produccion. Si algun dia rompe algo, se vuelve al modo
+			# informe cambiando solo el nombre de la cabecera.
+			header Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' wss://{$DOMINIO} https://auth.{$DOMINIO} https://fonts.gstatic.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
 			# Lo que la app no usa, apagado: ni camara, ni microfono, ni
 			# ubicacion, ni pagos, ni USB.
 			header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
