@@ -23,6 +23,12 @@
   "quickLoginCheckMilliSeconds": 1000,
   "minimumQuickLoginWaitSeconds": 60,
 
+  "passwordPolicy": "length(12) and notUsername and hashAlgorithm(argon2)",
+
+  "eventsEnabled": true,
+  "eventsExpiration": 604800,
+  "enabledEventTypes": ["LOGIN", "LOGIN_ERROR", "LOGOUT", "LOGOUT_ERROR", "CODE_TO_TOKEN", "CODE_TO_TOKEN_ERROR", "REFRESH_TOKEN_ERROR"],
+
   "accessTokenLifespan": 3600,
   "ssoSessionIdleTimeout": 3600,
   "ssoSessionMaxLifespan": 36000,
@@ -56,7 +62,7 @@
     {
       "clientId": "frontend-web",
       "name": "Max Pizzapp (aplicacion web)",
-      "description": "Aplicacion que usan recepcion y cocina: la web y el APK de cocina. Cliente publico: vive en el navegador o en el telefono y no puede guardar un secreto, asi que usa Authorization Code con PKCE. El APK vuelve por su propia direccion, tech.maxpizzapp.cocina:/callback.",
+      "description": "La web de recepcion y cocina y el APK de cocina. Cliente publico: no puede guardar un secreto, asi que usa Authorization Code con PKCE. El APK vuelve por tech.maxpizzapp.cocina:/callback.",
       "enabled": true,
       "protocol": "openid-connect",
       "publicClient": true,
@@ -66,18 +72,18 @@
       "serviceAccountsEnabled": false,
       "frontchannelLogout": true,
       "redirectUris": [
-        "http://localhost:*",
-        "http://127.0.0.1:*",
-        "https://maxpizzapp.tech/*",
-        "tech.maxpizzapp.cocina:/callback"
+        "https://maxpizzapp.tech/",
+        "tech.maxpizzapp.cocina:/callback",
+        "http://localhost:8090/",
+        "http://localhost:9999/callback"
       ],
       "webOrigins": [
-        "+",
+        "https://maxpizzapp.tech",
         "http://localhost:8090"
       ],
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:*##http://127.0.0.1:*##https://maxpizzapp.tech/*##tech.maxpizzapp.cocina:/callback"
+        "post.logout.redirect.uris": "https://maxpizzapp.tech/##tech.maxpizzapp.cocina:/callback##http://localhost:8090/"
       },
       "protocolMappers": [
         {

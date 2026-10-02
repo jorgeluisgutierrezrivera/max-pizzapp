@@ -147,7 +147,7 @@ max-pizzapp/
 ├── frontend/     App Flutter: la web (lib/main.dart) y el APK de cocina (lib/main_cocina.dart, android/)
 ├── docker/       Compose, Postgres (init SQL), Keycloak (realm), Caddy
 ├── pruebas/      Pruebas de extremo a extremo contra Keycloak y la API reales
-├── scripts/      Publicar la app, compilar el APK, preparar las fotos y dibujar las bebidas
+├── scripts/      Publicar la app, compilar el APK, endurecer Keycloak, preparar las fotos y dibujar las bebidas
 └── docs/         Documentación técnica: BRIEF de desarrollo, planes de trabajo, el
                   contrato de la API (docs/api/openapi.yaml) y el perfil del proyecto
 ```
@@ -336,7 +336,8 @@ Todo se ejecuta desde la raíz del repositorio.
 
    Keycloak tarda uno o dos minutos en quedar `healthy`. Su consola queda en
    `http://localhost:8082`.
-3. Asignar las contraseñas de las cuentas de demostración, como explica
+3. Aplicar la configuración de seguridad de Keycloak (`bash scripts/endurecer-keycloak.sh`) y
+   asignar las contraseñas de las cuentas de demostración, como explica
    `docker/keycloak/README.md`.
 4. Comprobar el inicio de sesión de punta a punta:
 
@@ -478,8 +479,16 @@ obtiene los certificados solo durante el primer arranque. Los certificados queda
 volumen `caddy_datos`, que **no se debe borrar**: Let's Encrypt limita cuántas veces se
 puede pedir el mismo certificado por semana.
 
-Después se asignan las contraseñas de las cuentas de demostración, como explica
-`docker/keycloak/README.md` en el apartado *En producción*.
+Después, la configuración de seguridad de Keycloak y las contraseñas de las cuentas de
+demostración, como explica `docker/keycloak/README.md`:
+
+```bash
+bash scripts/endurecer-keycloak.sh
+```
+
+El script deja las direcciones de retorno exactas, la política de contraseñas con Argon2, los
+eventos de acceso y el rol por defecto vacío, y protege la consola contra la fuerza bruta. Al
+terminar, se reemplaza la cuenta temporal de administración por una permanente (mismo README).
 
 ### 5. Verificar desde fuera del servidor
 
