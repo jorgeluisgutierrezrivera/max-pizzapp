@@ -495,8 +495,8 @@ components:
             celular:
               type: string
               nullable: true
-              pattern: '^[67][0-9]{7}$'
-              description: Celular boliviano, opcional.
+              pattern: '^[5-7][0-9]{7}$'
+              description: Celular boliviano, opcional. Empieza con 5, 6 o 7 (D-56).
         observacion: { type: string, maxLength: 240, nullable: true }
         lineas:
           type: array

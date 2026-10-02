@@ -187,7 +187,8 @@ rechazaForma('sin cliente', venta(PIZZA, { cliente: undefined }), /nombre del cl
 rechazaForma('nombre vacio', venta(PIZZA, { cliente: { nombre: '   ' } }), /nombre del cliente/);
 rechazaForma('nombre de 121 caracteres', venta(PIZZA, { cliente: { nombre: 'a'.repeat(121) } }), /120/);
 rechazaForma('celular de 7 digitos', venta(PIZZA, { cliente: { nombre: 'Ana', celular: '7000001' } }), /8 digitos/);
-rechazaForma('celular que empieza con 5', venta(PIZZA, { cliente: { nombre: 'Ana', celular: '50000001' } }), /8 digitos/);
+rechazaForma('celular que empieza con 4, un fijo', venta(PIZZA, { cliente: { nombre: 'Ana', celular: '46000001' } }), /5, 6 o 7/);
+rechazaForma('celular que empieza con 8', venta(PIZZA, { cliente: { nombre: 'Ana', celular: '80000001' } }), /5, 6 o 7/);
 rechazaForma('celular con espacios', venta(PIZZA, { cliente: { nombre: 'Ana', celular: '7000 0001' } }), /8 digitos/);
 rechazaForma('celular con prefijo de pais', venta(PIZZA, { cliente: { nombre: 'Ana', celular: '+59170000001' } }), /8 digitos/);
 rechazaForma('celular como numero', venta(PIZZA, { cliente: { nombre: 'Ana', celular: 70000001 } }), /texto/);
@@ -248,6 +249,12 @@ test('normaliza: celular y observacion vacios quedan como nulos; el nombre sin e
   }));
   assert.deepEqual(v.cliente, { nombre: 'Ana Prueba', celular: null });
   assert.equal(v.observacion, null);
+});
+
+test('los celulares que empiezan con 5, 6 o 7 entran (el 5, desde D-56)', () => {
+  for (const celular of ['50000001', '60000001', '70000001']) {
+    assert.equal(leerVenta(venta(PIZZA, { cliente: { nombre: 'Ana', celular } })).cliente.celular, celular);
+  }
 });
 
 test('normaliza: el total mostrado pasa a centavos exactos', () => {

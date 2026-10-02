@@ -13,7 +13,10 @@ const MAXIMO_DE_LINEAS = 100;
 const MAXIMO_DE_EXTRAS = 10;
 const LARGO_NOMBRE = 120;
 const LARGO_OBSERVACION = 240;
-const CELULAR = /^[67][0-9]{7}$/; // celular boliviano: 8 digitos que empiezan con 6 o 7
+// Celular boliviano: 8 digitos que empiezan con 5, 6 o 7, los que el plan de numeracion del
+// pais reserva para el servicio movil (RM 339/2021). El 5 se sumo en D-56. La misma regla
+// que la app y que la base (cliente_celular_valido).
+const CELULAR = /^[5-7][0-9]{7}$/;
 
 class VentaInvalida extends Error {
   constructor(mensaje) {
@@ -122,7 +125,7 @@ function leerVenta(cuerpo) {
   if (nombre === null) throw new VentaInvalida('Falta el nombre del cliente.');
   const celular = textoOpcional(cliente.celular, 20, 'El celular');
   if (celular !== null && !CELULAR.test(celular)) {
-    throw new VentaInvalida('El celular debe tener 8 digitos y empezar con 6 o 7.');
+    throw new VentaInvalida('El celular debe tener 8 digitos y empezar con 5, 6 o 7.');
   }
 
   return {

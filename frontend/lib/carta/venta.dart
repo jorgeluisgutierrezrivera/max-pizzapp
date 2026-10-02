@@ -79,9 +79,9 @@ class LineaBebida {
   int get subtotal => bebida.precio * cantidad;
 }
 
-/// Celular boliviano: 8 dígitos que empiezan con 6 o 7. La misma regla que el servidor y la
-/// base (D-31).
-final celularValido = RegExp(r'^[67][0-9]{7}$');
+/// Celular boliviano: 8 dígitos que empiezan con 5, 6 o 7. La misma regla que el servidor y
+/// la base (D-31; el 5, desde D-56).
+final celularValido = RegExp(r'^[5-7][0-9]{7}$');
 
 /// El mismo límite que la base para una línea (detalle_pedido_cantidad_valida).
 const maximoPorLinea = 999;
@@ -247,7 +247,7 @@ class FormularioVenta extends ChangeNotifier {
   List<String> get problemas => [
     if (_nombre.trim().isEmpty) 'Escribe el nombre del cliente.',
     if (_celular.trim().isNotEmpty && !celularValido.hasMatch(_celular.trim()))
-      'El celular tiene 8 dígitos y empieza con 6 o 7.',
+      'El celular tiene 8 dígitos y empieza con 5, 6 o 7.',
     if (_paraLlevar == null) 'Elige si es para comer aquí o para llevar.',
     if (_grupos.isEmpty)
       _bebidas.lineas.isEmpty

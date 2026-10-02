@@ -332,7 +332,7 @@ class _SeccionCliente extends StatelessWidget {
         border: const OutlineInputBorder(),
         // Para llevar es cuando más sirve: si el cliente se va, se lo llama al estar listo.
         helperText: paraLlevar == true && celularEscrito.isEmpty ? 'Conviene pedirlo, para avisarle.' : null,
-        errorText: celularEscrito.length == 8 && !celularValido.hasMatch(celularEscrito) ? 'Empieza con 6 o 7.' : null,
+        errorText: celularEscrito.length == 8 && !celularValido.hasMatch(celularEscrito) ? 'Empieza con 5, 6 o 7.' : null,
       ),
       onChanged: formulario.escribirCelular,
     );

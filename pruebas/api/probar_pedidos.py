@@ -171,6 +171,16 @@ if __name__ == '__main__':
     comprobar('cliente sin celular', (estado, pedido.get('cliente'), pedido.get('paraLlevar')),
               (201, {'nombre': 'Usuario Demo', 'celular': None}, False))
 
+    print('\n--- un celular que empieza con 5 (D-56) ---')
+    estado, cuerpo = enviar('/pedidos', recepcion, venta(
+        [{'productoId': id_de['Peperoni'], 'cantidad': 1}], 50,
+        cliente={'nombre': 'Ana Prueba', 'celular': '50000001'}))
+    pedido = cuerpo.get('pedido', {})
+    creados.append(pedido.get('id'))
+    # Si la base no tiene la migracion 09, este pedido responde 500.
+    comprobar('la API y la base lo aceptan', (estado, (pedido.get('cliente') or {}).get('celular')),
+              (201, '50000001'), codigo(cuerpo) if estado != 201 else '')
+
     print('\n--- la venta directa de bebidas (D-38) ---')
     directa = {'ventaDirecta': True, 'lineas': [{'productoId': id_de['Gaseosa 2 L'], 'cantidad': 2}],
                'totalEsperado': 36}

@@ -466,12 +466,12 @@ void main() {
           return pedidoGuardado(p);
         },
       );
-      await escribirCliente(t, celular: '50000001');
+      await escribirCliente(t, celular: '46000001');
       await agregarPizza(t, 'Peperoni');
-      expect(find.text('Empieza con 6 o 7.'), findsOneWidget);
+      expect(find.text('Empieza con 5, 6 o 7.'), findsOneWidget);
       await tocarClave(t, 'confirmar-venta');
       expect(envios, 0);
-      expect(find.text('• El celular tiene 8 dígitos y empieza con 6 o 7.'), findsOneWidget);
+      expect(find.text('• El celular tiene 8 dígitos y empieza con 5, 6 o 7.'), findsOneWidget);
     });
 
     testWidgets('cancelar la venta pregunta antes de borrar', (t) async {

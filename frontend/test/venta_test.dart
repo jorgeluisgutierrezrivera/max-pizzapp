@@ -271,11 +271,13 @@ void main() {
     });
 
     test('el celular es opcional, pero si se escribe tiene que ser boliviano', () {
-      for (final malo in ['7000001', '50000001', '700000011']) {
+      // El 4 es un fijo (Tarija, Cochabamba); el 8, ningún servicio móvil.
+      for (final malo in ['7000001', '46000001', '80000001', '700000011']) {
         final f = conCliente(celular: malo)..agregarPizza(pizza(peperoni), 1);
-        expect(f.problemas, ['El celular tiene 8 dígitos y empieza con 6 o 7.'], reason: malo);
+        expect(f.problemas, ['El celular tiene 8 dígitos y empieza con 5, 6 o 7.'], reason: malo);
       }
-      for (final bueno in ['', '70000001', '60000001']) {
+      // El 5, desde D-56: el plan de numeración lo reserva para celulares.
+      for (final bueno in ['', '70000001', '60000001', '50000001']) {
         expect((conCliente(celular: bueno)..agregarPizza(pizza(peperoni), 1)).problemas, isEmpty, reason: bueno);
       }
     });
