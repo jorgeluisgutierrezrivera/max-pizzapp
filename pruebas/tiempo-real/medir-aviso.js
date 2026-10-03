@@ -23,7 +23,8 @@ const { io } = requerir('socket.io-client');
 
 const API = process.env.API_URL;
 const ORIGEN = new URL(API).origin;
-const VECES = Number(process.env.VECES || 10);
+// 30 repeticiones, las que pide el RNF-01 (tarjeta 10).
+const VECES = Number(process.env.VECES || 30);
 const LIMITE_MS = 2000;
 
 async function llamar(metodo, ruta, token, cuerpo) {

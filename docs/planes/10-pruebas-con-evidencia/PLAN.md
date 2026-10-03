@@ -150,18 +150,19 @@ Cada fase se prueba y se sube por separado.
 - [x] El README del repositorio: el comando de la sexta línea y la ruta del reporte.
 
 ### Fase B — La integración continua
-- [ ] `.github/workflows/pruebas.yml`, con las versiones fijadas.
-- [ ] La insignia en el README.
+- [x] `.github/workflows/pruebas.yml`, con las versiones fijadas.
+- [x] La insignia en el README.
 - [ ] El autor sube; el agente comprueba en la API pública de GitHub que la corrida terminó
       en verde. Si una prueba falla solo en la integración continua, se corrige o se explica
       en este plan.
 
 ### Fase C — RNF-01 en producción
-- [ ] `pruebas/carga/listado-pedidos.k6.js` y `pruebas/carga/medir_carga.py` *(nuevos)*.
-- [ ] Probado primero contra el entorno local.
-- [ ] En producción, fuera del horario de atención: **k6** (percentil 95 del listado, con 50
+- [x] `pruebas/carga/listado-pedidos.k6.js` y `pruebas/carga/medir_carga.py` *(nuevos)*.
+- [x] Probado primero contra el entorno local.
+- [x] En producción, fuera del horario de atención: **k6** (percentil 95 del listado, con 50
       activos y 5 usuarios) y **las 30 propagaciones** (`medir_aviso.py` con `VECES=30`), con
-      sus reportes. Al terminar, ningún pedido de prueba activo.
+      sus reportes. Al terminar, ningún pedido de prueba activo. *(Se corrió dentro del
+      horario, con el local sin atender ese día: ver la sección 10.)*
 
 ### Fase D — RNF-03 y RNF-04
 - [ ] El mapa de los cuatro estados en las tres vistas con datos, cada uno con su prueba; las
@@ -251,8 +252,8 @@ No cambia el código de la API, de la app ni la base: solo pruebas, *scripts* y 
 | Fase | Estado | Fecha | Evidencia de la prueba |
 |---|---|---|---|
 | A — La suite con su reporte | ✅ Verificada | 2026-10-02 | **La API:** `npm run test:reporte` (`backend/scripts/reporte-de-pruebas.js`) corre la misma suite que `npm test` con dos reportes del propio `node --test`: `api.txt`, que empieza con la fecha, la versión, Node, el sistema, el comando y el resultado, y `api-junit.xml`, con los **288 casos**. **288 de 288.** Sin códigos de color, y con las rutas relativas a la raíz del repositorio: las trazas que imprimen a propósito las pruebas que provocan errores, y el atributo `file` de cada caso del JUnit, traían la ruta absoluta de la máquina (`E:\Max Pizzapp v2\…`). `npm test` no cambió. **Las dos suites:** `bash scripts/correr-pruebas.sh` deja además `app.txt`, con la misma cabecera: **280 de 280**, Flutter 3.44.8. El reporte de Flutter también traía las rutas absolutas: se dejan relativas (`test/…`), con una expresión que sirve igual en Windows y en Linux. **La sonda de errores** (`pruebas/api/probar_errores.py`, nueva): los 15 casos de 401, 403, 400, 413 y 415 de la tarjeta 09, más **un acceso con la contraseña equivocada (CA-01.2)**, el último y uno solo, para no activar el bloqueo por intentos rápidos. **16 de 16**, en local y en producción. La sonda de acceso reconoce ahora el mensaje de Keycloak en español (*"Usuario o contraseña incorrectos"*): antes, la contraseña equivocada salía como *"no hubo redirección"* en lugar de *"credenciales rechazadas"*. **Las sondas, con su reporte:** `pruebas/correr_sondas.py` corre las cinco (acceso, salud, carta, pedidos y errores) y deja `sonda-*.txt`, con la fecha, la API y Keycloak al principio. En local, todas correctas. **En producción** (2-oct, 11:25, fuera del horario de atención): acceso en 4,1 s, salud en 7,3 s, carta en 7,4 s, pedidos en 107,6 s y errores en 13,3 s, **TODAS CORRECTAS**; la de pedidos cerró los pedidos que creó. Ningún reporte contiene la contraseña (buscada con su valor real) ni un token. **El plan de pruebas** (`docs/pruebas/README.md`): la sexta línea, los niveles de prueba con su herramienta, su comando y su reporte, y **la tabla de casos**. De los 14 casos de los *Must*, 12 ya tienen su evidencia; CP-05 y CP-11 (menos de 2 s) esperan las 30 propagaciones de la fase C. Los 8 de seguridad, completos. De los 6 de los RNF, el de RNF-02; los demás, en las fases C, D y E. Cada nombre de prueba citado se verificó contra el código. **El README** del repositorio: la sexta línea, la ruta del reporte y los dos comandos nuevos |
-| B — La integración continua | ⬜ | | |
-| C — RNF-01 en producción | ⬜ | | |
+| B — La integración continua | 🟡 Verificada en local; falta la corrida en GitHub | 2026-10-02 | **El flujo** (`.github/workflows/pruebas.yml`): en cada `push` a `main`, en cada *pull request* y a mano (*Run workflow*), dos trabajos en Ubuntu 24.04. **La API**, con Node 24.15.0: `npm ci`, `npm test` —el comando de la sexta línea— y `npm run test:reporte`, cuyo texto y JUnit quedan como artefacto `reporte-api`. **La app**, con Flutter 3.44.8: `flutter pub get --enforce-lockfile`, `flutter analyze` y `flutter test`. Las versiones, fijadas; un tiempo máximo de 10 y 20 minutos por trabajo, para que una prueba colgada no corra horas. **La insignia**, al principio del README, y el párrafo de la integración continua en su sección de pruebas. **Comprobado antes de subir:** `actionlint` 1.7.12, sin observaciones; las acciones (`checkout`, `setup-node` y `upload-artifact` en su versión 7, `subosito/flutter-action` en la 2), la imagen `ubuntu-24.04`, Node 24.15.0 y Flutter 3.44.8 existen, y las entradas que usa el flujo son las de cada acción. **Un clon limpio, simulado en Docker:** el código de `main` (`5b7908b`) bajado de GitHub, en Linux y con la hora en UTC, como la máquina de GitHub. La API: **288 de 288**, y el reporte sin rutas absolutas. La app, con el Flutter 3.44.8 para Linux (su SHA-256, verificado): las dependencias exactas, el análisis **sin avisos** y **280 de 280**, en 1 min 17 s. En Linux se revisaba lo que en Windows no se ve: los nombres de archivo distinguen mayúsculas, y las pruebas que muestran horas corren en UTC. **Falta:** la corrida real en GitHub, tras el `10-2` |
+| C — RNF-01 en producción | ✅ Verificada | 2026-10-02 | **La carga** (`pruebas/carga/`, nuevos): `listado-pedidos.k6.js` crea 50 pedidos pendientes al empezar; 5 usuarios a la vez, 3 de recepción y 2 de cocina, leen `GET /api/v1/pedidos` una vez por segundo durante 60 s, y cada lectura comprueba que el listado trae los 50 o más; al terminar, cancela los 50 con el motivo *"Prueba de carga k6"*. Los umbrales están en el script: percentil 95 bajo 2 s, ninguna lectura fallida y todas las comprobaciones cumplidas. `medir_carga.py` consigue los tokens por PKCE y corre k6 2.3.0 en Docker: el script entra por la entrada estándar y los tokens por el entorno, sin aparecer en la línea de comandos. **La propagación:** `medir_aviso.py` hace 30 repeticiones por omisión y deja su reporte. **En local:** k6, percentil 95 de 24 ms en 297 lecturas, ninguna falla y los 50 cancelados; la propagación, peor caso de 176 ms. **En producción**, corridas por el autor el 2-oct a las 20:04, hora de Bolivia (los reportes dicen 00:03 y 00:05 del 3-oct, en UTC). **Las 30 propagaciones** ([`tiempo-real.txt`](../../pruebas/reportes/tiempo-real.txt)): del pedido nuevo a cocina, **peor caso de 303 ms** (mediana 236); del cambio de estado a recepción, **262 ms** (mediana 231); de lo agregado a cocina, **705 ms** (mediana 239). Los 30 pedidos, cerrados. **k6** ([`carga-k6.txt`](../../pruebas/reportes/carga-k6.txt)): 235 lecturas del listado con 50 activos y 5 usuarios, **percentil 95 de 296 ms** (mediana 286, máximo 369), ninguna falla y 470 de 470 comprobaciones; 336 peticiones en total, bajo el límite de 600 por minuto. Los 50 pedidos (#327 a #376), cancelados. **Los dos, holgados:** el peor caso más alto queda a un tercio del umbral. El piso de unos 230 ms aparece en todas las mediciones, también en las más simples: es el viaje por la red entre la máquina del autor y el servidor, porque en local las mismas pruebas dan decenas de milisegundos. Ningún token en los reportes |
 | D — RNF-03 y RNF-04 | ⬜ | | |
 | E — La tabla de casos | ⬜ | | |
 
@@ -264,6 +265,7 @@ No cambia el código de la API, de la app ni la base: solo pruebas, *scripts* y 
 |---|---|---|
 | 2026-10-02 | Versión inicial propuesta | Lo que el E3 pide para las pruebas, lo que pidió el docente en la T3 y lo que la revisión del 2-oct encontró sin medir (sección 1) |
 | 2026-10-02 | **Aprobado** por el autor, sin cambios | |
+| 2026-10-02 | **La fase C se corre a las 20:04, dentro del horario de atención** que D-58 evitaba | El autor confirmó que ese día el local no usaba el sistema. La regla existe para no meter 50 pedidos de prueba en la cocina durante el servicio, y ese día no había servicio. La hora real queda en los reportes |
 
 ---
 

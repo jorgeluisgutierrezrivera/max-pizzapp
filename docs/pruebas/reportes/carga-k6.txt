@@ -1,0 +1,56 @@
+Max Pizzapp - reporte de la carga del listado (RNF-01), con k6
+Fecha:    2026-10-03T00:05:49+00:00 (duro 78.3 s)
+API:      https://maxpizzapp.tech/api/v1
+Keycloak: https://auth.maxpizzapp.tech
+Herramienta: grafana/k6:2.3.0, en Docker
+Comando:  python pruebas/carga/medir_carga.py   (el script: pruebas/carga/listado-pedidos.k6.js)
+Prueba:   50 pedidos activos, 5 usuarios a la vez (3 de recepcion y 2 de cocina) leyendo
+          GET /api/v1/pedidos una vez por segundo durante 60 s. Umbral: p(95) < 2 s.
+Cuentas de prueba reales por PKCE; la contrasena y los tokens no se imprimen.
+Resultado: UMBRAL CUMPLIDO
+------------------------------------------------------------------------------
+
+
+  █ THRESHOLDS 
+
+    checks{nombre:listado}
+    ✓ 'rate==1' rate=100.00%
+
+    http_req_duration{nombre:listado}
+    ✓ 'p(95)<2000' p(95)=296.36ms
+
+    http_req_failed{nombre:listado}
+    ✓ 'rate==0' rate=0.00%
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 470     6.132343/s
+    checks_succeeded...: 100.00% 470 out of 470
+    checks_failed......: 0.00%   0 out of 470
+
+    ✓ el listado responde 200
+    ✓ el listado trae 50 pedidos activos o mas
+
+    HTTP
+    http_req_duration..............: min=139.79ms med=283.81ms avg=245.21ms p(90)=292.02ms p(95)=294.23ms max=369.42ms
+      { expected_response:true }...: min=139.79ms med=283.81ms avg=245.21ms p(90)=292.02ms p(95)=294.23ms max=369.42ms
+      { nombre:listado }...........: min=273.11ms med=286ms    avg=287.06ms p(90)=293.44ms p(95)=296.36ms max=369.42ms
+    http_req_failed................: 0.00%  0 out of 336
+      { nombre:listado }...........: 0.00%  0 out of 235
+    http_reqs......................: 336    4.383973/s
+
+    EXECUTION
+    iteration_duration.............: min=1.27s    med=1.28s    avg=1.29s    p(90)=1.29s    p(95)=1.3s     max=1.67s   
+    iterations.....................: 235    3.066172/s
+    vus............................: 0      min=0        max=5
+    vus_max........................: 5      min=5        max=5
+
+    NETWORK
+    data_received..................: 5.2 MB 67 kB/s
+    data_sent......................: 74 kB  966 B/s
+
+
+
+time="2026-10-03T00:05:58Z" level=info msg="setup: 50 pedidos activos creados (#327 a #376)" source=console
+time="2026-10-03T00:07:06Z" level=info msg="teardown: 50 de 50 pedidos de la prueba cancelados" source=console
