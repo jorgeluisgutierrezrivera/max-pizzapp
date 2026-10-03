@@ -16,6 +16,8 @@ import 'package:maxpizzapp/pedidos/pedido.dart';
 import 'package:maxpizzapp/pedidos/pedidos_en_vivo.dart';
 import 'package:maxpizzapp/tema.dart';
 
+import 'anchos_del_rnf04.dart';
+
 class CanalDePrueba implements CanalEnVivo {
   final nuevos = StreamController<Map<String, dynamic>>.broadcast();
   final cambios = StreamController<Map<String, dynamic>>.broadcast();
@@ -132,6 +134,10 @@ class Escena {
   Future<Pedido> Function(Pedido, Map<String, dynamic>)? responderAgregado;
   Future<Pedido> Function(Pedido, String)? responderCancelacion;
 
+  /// Si está, responde la lectura de los pedidos en lugar de la lista de arriba: para ver la
+  /// pantalla mientras la lectura viaja, o cuando falla.
+  Future<List<Pedido>> Function()? responderLectura;
+
   Widget app() => MaterialApp(
     theme: temaMaxPizzas(),
     home: PantallaRecepcion(
@@ -142,6 +148,7 @@ class Escena {
       enviarPedido: (p) async => {},
       cargarPedidos: () async {
         lecturas++;
+        if (responderLectura != null) return responderLectura!();
         return [for (final p in pedidos) Pedido.desdeJson(p)];
       },
       cambiarEstado: (pedido, hacia) async {
@@ -307,6 +314,84 @@ void main() {
       await abrir(t, []);
       expect(find.textContaining('No hay pedidos por atender.'), findsOneWidget);
     });
+
+    // RNF-03: los cuatro estados. Con datos y vacío tienen sus pruebas arriba y en "lo que
+    // muestra cada pedido"; estas son las otras dos.
+    testWidgets('cargando: lo dice mientras la lectura viaja, y después muestra los pedidos', (t) async {
+      tamano(t, 1400, 1000);
+      final lectura = Completer<List<Pedido>>();
+      final e = Escena()..responderLectura = (() => lectura.future);
+      await t.pumpWidget(e.app());
+      await t.pump();
+      await t.tap(find.byKey(const Key('pestana-pedidos')));
+      await t.pump(const Duration(milliseconds: 300));
+      expect(find.text('Cargando los pedidos…'), findsOneWidget);
+      lectura.complete([Pedido.desdeJson(jsonPedido(1))]);
+      await t.pumpAndSettle();
+      expect(find.text('Cargando los pedidos…'), findsNothing);
+      expect(find.byKey(const Key('recepcion-pedido-1')), findsOneWidget);
+    });
+
+    testWidgets('error: el mensaje del servidor, y Reintentar vuelve a leer', (t) async {
+      tamano(t, 1400, 1000);
+      final e = Escena()..pedidos = [jsonPedido(1)];
+      e.responderLectura = () async {
+        if (e.lecturas == 1) {
+          throw const ErrorApi(503, 'BASE_NO_DISPONIBLE', 'No se pueden leer los datos en este momento.');
+        }
+        return [for (final p in e.pedidos) Pedido.desdeJson(p)];
+      };
+      await t.pumpWidget(e.app());
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('pestana-pedidos')));
+      await t.pumpAndSettle();
+      expect(find.text('No se pueden leer los datos en este momento.'), findsOneWidget);
+      await t.tap(find.text('Reintentar'));
+      await t.pumpAndSettle();
+      expect(find.byKey(const Key('recepcion-pedido-1')), findsOneWidget);
+      expect(e.lecturas, 2);
+    });
+  });
+
+  group('RNF-04: a 1366 × 768 y a 768 × 1024, sin desplazamiento horizontal', () {
+    final agregadaHace = ahora.subtract(const Duration(minutes: 2)).toIso8601String();
+    for (final (ancho, alto) in tamanosDelRnf04) {
+      testWidgets('los pedidos, a ${ancho.round()} × ${alto.round()}', (t) async {
+        // Uno de cada estado, un nombre largo y lo agregado, que es lo que más ocupa.
+        await abrir(
+          t,
+          [
+            jsonPedido(1, estado: 'listo', cliente: 'María Fernanda Gutiérrez de la Fuente', minutos: 25),
+            jsonPedido(
+              2,
+              estado: 'en_preparacion',
+              minutos: 12,
+              total: 68,
+              agregadas: [
+                {
+                  'producto': {'id': 10, 'nombre': 'Gaseosa 2 L', 'categoria': 'bebida'},
+                  'mitad': null,
+                  'cantidad': 1,
+                  'agregadoEn': agregadaHace,
+                  'extras': [],
+                },
+              ],
+            ),
+            jsonPedido(3, paraLlevar: false, celular: null),
+          ],
+          ancho: ancho,
+          alto: alto,
+        );
+        for (final id in [1, 2, 3]) {
+          expect(find.byKey(Key('recepcion-pedido-$id')), findsOneWidget, reason: 'pedido $id');
+        }
+        sinDesplazamientoHorizontal(t, 'la lista de pedidos');
+
+        // Cancelar, con sus motivos, es la ventana más ancha de esta pestaña.
+        await tocar(t, enTarjeta(3, find.text('Cancelar')));
+        sinDesplazamientoHorizontal(t, 'la ventana de cancelar');
+      });
+    }
   });
 
   group('el canal caído (CA-03.2, D-45)', () {

@@ -16,6 +16,8 @@ import 'package:maxpizzapp/pantallas/timbre_android.dart';
 import 'package:maxpizzapp/pedidos/pedido.dart';
 import 'package:maxpizzapp/tema.dart';
 
+import 'anchos_del_rnf04.dart';
+
 class CanalDePrueba implements CanalEnVivo {
   final nuevos = StreamController<Map<String, dynamic>>.broadcast();
   final cambios = StreamController<Map<String, dynamic>>.broadcast();
@@ -624,5 +626,41 @@ void main() {
       await t.pumpAndSettle();
       expect(reproductor.sonidos, 2);
     });
+  });
+
+  group('RNF-04: a 1366 × 768 y a 768 × 1024, sin desplazamiento horizontal', () {
+    for (final (ancho, alto) in tamanosDelRnf04) {
+      testWidgets('la cola, a ${ancho.round()} × ${alto.round()}, también con la banda y la franja', (t) async {
+        tamano(t, ancho, alto);
+        // Lo que más ocupa: mitades con extras y bebidas (todos), un nombre y una observación
+        // largos, lo agregado y un pedido ya empezado. Y el navegador sin sonido todavía.
+        final e = Escena()
+          ..cola = [
+            json(1, minutos: 25),
+            json(
+              2,
+              estado: 'en_preparacion',
+              minutos: 12,
+              cliente: 'María Fernanda Gutiérrez de la Fuente',
+              observacion: 'Sin cebolla y bien cocida, la masa delgada y cortada en ocho',
+            ),
+            json(3, agregadas: [pizzaAgregada]),
+            json(4, minutos: 1),
+          ]
+          ..timbre.pendiente = true;
+        await t.pumpWidget(e.app());
+        await t.pumpAndSettle();
+        for (final id in [1, 2, 3, 4]) {
+          expect(find.byKey(Key('pedido-$id')), findsOneWidget, reason: 'pedido $id');
+        }
+        expect(find.byKey(const Key('aviso-sin-sonido')), findsOneWidget);
+        sinDesplazamientoHorizontal(t, 'la cola con la franja del sonido');
+
+        // El canal no entra en 5 s: la banda de canal caído se suma arriba.
+        await t.pump(const Duration(seconds: 5));
+        expect(find.byKey(const Key('aviso-sin-conexion')), findsOneWidget);
+        sinDesplazamientoHorizontal(t, 'la cola con la banda y la franja');
+      });
+    }
   });
 }

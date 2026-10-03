@@ -37,6 +37,38 @@ Las sondas, la medición del tiempo real y la carga crean pedidos de prueba con 
 ficticios y los cierran al terminar. Contra producción se corren fuera del horario de
 atención del local, de 18:00 a 23:30.
 
+## La usabilidad y los anchos (RNF-03 y RNF-04)
+
+**Un paso es una sección del formulario de venta** (D-60): el cliente, los productos y
+confirmar. Desde la tutoría del 24-sep la venta es un solo formulario: la pantalla numera sus
+secciones (*1 · Cliente*, *2 · Pizzas* y *3 · Bebidas*) y *Confirmar* está en el pedido, a la
+derecha. Las pizzas y las bebidas son el mismo paso, los productos, y las bebidas son
+opcionales. Elegir una pizza en su ventana también es parte de ese paso. La prueba *el cliente,
+los productos y confirmar, en la misma pantalla: cada toque cae en su sección* hace una venta
+completa en esos tres pasos y comprueba que ninguno lleva a otra pantalla.
+
+**Los cuatro estados, en cada vista que consume datos.** Cada celda es el nombre de su prueba:
+
+| Vista | Cargando | Con datos | Vacío | Error |
+|---|---|---|---|---|
+| **La venta** (la carta), `pantalla_recepcion_test.dart` | *cargando* | *todo a la vista: el cliente, las pizzas, las bebidas y el pedido…* | *carta vacía: lo dice, en vez de una pantalla en blanco* | *error: el mensaje del servidor, y reintentar vuelve a pedir* |
+| **Los pedidos de recepción**, `pedidos_de_recepcion_test.dart` | *cargando: lo dice mientras la lectura viaja, y después muestra los pedidos* | *número del día, cliente, para llevar, celular, líneas, lo agregado con su hora, total y estado* | *sin pedidos lo dice, en vez de una pantalla en blanco* | *error: el mensaje del servidor, y Reintentar vuelve a leer* |
+| **La cola de cocina**, `pantalla_cocina_test.dart` | *cargando, y luego la cola* | *número, cliente, para llevar, las pizzas con mitades y extras, las bebidas aparte y la observación* | *sin pedidos lo dice, en vez de una pantalla en blanco* | *si la API falla, el mensaje y Reintentar* |
+
+El acceso también lee del servidor (`/sesion`), y tiene su espera y su error con *Reintentar*
+(`segun_rol_test.dart`); el estado vacío no le corresponde.
+
+**Los dos anchos del RNF-04**, 1366 × 768 (una computadora portátil) y 768 × 1024 (una tableta
+vertical), se prueban en las tres vistas con lo que más ocupa: un nombre largo, una pizza
+mitad y mitad con extra, una observación larga, lo agregado y un pedido de cada estado; en
+cocina, también la banda de canal caído y la franja del sonido apagado. La comprobación
+(`test/anchos_del_rnf04.dart`) mira tres cosas: que Flutter no reporte un desborde, que
+ningún texto visible quede fuera del ancho de la pantalla y que nada se desplace de lado.
+Quedan afuera, a propósito, la tira de extras del modal de la pizza y cada campo de texto de
+una línea, que corre lo escrito cuando no cabe, como en cualquier formulario: ninguno de los
+dos desplaza la página. Antes de usarla, la comprobación se calibró: rechazó un texto fuera de
+la pantalla, una lista que se desplazaba de lado y un desborde.
+
 ## La tabla de casos
 
 Camino feliz y error de cada requisito *Must* (RF-01 a RF-07), los casos de seguridad y los
@@ -82,6 +114,6 @@ verlo: un reporte de esta carpeta, una prueba automática por su nombre o un com
 | CP-23 | RNF-01 | Peor caso de 30 propagaciones < 2 s | El pedido nuevo, 303 ms; el cambio de estado, 262 ms; lo agregado, 705 ms. En producción | ✅ | [`tiempo-real.txt`](reportes/tiempo-real.txt) |
 | CP-24 | RNF-01 | Percentil 95 del listado con 50 activos y 5 usuarios < 2 s | 296 ms en 235 lecturas, ninguna fallida. En producción | ✅ | [`carga-k6.txt`](reportes/carga-k6.txt) |
 | CP-25 | RNF-02 | Keycloak, token de 60 min, HTTPS, Argon2, rol en el servidor | Todo, con su evidencia | ✅ | Tarjeta 09 (plan, sección 9) |
-| CP-26 | RNF-03 | La venta en 3 pasos o menos; 4 estados en cada vista con datos | ⏳ | ⏳ | fase D |
-| CP-27 | RNF-04 | Sin desplazamiento horizontal a 1366 y 768 px; Chrome y Edge | ⏳ | ⏳ | fase D |
+| CP-26 | RNF-03 | La venta en 3 pasos o menos; 4 estados en cada vista con datos | La venta en 3 pasos, sin cambiar de pantalla; los 4 estados en las 3 vistas, 12 de 12 | ✅ | app: *el cliente, los productos y confirmar, en la misma pantalla: cada toque cae en su sección*; las 12 pruebas de los estados, en la sección de arriba |
+| CP-27 | RNF-04 | Sin desplazamiento horizontal a 1366 y 768 px; Chrome y Edge | En las pruebas de la app, nada se desborda ni se desplaza de lado en las 3 vistas, a los 2 tamaños; Edge y las capturas, ⏳ | ⏳ | app: *la venta de punta a punta*, *los pedidos* y *la cola*, a 1366 × 768 y a 768 × 1024 |
 | CP-28 | RNF-05 | ≥ 99 % de respuestas 200 en 7 días o más; aviso de canal caído < 10 s | El aviso, sí (CP-06); el monitor, ⏳ | ⏳ | fase E |

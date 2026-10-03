@@ -14,6 +14,8 @@ import 'package:maxpizzapp/pantallas/venta/formulario_de_venta.dart';
 import 'package:maxpizzapp/pantallas/venta/pedido_enviado.dart';
 import 'package:maxpizzapp/tema.dart';
 
+import 'anchos_del_rnf04.dart';
+
 /// Un canal que ya está conectado y no avisa nada: la venta se prueba en el caso normal, sin
 /// la banda de canal caído, que tiene sus propias pruebas.
 class CanalConectado implements CanalEnVivo {
@@ -789,5 +791,86 @@ void main() {
       await tocarClave(t, 'confirmar-venta');
       expect(texto(t, 'pedido-enviado'), 'Pedido 12 de Ana Prueba enviado a cocina');
     });
+  });
+
+  // RNF-03: "registrar un pedido en 3 pasos o menos". Un paso es una sección del formulario
+  // (D-60): el cliente, los productos (las pizzas y, si hay, las bebidas) y confirmar.
+  group('RNF-03: un pedido en tres pasos (D-60)', () {
+    testWidgets('el cliente, los productos y confirmar, en la misma pantalla: cada toque cae en su sección', (t) async {
+      Map<String, dynamic>? enviado;
+      await empezar(
+        t,
+        ancho: 1366,
+        alto: 768,
+        enviar: (pedido) async {
+          enviado = pedido;
+          return pedidoGuardado(pedido);
+        },
+      );
+      Finder en(String seccion, String clave) =>
+          find.descendant(of: find.widgetWithText(Seccion, seccion), matching: find.byKey(Key(clave)));
+      final pantalla = ModalRoute.of(t.element(find.byKey(const Key('formulario-venta'))));
+
+      // Paso 1, el cliente: el nombre, el celular y si es para llevar, en su sección.
+      for (final clave in ['cliente-nombre', 'cliente-celular', 'para-llevar']) {
+        expect(en('1 · Cliente', clave), findsOneWidget, reason: clave);
+      }
+      await escribirCliente(t, celular: '70000001');
+
+      // Paso 2, los productos: la pizza se arma en su modal, que se abre desde su sección y
+      // vuelve a ella; la bebida se suma con un toque.
+      final gaseosa = 'bebida-${de('Gaseosa 2 L').id}-mas';
+      expect(en('2 · Pizzas', 'agregar-pizza'), findsOneWidget);
+      expect(en('3 · Bebidas', gaseosa), findsOneWidget);
+      await agregarPizza(t, 'Peperoni');
+      await tocarClave(t, gaseosa);
+      expect(texto(t, 'total-venta'), 'Bs 68');
+
+      // Paso 3, confirmar: un solo botón, en el pedido.
+      expect(
+        find.descendant(of: find.byType(PanelPedido), matching: find.byKey(const Key('confirmar-venta'))),
+        findsOneWidget,
+      );
+      await tocarClave(t, 'confirmar-venta');
+      expect(enviado, isNotNull);
+      expect(texto(t, 'pedido-enviado'), 'Pedido 12 de Ana Prueba enviado a cocina');
+
+      // Ningún paso llevó a otra pantalla: la venta empezó y terminó en la misma.
+      final alFinal = ModalRoute.of(t.element(find.byKey(const Key('formulario-venta'))));
+      expect(alFinal, same(pantalla));
+      expect(alFinal!.isCurrent, isTrue);
+    });
+  });
+
+  group('RNF-04: a 1366 × 768 y a 768 × 1024, sin desplazamiento horizontal', () {
+    for (final (ancho, alto) in tamanosDelRnf04) {
+      testWidgets('la venta de punta a punta, a ${ancho.round()} × ${alto.round()}', (t) async {
+        await empezar(t, ancho: ancho, alto: alto, enviar: (p) async => pedidoGuardado(p));
+        sinDesplazamientoHorizontal(t, 'el formulario vacío');
+
+        // Un nombre largo, una pizza mitad y mitad con extra, una bebida y una observación.
+        await escribirCliente(t, nombre: 'María Fernanda Gutiérrez de la Fuente', celular: '70000001');
+        await tocarClave(t, 'agregar-pizza');
+        await tocarClave(t, 'tipo-mitades');
+        await tocarSabor(t, 'Salame');
+        await tocarSabor(t, 'Peperoni');
+        await tocarClave(t, 'extra-Extra queso');
+        sinDesplazamientoHorizontal(t, 'el modal de la pizza');
+        await tocarClave(t, 'listo-pizza');
+        await tocarClave(t, 'bebida-${de('Gaseosa 2 L').id}-mas');
+        await tocarClave(t, 'observacion');
+        await t.enterText(find.byKey(const Key('observacion')), 'Sin cebolla y bien cocida, por favor');
+        await t.pumpAndSettle();
+        sinDesplazamientoHorizontal(t, 'el formulario lleno');
+
+        await tocarClave(t, 'vender-bebidas');
+        sinDesplazamientoHorizontal(t, 'el modal de las bebidas');
+        await tocarClave(t, 'cerrar-bebidas');
+
+        await tocarClave(t, 'confirmar-venta');
+        expect(texto(t, 'pedido-enviado'), 'Pedido 12 de María Fernanda Gutiérrez de la Fuente enviado a cocina');
+        sinDesplazamientoHorizontal(t, 'el aviso de la venta');
+      });
+    }
   });
 }
