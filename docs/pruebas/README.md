@@ -15,6 +15,12 @@ Corre en un clon limpio, sin base de datos, sin Keycloak y sin `.env`: solo nece
 Su reporte es [`reportes/api.txt`](reportes/api.txt) (y [`reportes/api-junit.xml`](reportes/api-junit.xml),
 en JUnit). Para volver a escribirlo: `cd backend && npm run test:reporte`.
 
+**La integración continua lo demuestra en cada `push`** (D-59): una máquina de GitHub, que
+parte de un clon limpio igual que la del tribunal, corre ese comando y la suite de la app.
+El resultado de cada corrida está en la pestaña
+[*Actions*](https://github.com/jorgeluisgutierrezrivera/max-pizzapp/actions/workflows/pruebas.yml)
+del repositorio, con el reporte de la API como artefacto.
+
 ## Los niveles de prueba
 
 | Nivel | Qué prueba | Herramienta | Comando | Necesita | Reporte |
@@ -25,7 +31,7 @@ en JUnit). Para volver a escribirlo: `cd backend && npm run test:reporte`.
 | **Sondas de punta a punta** | Lo mismo que una persona, contra un entorno real: el acceso por PKCE con las cuentas de prueba, la carta y los pedidos en la base de verdad, las carreras que decide su bloqueo y la matriz de errores | Python 3, sin paquetes | `python pruebas/correr_sondas.py` | El entorno levantado, o la URL pública y la contraseña de prueba | [`sonda-*.txt`](reportes/) |
 | **Tiempo real** (RNF-01) | Cuánto tarda en llegar cada aviso en vivo, del cambio a la otra pantalla, en 30 repeticiones | `socket.io-client` (Node), desde Python | `python pruebas/tiempo-real/medir_aviso.py` | Igual que las sondas | ⏳ fase C |
 | **Carga** (RNF-01) | El listado de pedidos con 50 activos y 5 usuarios a la vez: el percentil 95 | k6, en Docker | `python pruebas/carga/medir_carga.py` | Docker, y lo mismo que las sondas | ⏳ fase C |
-| **Integración continua** | Las dos suites, en un clon limpio, en cada `push` | GitHub Actions | automático | — | ⏳ fase B |
+| **Integración continua** | Las dos suites, en un clon limpio, en cada `push`: la API con `npm ci && npm test`; la app con `flutter analyze` y `flutter test` | GitHub Actions ([`pruebas.yml`](../../.github/workflows/pruebas.yml)), Ubuntu 24.04, Node 24.15.0, Flutter 3.44.8 | automático; o *Run workflow* en *Actions* | — | [Las corridas](https://github.com/jorgeluisgutierrezrivera/max-pizzapp/actions/workflows/pruebas.yml), con el artefacto `reporte-api` |
 
 Las sondas, la medición del tiempo real y la carga crean pedidos de prueba con datos
 ficticios y los cierran al terminar. Contra producción se corren fuera del horario de

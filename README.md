@@ -4,6 +4,8 @@
 > Módulo 4 — Integración y Despliegue de Soluciones\
 > Autor: Jorge Luis Gutierrez Rivera · Tutor: M.Sc. Ing. Isaac Lange Aguilar
 
+[![Pruebas](https://github.com/jorgeluisgutierrezrivera/max-pizzapp/actions/workflows/pruebas.yml/badge.svg?branch=main)](https://github.com/jorgeluisgutierrezrivera/max-pizzapp/actions/workflows/pruebas.yml)
+
 ## Descripción
 
 Sistema web de **gestión de pedidos con sincronización en tiempo real** del estado de
@@ -149,6 +151,12 @@ Su reporte queda en `docs/pruebas/reportes/api.txt` (`npm run test:reporte` lo v
 escribir). Las dos suites con sus reportes: `bash scripts/correr-pruebas.sh`. Las sondas
 contra un entorno real, con su reporte cada una: `python pruebas/correr_sondas.py`.
 
+**Integración continua:** en cada `push` a `main`, GitHub Actions clona el repositorio desde
+cero y corre las dos suites ([`.github/workflows/pruebas.yml`](.github/workflows/pruebas.yml)):
+la de la API con ese mismo comando, y la de la app con `flutter analyze` y `flutter test`. La
+insignia del principio muestra el último resultado, y cada corrida guarda el reporte de la
+API (texto y JUnit) como artefacto. También se corre a mano, desde la pestaña *Actions*.
+
 Las del backend y la app corren sin el entorno levantado; las de `pruebas/`, contra
 Keycloak y la API reales. Antes de la primera vez: `cd backend && npm ci` y
 `cd frontend && flutter pub get`.
@@ -188,6 +196,7 @@ max-pizzapp/
 ├── docker/       Compose, Postgres (init SQL), Keycloak (realm), Caddy
 ├── pruebas/      Pruebas de extremo a extremo contra Keycloak y la API reales
 ├── scripts/      Publicar la app, compilar el APK, endurecer Keycloak, preparar las fotos y dibujar las bebidas
+├── .github/      La integración continua: las dos suites en cada push (GitHub Actions)
 └── docs/         Documentación técnica: BRIEF de desarrollo, planes de trabajo, el
                   contrato de la API (docs/api/openapi.yaml) y el perfil del proyecto
 ```

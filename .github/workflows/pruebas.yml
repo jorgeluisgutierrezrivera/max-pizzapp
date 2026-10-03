@@ -1,0 +1,82 @@
+# ==========================================================
+# Max Pizzapp - integracion continua (tarjeta 10, D-59)
+#
+# En cada push a main y en cada pull request (y a mano, desde la
+# pestana Actions: "Run workflow"), una maquina de GitHub clona
+# el repositorio desde cero y corre las dos suites:
+#   - la API, con el comando exacto de la entrega:
+#       cd backend && npm ci && npm test
+#     y despues su reporte (texto y JUnit), como artefacto;
+#   - la app, con flutter analyze y flutter test.
+# Ninguna necesita base de datos, Keycloak ni un .env: es la
+# prueba de que el comando funciona en un clon limpio.
+#
+# Las sondas contra produccion NO corren aqui: necesitan la
+# contrasena de las cuentas de prueba, que no se guarda en
+# GitHub. Se corren con pruebas/correr_sondas.py.
+#
+# Versiones fijadas: las mismas que el README declara.
+# ==========================================================
+name: Pruebas
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  api:
+    name: API (npm test)
+    runs-on: ubuntu-24.04
+    # La suite tarda unos 15 s; si algo se cuelga, no queda corriendo horas.
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24.15.0'
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - name: Instalar las dependencias exactas
+        run: npm ci
+      - name: La suite, con el comando de la entrega
+        run: npm test
+      - name: El reporte (texto y JUnit)
+        if: always()
+        run: npm run test:reporte
+      - name: Guardar el reporte
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reporte-api
+          path: |
+            docs/pruebas/reportes/api.txt
+            docs/pruebas/reportes/api-junit.xml
+
+  app:
+    name: App (flutter test)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.44.8'
+          channel: stable
+          cache: true
+      - name: Instalar las dependencias exactas
+        run: flutter pub get --enforce-lockfile
+      - name: Analisis estatico
+        run: flutter analyze
+      - name: La suite de la app
+        run: flutter test
