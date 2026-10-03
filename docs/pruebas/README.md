@@ -31,6 +31,7 @@ del repositorio, con el reporte de la API como artefacto.
 | **Sondas de punta a punta** | Lo mismo que una persona, contra un entorno real: el acceso por PKCE con las cuentas de prueba, la carta y los pedidos en la base de verdad, las carreras que decide su bloqueo y la matriz de errores | Python 3, sin paquetes | `python pruebas/correr_sondas.py` | El entorno levantado, o la URL pública y la contraseña de prueba | [`sonda-*.txt`](reportes/) |
 | **Tiempo real** (RNF-01) | Cuánto tarda en llegar cada aviso en vivo, del cambio a la otra pantalla, en 30 repeticiones | `socket.io-client` (Node), desde Python | `python pruebas/tiempo-real/medir_aviso.py` | Igual que las sondas | [`tiempo-real.txt`](reportes/tiempo-real.txt) |
 | **Carga** (RNF-01) | El listado de pedidos con 50 activos y 5 usuarios a la vez: el percentil 95 | k6, en Docker | `python pruebas/carga/medir_carga.py` | Docker, y lo mismo que las sondas | [`carga-k6.txt`](reportes/carga-k6.txt) |
+| **Disponibilidad** (RNF-05) | Que la API responda 200 en `GET /api/v1/salud`, las 24 horas, desde el 23-sep | UptimeRobot, plan gratuito, desde Norteamérica | automático, cada 5 minutos | — | El panel del monitor (capturas del 2-oct) |
 | **Integración continua** | Las dos suites, en un clon limpio, en cada `push`: la API con `npm ci && npm test`; la app con `flutter analyze` y `flutter test` | GitHub Actions ([`pruebas.yml`](../../.github/workflows/pruebas.yml)), Ubuntu 24.04, Node 24.15.0, Flutter 3.44.8 | automático; o *Run workflow* en *Actions* | — | [Las corridas](https://github.com/jorgeluisgutierrezrivera/max-pizzapp/actions/workflows/pruebas.yml), con el artefacto `reporte-api` |
 
 Las sondas, la medición del tiempo real y la carga crean pedidos de prueba con datos
@@ -40,10 +41,13 @@ atención del local, de 18:00 a 23:30.
 ## La usabilidad y los anchos (RNF-03 y RNF-04)
 
 **Un paso es una sección del formulario de venta** (D-60): el cliente, los productos y
-confirmar. Desde la tutoría del 24-sep la venta es un solo formulario: la pantalla numera sus
-secciones (*1 · Cliente*, *2 · Pizzas* y *3 · Bebidas*) y *Confirmar* está en el pedido, a la
-derecha. Las pizzas y las bebidas son el mismo paso, los productos, y las bebidas son
-opcionales. Elegir una pizza en su ventana también es parte de ese paso. La prueba *el cliente,
+confirmar. Desde la tutoría del 24-sep la venta es un solo formulario. En la computadora, la
+pantalla numera *1 · Cliente*, *2 · Pizzas* y *3 · Bebidas*, y la observación y *Confirmar*
+están en el pedido, a la derecha. En la tableta y el celular no hay lugar para el pedido al
+costado: la observación pasa a ser *4 · Observación para cocina* y *Confirmar* queda en la
+barra de abajo. Las pizzas y las bebidas son un mismo paso, los productos, y elegir una pizza
+en su ventana también es parte de ese paso. **Lo que un pedido exige es el cliente, al menos
+una pizza y confirmar: las bebidas y la observación son opcionales.** La prueba *el cliente,
 los productos y confirmar, en la misma pantalla: cada toque cae en su sección* hace una venta
 completa en esos tres pasos y comprueba que ninguno lleva a otra pantalla.
 
@@ -115,5 +119,9 @@ verlo: un reporte de esta carpeta, una prueba automática por su nombre o un com
 | CP-24 | RNF-01 | Percentil 95 del listado con 50 activos y 5 usuarios < 2 s | 296 ms en 235 lecturas, ninguna fallida. En producción | ✅ | [`carga-k6.txt`](reportes/carga-k6.txt) |
 | CP-25 | RNF-02 | Keycloak, token de 60 min, HTTPS, Argon2, rol en el servidor | Todo, con su evidencia | ✅ | Tarjeta 09 (plan, sección 9) |
 | CP-26 | RNF-03 | La venta en 3 pasos o menos; 4 estados en cada vista con datos | La venta en 3 pasos, sin cambiar de pantalla; los 4 estados en las 3 vistas, 12 de 12 | ✅ | app: *el cliente, los productos y confirmar, en la misma pantalla: cada toque cae en su sección*; las 12 pruebas de los estados, en la sección de arriba |
-| CP-27 | RNF-04 | Sin desplazamiento horizontal a 1366 y 768 px; Chrome y Edge | En las pruebas de la app, nada se desborda ni se desplaza de lado en las 3 vistas, a los 2 tamaños; Edge y las capturas, ⏳ | ⏳ | app: *la venta de punta a punta*, *los pedidos* y *la cola*, a 1366 × 768 y a 768 × 1024 |
-| CP-28 | RNF-05 | ≥ 99 % de respuestas 200 en 7 días o más; aviso de canal caído < 10 s | El aviso, sí (CP-06); el monitor, ⏳ | ⏳ | fase E |
+| CP-27 | RNF-04 | Sin desplazamiento horizontal a 1366 y 768 px; Chrome y Edge | En las pruebas de la app, nada se desborda ni se desplaza de lado en las 3 vistas, a los 2 tamaños. En producción, en Edge 154.0.4258.53: 16 capturas, 8 por tamaño, con el ciclo de un pedido de la venta a la cancelación, sin desplazamiento de lado. Chrome 154.0.8037.98 es el navegador de las pruebas del autor de las tarjetas anteriores | ✅ | app: *la venta de punta a punta*, *los pedidos* y *la cola*, a 1366 × 768 y a 768 × 1024; capturas del 2-oct en Edge (`rnf04-1366-01` a `08` y `rnf04-768-01` a `08`) |
+| CP-28 | RNF-05 | ≥ 99 % de respuestas 200 en 7 días o más; aviso de canal caído < 10 s | **100 %** del 23-sep a la 01:19 al 2-oct a las 21:48, hora de Bolivia: 9 días y 20 horas, unos 2840 sondeos, de los que unos 650 caen en la franja de 18:00 a 23:30. Ningún incidente y 0 minutos caído, en 24 h, en 7 y en 30 días. Respuesta media de 48 ms. El aviso de canal caído, al segundo (CP-06) | ✅ | UptimeRobot, el monitor *Max Pizzapp — salud de la API*, que pide `GET /api/v1/salud` cada 5 minutos (capturas del panel del 2-oct, `uptimerobot-01` y `02`); el aviso: CP-06 |
+
+**Lo que el sondeo no ve.** Uno cada 5 minutos no ve un corte más corto que eso, como los
+segundos que tarda en reiniciarse la API en un despliegue. El RNF-05 define la medición así,
+y por eso el 100 % se declara con su método y sus fechas, no como «nunca se cortó».
