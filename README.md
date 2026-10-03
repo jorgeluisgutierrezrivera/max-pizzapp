@@ -169,7 +169,8 @@ python pruebas/api/probar_salud_y_token.py       # la API con tokens reales del 
 python pruebas/api/probar_carta.py               # la carta con token real y la base real
 python pruebas/api/probar_pedidos.py             # pedidos: precios, número del día, venta directa, agregar, tres carreras y limpieza, en la base real
 python pruebas/api/probar_errores.py             # la matriz de 401, 403, 400, 413 y 415, y la contraseña equivocada
-python pruebas/tiempo-real/medir_aviso.py       # cuánto tarda el aviso en vivo: la venta y lo agregado en cocina, el cambio de estado en recepción
+python pruebas/tiempo-real/medir_aviso.py       # cuánto tarda el aviso en vivo, en 30 repeticiones: la venta y lo agregado en cocina, el cambio de estado en recepción (RNF-01)
+python pruebas/carga/medir_carga.py             # la carga del listado con k6, en Docker: 50 pedidos activos y 5 usuarios, el percentil 95 (RNF-01)
 python pruebas/tiempo-real/medir_caida.py       # cuánto tarda una pantalla en notar que la red se colgó (RNF-05: menos de 10 s)
 ```
 

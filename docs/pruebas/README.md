@@ -29,8 +29,8 @@ del repositorio, con el reporte de la API como artefacto.
 | **App** | La venta, los pedidos, la cocina, el acceso en la web y en el APK, la sesión, el canal y sus cortes, los avisos, los anchos de pantalla y el contraste | `flutter_test` | `cd frontend && flutter test` | Flutter 3.44.8 | [`app.txt`](reportes/app.txt) |
 | **Las dos, con sus reportes** | | | `bash scripts/correr-pruebas.sh` | Node y Flutter | `api.txt`, `app.txt` |
 | **Sondas de punta a punta** | Lo mismo que una persona, contra un entorno real: el acceso por PKCE con las cuentas de prueba, la carta y los pedidos en la base de verdad, las carreras que decide su bloqueo y la matriz de errores | Python 3, sin paquetes | `python pruebas/correr_sondas.py` | El entorno levantado, o la URL pública y la contraseña de prueba | [`sonda-*.txt`](reportes/) |
-| **Tiempo real** (RNF-01) | Cuánto tarda en llegar cada aviso en vivo, del cambio a la otra pantalla, en 30 repeticiones | `socket.io-client` (Node), desde Python | `python pruebas/tiempo-real/medir_aviso.py` | Igual que las sondas | ⏳ fase C |
-| **Carga** (RNF-01) | El listado de pedidos con 50 activos y 5 usuarios a la vez: el percentil 95 | k6, en Docker | `python pruebas/carga/medir_carga.py` | Docker, y lo mismo que las sondas | ⏳ fase C |
+| **Tiempo real** (RNF-01) | Cuánto tarda en llegar cada aviso en vivo, del cambio a la otra pantalla, en 30 repeticiones | `socket.io-client` (Node), desde Python | `python pruebas/tiempo-real/medir_aviso.py` | Igual que las sondas | [`tiempo-real.txt`](reportes/tiempo-real.txt) |
+| **Carga** (RNF-01) | El listado de pedidos con 50 activos y 5 usuarios a la vez: el percentil 95 | k6, en Docker | `python pruebas/carga/medir_carga.py` | Docker, y lo mismo que las sondas | [`carga-k6.txt`](reportes/carga-k6.txt) |
 | **Integración continua** | Las dos suites, en un clon limpio, en cada `push`: la API con `npm ci && npm test`; la app con `flutter analyze` y `flutter test` | GitHub Actions ([`pruebas.yml`](../../.github/workflows/pruebas.yml)), Ubuntu 24.04, Node 24.15.0, Flutter 3.44.8 | automático; o *Run workflow* en *Actions* | — | [Las corridas](https://github.com/jorgeluisgutierrezrivera/max-pizzapp/actions/workflows/pruebas.yml), con el artefacto `reporte-api` |
 
 Las sondas, la medición del tiempo real y la carga crean pedidos de prueba con datos
@@ -51,13 +51,13 @@ verlo: un reporte de esta carpeta, una prueba automática por su nombre o un com
 | CP-02 | CA-01.2 | Una contraseña equivocada | Keycloak no entrega código ni token | *Credenciales rechazadas* | ✅ | [`sonda-errores.txt`](reportes/sonda-errores.txt) |
 | CP-03 | CA-02.1 | Recepción vende productos disponibles y confirma | El pedido se crea pendiente, con su número del día y el precio que calcula el servidor | 201, pendiente, Bs 189, número del día | ✅ | [`sonda-pedidos.txt`](reportes/sonda-pedidos.txt) (*venta mixta de Bs 189*); app: *una venta completa: el cuerpo exacto que se envía…* |
 | CP-04 | CA-02.2 | Una venta sin productos | No se crea; *"Agregue al menos un producto"* | 400 `VENTA_INVALIDA`; la app no deja confirmar | ✅ | [`sonda-errores.txt`](reportes/sonda-errores.txt); app: *confirmar sin lo necesario dice qué falta y no envía nada* |
-| CP-05 | CA-03.1 | Cocina cambia el estado de un pedido | Recepción lo ve en menos de 2 s, sin recargar | ⏳ 30 repeticiones en la fase C | ⏳ | `tiempo-real.txt` (fase C) |
+| CP-05 | CA-03.1 | Cocina cambia el estado de un pedido | Recepción lo ve en menos de 2 s, sin recargar | Peor caso de 262 ms en 30 repeticiones (mediana 231 ms), en producción | ✅ | [`tiempo-real.txt`](reportes/tiempo-real.txt) (*cambio de estado -> recepcion*) |
 | CP-06 | CA-03.2 | Se cae el canal en vivo | Aviso y *Recargar* para ver el estado actual | La banda al segundo; sin red, en el acto; *Recargar* relee sin recargar la página | ✅ | app: *un corte en vivo se avisa al segundo…*, *Recargar lee de nuevo…*; tarjeta 07 (`5ba384a`) |
 | CP-07 | CA-04.1 | Cocina marca listo un pedido | Recepción recibe el aviso: suena, dice quién y lo cuenta | El aviso, el contador de la pestaña y el título del navegador | ✅ | app: *suena, avisa quién, cuenta en la pestaña y lo dice el título del navegador* |
 | CP-08 | CA-04.2 | No hay pedidos listos | Pantalla vacía, sin avisos pendientes | *"No hay pedidos por atender"* | ✅ | app: *sin pedidos lo dice, en vez de una pantalla en blanco* (pedidos de recepción) |
 | CP-09 | CA-05.1 | Recepción entrega un pedido listo | Pasa a entregado y sale de la lista | 200, entregado, con el historial de los cuatro pasos | ✅ | [`sonda-pedidos.txt`](reportes/sonda-pedidos.txt) (*recepcion lo entrega*); API: *matriz: recepcion lleva un pedido listo a entregado: 200* |
 | CP-10 | CA-05.2 | Recepción intenta entregar uno que no está listo | No se permite | 409 | ✅ | [`sonda-pedidos.txt`](reportes/sonda-pedidos.txt) (*no se entrega lo que no esta listo*); API: *matriz: recepcion lleva un pedido pendiente a entregado: 409* |
-| CP-11 | CA-06.1 | Recepción confirma un pedido nuevo | Aparece en cocina en menos de 2 s, al final de la cola | Al final y marcado *Nuevo*; el tiempo, ⏳ fase C | ⏳ | app: *un pedido nuevo aparece solo, al final, marcado "Nuevo", y suena el timbre*; `tiempo-real.txt` (fase C) |
+| CP-11 | CA-06.1 | Recepción confirma un pedido nuevo | Aparece en cocina en menos de 2 s, al final de la cola | Al final y marcado *Nuevo*; peor caso de 303 ms en 30 repeticiones (mediana 236 ms), en producción | ✅ | app: *un pedido nuevo aparece solo, al final, marcado "Nuevo", y suena el timbre*; [`tiempo-real.txt`](reportes/tiempo-real.txt) (*pedido nuevo -> cocina*) |
 | CP-12 | CA-06.2 | No hay pedidos pendientes | Cocina ve la pantalla vacía | *"No hay pedidos en cocina"* | ✅ | app: *sin pedidos lo dice, en vez de una pantalla en blanco* (cocina) |
 | CP-13 | CA-07.1 | Cocina empieza un pedido y después lo marca listo | Pendiente → en preparación → listo | 200 y 200, con quién hizo cada paso | ✅ | [`sonda-pedidos.txt`](reportes/sonda-pedidos.txt) (*cocina lo empieza*, *cocina lo marca listo*); app: *Empezar lo pasa a en preparación; Listo lo saca de la cola* |
 | CP-14 | CA-07.2 | Cocina intenta cambiar un pedido entregado | No se permite: es un estado final | 409 | ✅ | API: *matriz: cocina lleva un pedido entregado a en_preparacion: 409* |
@@ -79,8 +79,8 @@ verlo: un reporte de esta carpeta, una prueba automática por su nombre o un com
 
 | ID | Requisito | Métrica | Obtenido | Estado | Evidencia |
 |---|---|---|---|---|---|
-| CP-23 | RNF-01 | Peor caso de 30 propagaciones < 2 s | ⏳ | ⏳ | fase C |
-| CP-24 | RNF-01 | Percentil 95 del listado con 50 activos y 5 usuarios < 2 s | ⏳ | ⏳ | fase C |
+| CP-23 | RNF-01 | Peor caso de 30 propagaciones < 2 s | El pedido nuevo, 303 ms; el cambio de estado, 262 ms; lo agregado, 705 ms. En producción | ✅ | [`tiempo-real.txt`](reportes/tiempo-real.txt) |
+| CP-24 | RNF-01 | Percentil 95 del listado con 50 activos y 5 usuarios < 2 s | 296 ms en 235 lecturas, ninguna fallida. En producción | ✅ | [`carga-k6.txt`](reportes/carga-k6.txt) |
 | CP-25 | RNF-02 | Keycloak, token de 60 min, HTTPS, Argon2, rol en el servidor | Todo, con su evidencia | ✅ | Tarjeta 09 (plan, sección 9) |
 | CP-26 | RNF-03 | La venta en 3 pasos o menos; 4 estados en cada vista con datos | ⏳ | ⏳ | fase D |
 | CP-27 | RNF-04 | Sin desplazamiento horizontal a 1366 y 768 px; Chrome y Edge | ⏳ | ⏳ | fase D |
