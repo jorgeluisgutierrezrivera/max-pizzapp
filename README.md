@@ -196,8 +196,9 @@ max-pizzapp/
 ├── frontend/     App Flutter: la web (lib/main.dart) y el APK de cocina (lib/main_cocina.dart, android/)
 ├── docker/       Compose, Postgres (init SQL), Keycloak (realm), Caddy
 ├── pruebas/      Pruebas de extremo a extremo contra Keycloak y la API reales
-├── scripts/      Publicar la app, compilar el APK, endurecer Keycloak, preparar las fotos y dibujar las bebidas
-├── .github/      La integración continua: las dos suites en cada push (GitHub Actions)
+├── scripts/      Instalar en un paso, publicar la app, compilar el APK, endurecer Keycloak, preparar las fotos y dibujar las bebidas
+├── .github/      La integración continua: las dos suites y la instalación desde cero en cada push (GitHub Actions)
+├── instalar.cmd  La instalación local en un paso, en Windows (doble clic)
 └── docs/         Documentación técnica: BRIEF de desarrollo, planes de trabajo, el
                   contrato de la API (docs/api/openapi.yaml) y el perfil del proyecto
 ```
@@ -357,6 +358,14 @@ origen.
 
 ## Requisitos previos
 
+**Para instalar y probar el sistema en una computadora**, en un paso: solo **Docker**.
+
+- En Windows, **Docker Desktop**: Windows 10 22H2 (compilación 19045) o Windows 11, con 8 GB
+  de RAM y la virtualización habilitada, según los requisitos de Docker.
+- En Linux o macOS, Docker con el plugin de Compose.
+
+**Para desarrollar:**
+
 - Git.
 - Docker con el plugin de Compose (en Windows, Docker Desktop).
 - Flutter 3.44.8 (stable), para compilar y probar la app.
@@ -365,6 +374,49 @@ origen.
   `scripts/` que preparan las imágenes de la carta usan además Pillow.
 
 ## Puesta en marcha en local
+
+Hay dos caminos: la **instalación de prueba**, en un paso, para quien quiere usar el sistema
+en su computadora, y el **entorno de desarrollo**, para quien va a cambiar el código.
+
+### Instalación de prueba, en un paso
+
+1. Bajar el código: en GitHub, *Code → Download ZIP*, y descomprimirlo. También sirve
+   `git clone`.
+2. Abrir Docker Desktop y esperar a que diga *Engine running*.
+3. **En Windows, doble clic en `instalar.cmd`.** En Linux o macOS, desde la carpeta:
+
+   ```bash
+   bash scripts/instalar.sh
+   ```
+
+El instalador hace todo lo demás:
+
+- crea el `.env` a partir de `.env.example`, con contraseñas al azar generadas en esa
+  computadora, y nunca pisa uno que ya existe;
+- compila la app **dentro de Docker** (`frontend/Dockerfile`), así que no hace falta Flutter;
+- levanta la base, Keycloak, la API y la app, con el perfil `completo` de
+  `docker/docker-compose.yml`;
+- configura Keycloak con el mismo script de seguridad que producción
+  (`docker/keycloak/endurecer.sh`) y asigna la contraseña de las cuentas de prueba;
+- espera a que la API y la app respondan.
+
+Al terminar, muestra la dirección, **`http://localhost:8090`**, las dos cuentas
+(`recepcion.demo` y `cocina.demo`) y su contraseña, y abre el navegador. La app se publica
+solo para esa computadora (`127.0.0.1`).
+
+- **La primera vez tarda**, porque baja y prepara todo. Las siguientes, segundos.
+- **Repetirlo no borra nada:** sirve también para volver a levantar el sistema después de
+  apagar la computadora.
+- **Para empezar de cero**, borrando los pedidos de esa instalación: `instalar.cmd desde-cero`
+  (o `bash scripts/instalar.sh desde-cero`). El instalador lo propone solo si encuentra datos
+  de una instalación anterior sin su `.env`.
+- **Para detenerlo:** en Docker Desktop, *Containers → maxpizzapp → Stop*.
+
+La integración continua hace esta misma instalación desde cero en cada `push`
+(`.github/workflows/instalacion.yml`) y prueba el acceso con las dos cuentas y los 401, 403 y
+400 a través de la app.
+
+### Entorno de desarrollo
 
 Todo se ejecuta desde la raíz del repositorio.
 
