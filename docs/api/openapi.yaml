@@ -34,7 +34,9 @@ info:
 
     **Tiempo real.** Además de estas rutas, el servidor expone un canal Socket.IO en
     `/socket.io`, autenticado con el mismo token. Emite `pedido:nuevo`,
-    `pedido:actualizado` y `pedido:estado` después de confirmar cada cambio en la base.
+    `pedido:actualizado` y `pedido:estado` después de confirmar cada cambio en la base, y
+    `producto:disponibilidad` cuando un producto se marca agotado o disponible
+    (`{ id, nombre, categoria, disponible, por, fechaHora }`, a los dos roles).
 servers:
   - url: https://maxpizzapp.tech/api/v1
     description: Producción
@@ -114,6 +116,43 @@ paths:
         '400': { $ref: '#/components/responses/PeticionInvalida' }
         '401': { $ref: '#/components/responses/NoAutenticado' }
         '403': { $ref: '#/components/responses/SinPermiso' }
+        '503': { $ref: '#/components/responses/BaseNoDisponible' }
+
+  /productos/{id}/disponibilidad:
+    patch:
+      tags: [Carta]
+      summary: Marcar un producto agotado o disponible
+      description: |
+        Roles: recepcion o cocina (RF-13). Cambia solo la disponibilidad: precios, nombres y
+        altas no se tocan desde aquí. Los pedidos que ya llevan el producto no cambian. Si el
+        valor cambia, el canal en vivo avisa `producto:disponibilidad` a los dos roles; si ya
+        estaba así, responde 200 y no avisa.
+      parameters:
+        - $ref: '#/components/parameters/IdProducto'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CambioDeDisponibilidad' }
+            example: { disponible: false }
+      responses:
+        '200':
+          description: El producto con su disponibilidad nueva.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [producto]
+                properties:
+                  producto: { $ref: '#/components/schemas/Producto' }
+        '400': { $ref: '#/components/responses/PeticionInvalida' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermiso' }
+        '404':
+          description: '`PRODUCTO_NO_ENCONTRADO`.'
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
         '503': { $ref: '#/components/responses/BaseNoDisponible' }
 
   /pedidos:
@@ -353,6 +392,12 @@ components:
         Authorization Code y PKCE en https://auth.maxpizzapp.tech.
 
   parameters:
+    IdProducto:
+      name: id
+      in: path
+      required: true
+      description: Identificador del producto, el `id` que devuelve `GET /productos`.
+      schema: { type: integer, minimum: 1, maximum: 2147483647 }
     IdPedido:
       name: id
       in: path
@@ -364,7 +409,8 @@ components:
     PeticionInvalida:
       description: |
         La petición está mal formada: `JSON_INVALIDO`, `VENTA_INVALIDA`, `FILTRO_INVALIDO`,
-        `ID_INVALIDO`, `ESTADO_INVALIDO`, `VERSION_INVALIDA` o `MOTIVO_INVALIDO`.
+        `ID_INVALIDO`, `ESTADO_INVALIDO`, `VERSION_INVALIDA`, `MOTIVO_INVALIDO` o
+        `DISPONIBILIDAD_INVALIDA`.
       content:
         application/json:
           schema: { $ref: '#/components/schemas/Error' }
@@ -550,6 +596,13 @@ components:
           minimum: 1
           maximum: 100000
           description: Cuántas líneas tenía el pedido en la pantalla de quien toca el botón.
+
+    CambioDeDisponibilidad:
+      type: object
+      required: [disponible]
+      additionalProperties: false
+      properties:
+        disponible: { type: boolean, description: 'false: agotado; true: se vuelve a ofrecer.' }
 
     Cancelacion:
       type: object

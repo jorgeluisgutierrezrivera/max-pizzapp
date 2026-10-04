@@ -161,6 +161,22 @@ test('un cambio de estado les llega a los dos roles, con desde, hacia y cuando',
   }
 });
 
+test('un producto agotado les llega a los dos roles, con quien lo marco y cuando (RF-13, D-67)', async () => {
+  const { socket: deCocinaSocket } = await entrar(firmar(deCocina));
+  const { socket: deRecepcionSocket } = await entrar(firmar(deRecepcion));
+  const enCocina = esperar(deCocinaSocket, 'producto:disponibilidad');
+  const enRecepcion = esperar(deRecepcionSocket, 'producto:disponibilidad');
+  canal.disponibilidadCambiada({ id: 7, nombre: 'Hawaiana', categoria: 'pizza', disponible: false, por: 'cocina' });
+  for (const aviso of [await enCocina, await enRecepcion]) {
+    assert.equal(aviso.id, 7);
+    assert.equal(aviso.nombre, 'Hawaiana');
+    assert.equal(aviso.categoria, 'pizza');
+    assert.equal(aviso.disponible, false);
+    assert.equal(aviso.por, 'cocina');
+    assert.ok(!Number.isNaN(Date.parse(aviso.fechaHora)));
+  }
+});
+
 // --- por donde avisa la API -----------------------------------------------------------------
 // Las rutas no llaman al canal: llaman a los avisos que les pasa crearServidor. Las pruebas de
 // arriba iban directo al canal y no vieron que faltaba el de lo agregado (D-37): recepcion
@@ -174,6 +190,7 @@ for (const [aviso, evento, datos] of [
   ['pedidoNuevo', 'pedido:nuevo', { ...PEDIDO, id: 47 }],
   ['pedidoActualizado', 'pedido:actualizado', { ...PEDIDO, id: 48, estado: 'en_preparacion', version: 2 }],
   ['estadoCambiado', 'pedido:estado', { id: 49, anterior: 'pendiente', nuevo: 'en_preparacion' }],
+  ['disponibilidadCambiada', 'producto:disponibilidad', { id: 50, nombre: 'Gaseosa 2 L', categoria: 'bebida', disponible: true, por: 'recepcion' }],
 ]) {
   test(`${aviso}, avisado como lo avisa la API, le llega a cocina como ${evento}`, async () => {
     const { socket } = await entrar(firmar(deCocina));

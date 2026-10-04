@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""La matriz de errores de la API: 401, 403, 400, 413 y 415, con tokens REALES (tarjeta 10).
+"""La matriz de errores de la API: 401, 403, 400, 404, 413 y 415, con tokens REALES (tarjetas 10 y 08).
 
 Cada caso pide algo que el sistema tiene que rechazar y comprueba el codigo y el error del
 formato unico. NINGUN caso crea nada en la base: todos se cortan antes, en el acceso, en el
@@ -97,6 +97,15 @@ if __name__ == '__main__':
          grande, None),
         (415, 'FORMATO_NO_SOPORTADO', 'Cuerpo con otro juego de caracteres, sin token', 'POST', '/pedidos',
          None, None, b'{}', {'Content-Type': 'application/json; charset=latin9'}),
+        # La disponibilidad de los productos (RF-13, tarjeta 08). Ninguno de estos cambia la carta.
+        (401, 'TOKEN_AUSENTE', 'Marcar un producto agotado sin token', 'PATCH', '/productos/1/disponibilidad',
+         None, {'disponible': False}, None, None),
+        (400, 'ID_INVALIDO', 'Numero de producto que no es valido', 'PATCH', '/productos/abc/disponibilidad',
+         cocina, {'disponible': False}, None, None),
+        (400, 'DISPONIBILIDAD_INVALIDA', 'Marcar con un campo de mas (el precio)', 'PATCH',
+         '/productos/1/disponibilidad', cocina, {'disponible': False, 'precio': 1}, None, None),
+        (404, 'PRODUCTO_NO_ENCONTRADO', 'Marcar un producto que no existe', 'PATCH',
+         '/productos/2147483647/disponibilidad', recepcion, {'disponible': False}, None, None),
     ]
 
     print('\n| Esperado | Caso | Peticion | Obtenido | Resultado |')

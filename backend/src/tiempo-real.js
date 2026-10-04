@@ -96,6 +96,13 @@ function crearCanal(servidorHttp, { usuarioDelToken, reloj = { setTimeout, clear
       io.to(SALA.recepcion).to(SALA.cocina).emit('pedido:estado', aviso);
     },
 
+    // Un producto se marco agotado o disponible (RF-13, D-67). A las dos salas: a las dos les
+    // cambia la carta. "por" es el rol que lo marco, no la persona.
+    disponibilidadCambiada({ id, nombre, categoria, disponible, por }) {
+      const aviso = { id, nombre, categoria, disponible, por, fechaHora: new Date().toISOString() };
+      io.to(SALA.recepcion).to(SALA.cocina).emit('producto:disponibilidad', aviso);
+    },
+
     // Cierra el canal Y el servidor HTTP que comparte con la API: corta las conexiones en
     // vivo, deja de aceptar peticiones y llama a "listo" cuando terminaron las que estaban.
     cerrar: (listo) => io.close(listo),
@@ -103,6 +110,16 @@ function crearCanal(servidorHttp, { usuarioDelToken, reloj = { setTimeout, clear
 }
 
 // Para las pruebas y para arrancar sin canal: avisos que no hacen nada.
-const SIN_AVISOS = { pedidoNuevo() {}, pedidoActualizado() {}, estadoCambiado() {} };
+const SIN_AVISOS = { pedidoNuevo() {}, pedidoActualizado() {}, estadoCambiado() {}, disponibilidadCambiada() {} };
 
-module.exports = { crearCanal, SIN_AVISOS, TAMANO_MAXIMO_DE_MENSAJE };
+// Un aviso que falla no deshace nada: la operacion ya se guardo y se respondio. Se anota y
+// la pantalla se pone al dia la proxima vez que lea la lista.
+function avisar(accion) {
+  try {
+    accion();
+  } catch (err) {
+    console.error('[canal] no se pudo avisar:', err.message);
+  }
+}
+
+module.exports = { crearCanal, SIN_AVISOS, avisar, TAMANO_MAXIMO_DE_MENSAJE };

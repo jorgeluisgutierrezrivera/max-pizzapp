@@ -3,8 +3,9 @@
 
 Obtiene los tokens de recepcion.demo y cocina.demo en Keycloak y lanza medir-aviso.js, que
 crea pedidos, mide del envio de la venta al aviso en cocina (el "menos de 2 segundos" del
-E2), del cambio de estado al aviso en recepcion y de lo agregado al aviso en cocina, y al
-final cierra lo que creo. El reporte queda en docs/pruebas/reportes/tiempo-real.txt, con la
+E2), del cambio de estado al aviso en recepcion, de lo agregado al aviso en cocina y de la
+marca de una bebida agotada o disponible al aviso en recepcion (CA-13.1, tarjeta 08), y al
+final cierra lo que creo y deja la bebida como estaba. El reporte queda en docs/pruebas/reportes/tiempo-real.txt, con la
 fecha y el entorno al principio (tarjeta 10, D-57).
 
 Uso, con el entorno levantado (necesita Node y el backend con sus dependencias instaladas):
@@ -53,7 +54,7 @@ if __name__ == '__main__':
     print(salida, end='', flush=True)
     bien = resultado.returncode == 0
     cabecera = '\n'.join([
-        'Max Pizzapp - reporte de la propagacion del aviso en vivo (RNF-01)',
+        'Max Pizzapp - reporte de la propagacion del aviso en vivo (RNF-01 y CA-13.1)',
         'Fecha:    %s (duro %.1f s)' % (inicio.isoformat(timespec='seconds'), duracion),
         'API:      %s' % API,
         'Keycloak: %s' % identidad.KC,

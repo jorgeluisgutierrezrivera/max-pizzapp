@@ -59,7 +59,7 @@ function crearApp({ pool, autenticar, avisos = SIN_AVISOS, montarExtra, limitePo
     res.json({ sub, nombre, usuario, roles });
   });
 
-  api.use(rutasProductos({ pool, autenticar }));
+  api.use(rutasProductos({ pool, autenticar, avisos }));
   api.use(rutasPedidos({ pool, autenticar, avisos }));
 
   if (montarExtra) montarExtra(api, { autenticar, exigirRol });

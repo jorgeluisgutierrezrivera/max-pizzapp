@@ -1,13 +1,20 @@
 const express = require('express');
 const { exigirRol, ROLES_DEL_SISTEMA } = require('../autenticacion');
 const { ErrorApi } = require('../errores');
+const { avisar } = require('../tiempo-real');
 
-// La carta: GET /api/v1/productos?categoria=pizza&disponible=true
+// La carta:
 //
-// La pueden leer los dos roles: recepcion la usa para armar el pedido. Marcar un producto
-// agotado (RF-13) esta previsto y todavia no tiene ruta. Sin filtros devuelve TODA la carta,
-// agotados incluidos: la pantalla los muestra atenuados, y un producto que desaparece sin
-// aviso confunde mas que uno marcado.
+//   GET   /api/v1/productos?categoria=pizza&disponible=true   leerla (los dos roles)
+//   PATCH /api/v1/productos/:id/disponibilidad                marcarlo agotado o disponible
+//                                                             (los dos roles, RF-13, D-66)
+//
+// Recepcion la usa para armar el pedido, y cocina para marcar lo que se acabo. Sin filtros
+// devuelve TODA la carta, agotados incluidos: la pantalla los muestra atenuados, y un
+// producto que desaparece sin aviso confunde mas que uno marcado.
+//
+// La ruta de la disponibilidad cambia SOLO eso: precios, nombres y altas son del rol
+// administrador, fuera de alcance (D-13).
 
 // Los mismos valores que el tipo categoria_producto de la base. «extra» es un agregado que
 // se vende colgado de una pizza (D-28).
@@ -25,6 +32,20 @@ const SQL_CARTA = `
    WHERE ($1::categoria_producto IS NULL OR categoria = $1::categoria_producto)
      AND ($2::boolean IS NULL OR disponible = $2::boolean)
    ORDER BY categoria, nombre`;
+
+// Marca el producto y devuelve tambien como estaba, en una sola consulta: la fila se bloquea
+// al leerla (FOR UPDATE), asi dos marcas a la vez no se pisan y la segunda ve la primera.
+// Sin el valor anterior no se sabria si hay algo que avisar.
+const SQL_DISPONIBILIDAD = `
+  WITH anterior AS (
+    SELECT id, disponible FROM producto WHERE id = $1 FOR UPDATE
+  )
+  UPDATE producto AS p
+     SET disponible = $2
+    FROM anterior
+   WHERE p.id = anterior.id
+  RETURNING p.id, p.nombre, p.categoria, p.precio, p.descripcion, p.imagen, p.disponible,
+            p.solo_entera, anterior.disponible AS disponible_antes`;
 
 function filtroInvalido(mensaje) {
   return new ErrorApi(400, 'FILTRO_INVALIDO', mensaje);
@@ -49,6 +70,26 @@ function leerFiltros(query) {
   };
 }
 
+// El :id de la ruta: un entero positivo que cabe en la columna, o nada.
+function leerId(texto) {
+  if (!/^[1-9][0-9]{0,9}$/.test(texto) || Number(texto) > 2147483647) {
+    throw new ErrorApi(400, 'ID_INVALIDO', 'El numero de producto no es valido.');
+  }
+  return Number(texto);
+}
+
+// El cuerpo: exactamente { "disponible": true } o { "disponible": false }. Un campo de mas
+// tambien se rechaza: esta ruta no cambia nada mas del producto.
+function leerDisponibilidad(cuerpo) {
+  const valido = cuerpo !== null && typeof cuerpo === 'object' && !Array.isArray(cuerpo)
+    && Object.keys(cuerpo).length === 1 && typeof cuerpo.disponible === 'boolean';
+  if (!valido) {
+    throw new ErrorApi(400, 'DISPONIBILIDAD_INVALIDA',
+      'Indica solo si el producto esta disponible: { "disponible": true } o { "disponible": false }.');
+  }
+  return cuerpo.disponible;
+}
+
 // PostgreSQL devuelve los numeric como texto, para no perder precision. Los precios de la
 // carta tienen dos decimales y caben sin perdida en un numero de JSON: la app los recibe
 // listos para mostrar. La imagen es solo el nombre del archivo; la app sabe donde buscarlo.
@@ -68,13 +109,32 @@ function aProducto(fila) {
   };
 }
 
-function rutasProductos({ pool, autenticar }) {
+function rutasProductos({ pool, autenticar, avisos }) {
   const rutas = express.Router();
 
   rutas.get('/productos', autenticar, exigirRol(...ROLES_DEL_SISTEMA), async (req, res) => {
     const { categoria, disponible } = leerFiltros(req.query);
     const { rows } = await pool.query(SQL_CARTA, [categoria, disponible]);
     res.json({ productos: rows.map(aProducto) });
+  });
+
+  // Se valida todo ANTES de tocar la base. Marcar lo que ya estaba igual responde 200 y no
+  // avisa: no hay nada que contar, y dos personas que tocan el mismo interruptor a la vez no
+  // generan avisos repetidos. El aviso sale despues de guardar (como en los pedidos).
+  rutas.patch('/productos/:id/disponibilidad', autenticar, exigirRol(...ROLES_DEL_SISTEMA), async (req, res) => {
+    const id = leerId(req.params.id);
+    const disponible = leerDisponibilidad(req.body);
+    const { rows } = await pool.query(SQL_DISPONIBILIDAD, [id, disponible]);
+    if (rows.length === 0) {
+      throw new ErrorApi(404, 'PRODUCTO_NO_ENCONTRADO', 'Ese producto no esta en la carta.');
+    }
+    const producto = aProducto(rows[0]);
+    res.json({ producto });
+    if (rows[0].disponible_antes !== disponible) {
+      const { nombre, categoria } = producto;
+      const por = req.usuario.roles[0];
+      avisar(() => avisos.disponibilidadCambiada({ id, nombre, categoria, disponible, por }));
+    }
   });
 
   return rutas;

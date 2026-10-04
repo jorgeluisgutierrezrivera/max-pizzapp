@@ -9,7 +9,8 @@ con la fecha y el entorno al principio:
     sonda-salud.txt     api/probar_salud_y_token.py      la ruta de salud, el token y el rol
     sonda-carta.txt     api/probar_carta.py              la carta que devuelve la base
     sonda-pedidos.txt   api/probar_pedidos.py            el ciclo de los pedidos, las carreras
-    sonda-errores.txt   api/probar_errores.py            la matriz de 401, 403, 400, 413 y 415
+    sonda-errores.txt   api/probar_errores.py            la matriz de 401, 403, 400, 404, 413 y 415
+    sonda-disponibilidad.txt  api/probar_disponibilidad.py  marcar y reponer un producto (RF-13)
 
 Uso, con el entorno levantado:
 
@@ -36,6 +37,7 @@ SONDAS = [
     ('carta', os.path.join('api', 'probar_carta.py')),
     ('pedidos', os.path.join('api', 'probar_pedidos.py')),
     ('errores', os.path.join('api', 'probar_errores.py')),
+    ('disponibilidad', os.path.join('api', 'probar_disponibilidad.py')),
 ]
 
 

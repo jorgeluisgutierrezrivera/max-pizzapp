@@ -6,6 +6,7 @@ const { crearPedido } = require('../pedidos/crear');
 const { agregarAlPedido } = require('../pedidos/agregar');
 const { leerPedidos, idsPorEstados, leerHistorial, puedeVerCelular } = require('../pedidos/leer');
 const { TRANSICIONES, cambiarEstado } = require('../pedidos/estados');
+const { avisar } = require('../tiempo-real');
 
 // Los pedidos, con su CRUD completo:
 //
@@ -84,16 +85,6 @@ function leerMotivo(cuerpo) {
     throw new ErrorApi(400, 'MOTIVO_INVALIDO', 'El motivo tiene caracteres no validos.');
   }
   return motivo;
-}
-
-// Un aviso que falla no deshace nada: la operacion ya se guardo y se respondio. Se anota y
-// la pantalla se pone al dia la proxima vez que lea la lista.
-function avisar(accion) {
-  try {
-    accion();
-  } catch (err) {
-    console.error('[canal] no se pudo avisar:', err.message);
-  }
 }
 
 function rutasPedidos({ pool, autenticar, avisos }) {

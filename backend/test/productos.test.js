@@ -211,3 +211,135 @@ test('un error de SQL es un fallo nuestro: 500, sin el texto del error', async (
   assert.equal(cuerpo.error.codigo, 'ERROR_INTERNO');
   assert.ok(!JSON.stringify(cuerpo).includes('FORM'));
 });
+
+// --- PATCH /productos/:id/disponibilidad (RF-13, D-66) ------------------------------
+// La misma app con una base que responde al UPDATE como lo haria PostgreSQL: devuelve la fila
+// con el valor nuevo y el que tenia antes, o nada si el producto no existe. Los avisos se
+// anotan, para comprobar cuando se avisa y que lleva el aviso.
+
+const HAWAIANA = { ...FILAS[0], disponible: true };
+
+function baseDeLaCarta(fila = HAWAIANA) {
+  return poolQueAnota(async (sql, [id, disponible]) => {
+    if (fila === null || id !== fila.id) return { rows: [] };
+    const actualizada = { ...fila, disponible, disponible_antes: fila.disponible };
+    fila = { ...fila, disponible };
+    return { rows: [actualizada] };
+  });
+}
+
+async function conLaCarta(probar, fila) {
+  const base = baseDeLaCarta(fila);
+  const avisados = [];
+  const avisos = { disponibilidadCambiada: (aviso) => avisados.push(aviso) };
+  const otra = await levantarApp(crearApp({ pool: base, autenticar: emisor.autenticar, avisos }));
+  try {
+    return await probar({ base: otra.base, consultas: base.consultas, avisados });
+  } finally {
+    otra.cerrar();
+  }
+}
+
+async function marcar(base, id, cuerpo, token, tipo = 'application/json') {
+  const cabeceras = { 'content-type': tipo };
+  if (token) cabeceras.authorization = `Bearer ${token}`;
+  const r = await fetch(`${base}/productos/${id}/disponibilidad`, {
+    method: 'PATCH', headers: cabeceras, body: typeof cuerpo === 'string' ? cuerpo : JSON.stringify(cuerpo),
+  });
+  return { estado: r.status, cuerpo: await r.json() };
+}
+
+test('disponibilidad sin token: 401 y la base ni se consulta', () => conLaCarta(async ({ base, consultas }) => {
+  const { estado, cuerpo } = await marcar(base, 7, { disponible: false });
+  assert.equal(estado, 401);
+  assert.equal(cuerpo.error.codigo, 'TOKEN_AUSENTE');
+  assert.equal(consultas.length, 0);
+}));
+
+test('disponibilidad con un token sin los roles del sistema: 403', () => conLaCarta(async ({ base, consultas }) => {
+  const { estado, cuerpo } = await marcar(base, 7, { disponible: false }, firmar(sinRol));
+  assert.equal(estado, 403);
+  assert.equal(cuerpo.error.codigo, 'ROL_SIN_PERMISO');
+  assert.equal(consultas.length, 0);
+}));
+
+for (const [rol, token] of [['recepcion', recepcion], ['cocina', cocina]]) {
+  test(`${rol} marca un producto agotado: 200 con el producto, y avisa quien lo marco`, () => conLaCarta(async ({ base, consultas, avisados }) => {
+    const { estado, cuerpo } = await marcar(base, 7, { disponible: false }, token);
+    assert.equal(estado, 200);
+    assert.deepEqual(cuerpo.producto, {
+      id: 7, nombre: 'Hawaiana', categoria: 'pizza', precio: 50, descripcion: 'Doble queso, jamón y piña caramelizada',
+      imagen: 'hawaiana.png', disponible: false, soloEntera: false,
+    });
+    assert.deepEqual(avisados, [{ id: 7, nombre: 'Hawaiana', categoria: 'pizza', disponible: false, por: rol }]);
+    // Una sola consulta, parametrizada, que solo toca la carta: ningun pedido cambia (CA-13.2).
+    assert.equal(consultas.length, 1);
+    assert.deepEqual(consultas[0].parametros, [7, false]);
+    assert.match(consultas[0].sql, /UPDATE producto/);
+    assert.match(consultas[0].sql, /\$1/);
+    assert.doesNotMatch(consultas[0].sql, /pedido/i);
+  }));
+}
+
+test('reponer un agotado: 200, disponible otra vez, y avisa', () => conLaCarta(async ({ base, avisados }) => {
+  const { estado, cuerpo } = await marcar(base, 7, { disponible: true }, cocina);
+  assert.equal(estado, 200);
+  assert.equal(cuerpo.producto.disponible, true);
+  assert.equal(avisados.length, 1);
+  assert.equal(avisados[0].disponible, true);
+}, { ...HAWAIANA, disponible: false }));
+
+test('marcar lo que ya estaba igual: 200 y no avisa (dos toques a la vez no repiten el aviso)', () => conLaCarta(async ({ base, avisados }) => {
+  const primero = await marcar(base, 7, { disponible: false }, cocina);
+  const segundo = await marcar(base, 7, { disponible: false }, recepcion);
+  assert.equal(primero.estado, 200);
+  assert.equal(segundo.estado, 200);
+  assert.equal(segundo.cuerpo.producto.disponible, false);
+  assert.equal(avisados.length, 1);
+}));
+
+test('un producto que no existe: 404 PRODUCTO_NO_ENCONTRADO, y no avisa', () => conLaCarta(async ({ base, avisados }) => {
+  const { estado, cuerpo } = await marcar(base, 999, { disponible: false }, recepcion);
+  assert.equal(estado, 404);
+  assert.equal(cuerpo.error.codigo, 'PRODUCTO_NO_ENCONTRADO');
+  assert.equal(avisados.length, 0);
+}));
+
+for (const id of ['abc', '0', '-3', '7.5', '99999999999', '2147483648']) {
+  test(`numero de producto invalido (${id}): 400 ID_INVALIDO, sin tocar la base`, () => conLaCarta(async ({ base, consultas }) => {
+    const { estado, cuerpo } = await marcar(base, id, { disponible: false }, recepcion);
+    assert.equal(estado, 400);
+    assert.equal(cuerpo.error.codigo, 'ID_INVALIDO');
+    assert.equal(consultas.length, 0);
+  }));
+}
+
+for (const [caso, cuerpoInvalido] of [
+  ['vacio', {}],
+  ['como texto', { disponible: 'false' }],
+  ['nulo', { disponible: null }],
+  ['como numero', { disponible: 0 }],
+  ['con otro campo', { disponible: false, precio: 1 }],
+  ['solo otro campo', { precio: 1 }],
+  ['una lista', [false]],
+]) {
+  test(`cuerpo invalido (${caso}): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base`, () => conLaCarta(async ({ base, consultas }) => {
+    const { estado, cuerpo } = await marcar(base, 7, cuerpoInvalido, cocina);
+    assert.equal(estado, 400);
+    assert.equal(cuerpo.error.codigo, 'DISPONIBILIDAD_INVALIDA');
+    assert.equal(consultas.length, 0);
+  }));
+}
+
+test('cuerpo que no es JSON: 400, sin tocar la base', () => conLaCarta(async ({ base, consultas }) => {
+  const { estado } = await marcar(base, 7, 'disponible=false', cocina, 'application/x-www-form-urlencoded');
+  assert.equal(estado, 400);
+  assert.equal(consultas.length, 0);
+}));
+
+test('un booleano suelto como cuerpo: 400 JSON_INVALIDO, lo rechaza el lector de JSON', () => conLaCarta(async ({ base, consultas }) => {
+  const { estado, cuerpo } = await marcar(base, 7, 'false', cocina);
+  assert.equal(estado, 400);
+  assert.equal(cuerpo.error.codigo, 'JSON_INVALIDO');
+  assert.equal(consultas.length, 0);
+}));
