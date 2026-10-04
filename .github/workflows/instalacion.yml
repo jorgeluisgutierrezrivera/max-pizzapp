@@ -1,0 +1,64 @@
+# ==========================================================
+# Max Pizzapp - la instalacion local, probada desde cero (tarjeta 13, D-65)
+#
+# En cada push a main y en cada pull request (y a mano, desde la
+# pestana Actions), una maquina de GitHub limpia, que solo tiene
+# Docker, hace lo mismo que la persona que sigue el manual:
+#
+#   1. bash scripts/instalar.sh   (el .env con contrasenas al azar,
+#      la app compilada en Docker, Keycloak configurado)
+#   2. el acceso real con las dos cuentas de prueba, por PKCE;
+#   3. la matriz de errores A TRAVES DE LA APP (el 8090): sin token
+#      401, el rol equivocado 403, un dato invalido 400.
+#
+# Las contrasenas se generan en la maquina de GitHub y se pierden con
+# ella: ninguna se guarda en GitHub ni se imprime en el registro.
+# ==========================================================
+name: Instalacion
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  instalacion:
+    name: Instalacion local desde cero
+    runs-on: ubuntu-24.04
+    # La primera compilacion de la app baja el SDK de Flutter: unos minutos.
+    timeout-minutes: 30
+    env:
+      COMPOSE: docker compose --env-file .env -f docker/docker-compose.yml --profile completo
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Instalar en un paso (scripts/instalar.sh)
+        run: bash scripts/instalar.sh
+
+      - name: El acceso con las dos cuentas (PKCE)
+        run: python3 pruebas/identidad/probar_acceso_pkce.py
+
+      - name: 401, 403 y 400 a traves de la app (http://localhost:8090)
+        env:
+          API_URL: http://localhost:8090/api/v1
+        run: python3 pruebas/api/probar_errores.py
+
+      - name: Repetir la instalacion no cambia el .env
+        run: |
+          antes="$(sha256sum .env)"
+          bash scripts/instalar.sh
+          [ "$(sha256sum .env)" = "$antes" ] && echo "El .env sigue igual."
+
+      - name: Si algo fallo, el estado y los registros
+        if: failure()
+        run: |
+          $COMPOSE ps -a
+          $COMPOSE logs --tail 60
+
+      - name: Bajar todo
+        if: always()
+        run: $COMPOSE down -v
