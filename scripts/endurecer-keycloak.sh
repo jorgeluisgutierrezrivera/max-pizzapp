@@ -75,70 +75,11 @@ fi
 
 echo "==> Keycloak: contenedor $CONTENEDOR, realm $REALM, dominio $DOMINIO"
 
-# El script de adentro corre en el contenedor; las variables viajan por
-# el entorno de docker exec (-e NOMBRE, sin valor), no en sus argumentos.
+# La parte de adentro es docker/keycloak/endurecer.sh (D-64): la misma que
+# corre el servicio keycloak-config en la instalacion local. Se la pasa al
+# contenedor por la entrada estandar; las variables viajan por el entorno de
+# docker exec (-e NOMBRE, sin valor), no en sus argumentos.
 KA="$KC_USUARIO" KP="$KC_CLAVE" R="$REALM" D="$DOMINIO" \
-  docker exec -i -e KA -e KP -e R -e D "$CONTENEDOR" sh -s <<'ADENTRO'
-set -eu
-K=/opt/keycloak/bin/kcadm.sh
-CONF=/tmp/kcadm-endurecer.config
-trap 'rm -f "$CONF"' EXIT
-C="--config $CONF"
-
-if ! $K config credentials $C --server http://localhost:8080 --realm master \
-    --user "$KA" --password "$KP" >/dev/null 2>&1; then
-  echo "ERROR: Keycloak no acepto la cuenta de administracion $KA." >&2
-  echo "Si ya la reemplazaste por una permanente: KC_USUARIO=tu.cuenta bash scripts/endurecer-keycloak.sh" >&2
-  exit 3
-fi
-
-echo "1. Las direcciones de retorno del cliente frontend-web, exactas (D-53)"
-CID=$($K get clients $C -r "$R" -q clientId=frontend-web --fields id --format csv --noquotes)
-if [ -z "$CID" ]; then
-  echo "ERROR: el realm $R no tiene el cliente frontend-web." >&2
-  exit 4
-fi
-$K update "clients/$CID" $C -r "$R" \
-  -s "redirectUris=[\"https://$D/\",\"tech.maxpizzapp.cocina:/callback\",\"http://localhost:8090/\",\"http://localhost:9999/callback\"]" \
-  -s "webOrigins=[\"https://$D\",\"http://localhost:8090\"]" \
-  -s "attributes.\"post.logout.redirect.uris\"=https://$D/##tech.maxpizzapp.cocina:/callback##http://localhost:8090/"
-
-echo "2. Contrasenas con Argon2 y eventos de acceso (D-54)"
-POLITICA='length(12) and notUsername and hashAlgorithm(argon2)'
-$K update "realms/$R" $C \
-  -s "passwordPolicy=$POLITICA" \
-  -s eventsEnabled=true -s eventsExpiration=604800 \
-  -s 'enabledEventTypes=["LOGIN","LOGIN_ERROR","LOGOUT","LOGOUT_ERROR","CODE_TO_TOKEN","CODE_TO_TOKEN_ERROR","REFRESH_TOKEN_ERROR"]'
-
-echo "3. El rol por defecto, vacio (D-54)"
-# Los de fabrica: dos del realm y los dos de la consola de cuenta. Quitar
-# uno que ya no esta no falla, asi que se puede repetir.
-$K remove-roles $C -r "$R" --rname "default-roles-$R" \
-  --rolename offline_access --rolename uma_authorization
-$K remove-roles $C -r "$R" --rname "default-roles-$R" \
-  --cclientid account --rolename view-profile --rolename manage-account
-
-echo "4. La consola de administracion: fuerza bruta y contrasenas en master"
-$K update realms/master $C \
-  -s bruteForceProtected=true -s permanentLockout=false -s failureFactor=5 \
-  -s waitIncrementSeconds=60 -s maxFailureWaitSeconds=900 \
-  -s minimumQuickLoginWaitSeconds=60 -s quickLoginCheckMilliSeconds=1000 \
-  -s "passwordPolicy=$POLITICA"
-
-echo
-echo "== Como quedo"
-echo "-- frontend-web:"
-$K get "clients/$CID" $C -r "$R" --fields redirectUris,webOrigins
-# --fields no muestra los atributos (un mapa anidado): se leen del cliente entero.
-$K get "clients/$CID" $C -r "$R" | grep -E '"(post\.logout\.redirect\.uris|pkce\.code\.challenge\.method)"'
-echo "-- realm $R:"
-$K get "realms/$R" $C --fields passwordPolicy,eventsEnabled,eventsExpiration,bruteForceProtected,failureFactor
-echo "-- rol por defecto (vacio = []):"
-$K get "roles/default-roles-$R/composites" $C -r "$R" --fields name
-echo "-- realm master:"
-$K get realms/master $C --fields bruteForceProtected,failureFactor,passwordPolicy
-echo "-- cuentas de administracion (la que dice is_temporary_admin es la de arranque):"
-$K get users $C -r master | grep -E '"username"|is_temporary_admin' || true
-ADENTRO
+  docker exec -i -e KA -e KP -e R -e D "$CONTENEDOR" sh -s < docker/keycloak/endurecer.sh
 
 echo "==> Listo."

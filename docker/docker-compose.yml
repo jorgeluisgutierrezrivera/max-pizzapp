@@ -14,12 +14,20 @@
 #   docker compose --env-file .env -f docker/docker-compose.yml config
 #   docker compose --env-file .env -f docker/docker-compose.yml up -d
 #   docker compose --env-file .env -f docker/docker-compose.yml down
+#
+# PERFIL "completo" (tarjeta 13, D-62): suma la app web compilada en
+# Docker (servicio "web", en http://localhost:8090) y la configuracion
+# de Keycloak en el arranque. Es la INSTALACION LOCAL de un paso, la que
+# corre instalar.cmd / scripts/instalar.sh. Sin el perfil, el entorno es
+# el de desarrollo de siempre (la app se corre con "flutter run").
+#   docker compose --env-file .env -f docker/docker-compose.yml --profile completo up -d --build
 # ==========================================================
 
 name: maxpizzapp
 
 # NOMBRES DE CONTENEDOR: por rol y con el prefijo del proyecto
 #   maxpizzapp-bd | maxpizzapp-auth | maxpizzapp-backend | maxpizzapp-proxy
+#   (y en la instalacion local: maxpizzapp-web)
 # Los nombres de contenedor son unicos en TODO el demonio de Docker, no por
 # proyecto. En la maquina de desarrollo convive el sistema anterior, que ya
 # ocupa maxpizzapp-postgres, maxpizzapp-keycloak y maxpizzapp-api: repetir
@@ -182,6 +190,87 @@ services:
       timeout: 5s
       retries: 5
       start_period: 15s
+
+  # --------------------------------------------------------
+  # La configuracion de Keycloak en el arranque de la INSTALACION
+  # LOCAL (perfil "completo", D-64). Corre una vez y termina.
+  #
+  # Aplica docker/keycloak/endurecer.sh, el MISMO archivo que
+  # scripts/endurecer-keycloak.sh usa en desarrollo y en produccion,
+  # contra Keycloak por la red interna, y asigna a las cuentas de
+  # prueba la contrasena de KEYCLOAK_DEMO_PASSWORD. Se puede repetir:
+  # el resultado es siempre el mismo.
+  #
+  # Las variables se leen DENTRO del contenedor ($$), desde el .env:
+  # asi ninguna contrasena queda escrita en "docker compose config".
+  # Sin DOMINIO (en local no hay), las direcciones de produccion
+  # quedan con maxpizzapp.tech, igual que en el script del anfitrion.
+  # --------------------------------------------------------
+  keycloak-config:
+    <<: *servicio-comun
+    profiles: ["completo"]
+    image: quay.io/keycloak/keycloak:26.7
+    container_name: maxpizzapp-auth-config
+    restart: "no"
+    entrypoint:
+      - sh
+      - -c
+      - >-
+        KA="$$KEYCLOAK_ADMIN" KP="$$KEYCLOAK_ADMIN_PASSWORD"
+        DP="$$KEYCLOAK_DEMO_PASSWORD" R="$${KEYCLOAK_REALM:-maxpizzapp}"
+        D="$${DOMINIO:-maxpizzapp.tech}" KC_SERVIDOR=http://keycloak:8080
+        exec sh /config/endurecer.sh
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    volumes:
+      - ./keycloak/endurecer.sh:/config/endurecer.sh:ro
+
+  # --------------------------------------------------------
+  # La app web de la INSTALACION LOCAL (perfil "completo", D-62).
+  #
+  # La imagen compila la app desde el codigo del repositorio
+  # (frontend/Dockerfile) y Caddy la sirve en el 8090, con /api y
+  # /socket.io reenviados a la API: un solo origen, como en
+  # produccion (docker/caddy/Caddyfile.local).
+  #
+  # Va en un perfil para no chocar con el "flutter run" del
+  # desarrollo, que usa el mismo puerto. El 8090 es fijo: es la
+  # direccion de retorno exacta del realm (D-53).
+  #
+  # Sin env_file: Caddy no necesita ningun secreto del .env.
+  # --------------------------------------------------------
+  web:
+    profiles: ["completo"]
+    build:
+      context: ../frontend
+      args:
+        # La direccion de Keycloak que usa el navegador de esa PC.
+        KEYCLOAK_URL: http://localhost:${KEYCLOAK_PORT}
+    image: maxpizzapp-web:local
+    container_name: maxpizzapp-web
+    restart: unless-stopped
+    networks:
+      - interna
+    depends_on:
+      backend:
+        condition: service_healthy
+      # Sin la configuracion de Keycloak las cuentas de prueba no tienen
+      # contrasena: si falla, la app no arranca y el error se ve enseguida.
+      keycloak-config:
+        condition: service_completed_successfully
+    ports:
+      # Solo en la propia PC (127.0.0.1): la instalacion local no se
+      # ofrece a otros equipos de la red.
+      - "127.0.0.1:8090:8090"
+    volumes:
+      - ./caddy/Caddyfile.local:/etc/caddy/Caddyfile:ro
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1:8090/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 networks:
   # Red privada del proyecto: los contenedores se ven entre si por

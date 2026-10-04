@@ -1,0 +1,57 @@
+# ==========================================================
+# Max Pizzapp - la app y la API en la instalacion LOCAL (tarjeta 13)
+#
+# Lo usa el servicio "web" de docker/docker-compose.yml, en el perfil
+# "completo". Es la version local del Caddyfile de produccion, con el
+# mismo reparto por ruta en un solo origen:
+#
+#     http://localhost:8090/             -> la app (compilada en la imagen)
+#     http://localhost:8090/api/*        -> la API
+#     http://localhost:8090/socket.io/*  -> el canal en tiempo real
+#
+# Asi, para el navegador la app y la API comparten origen, igual que
+# en https://maxpizzapp.tech, y la API no necesita CORS.
+#
+# QUE NO TIENE, Y POR QUE
+#   - HTTPS: es localhost, en una sola PC (como el desarrollo).
+#   - HSTS y la politica de contenido (CSP): son de HTTPS y estan
+#     medidas para produccion (D-55); alli no cambian.
+#
+# El 8090 es fijo: es la direccion de retorno exacta que el realm de
+# Keycloak declara para la web local (D-53).
+# ==========================================================
+
+{
+	# Nada de certificados ni de consola de administracion.
+	auto_https off
+	admin off
+}
+
+:8090 {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	handle /socket.io/* {
+		reverse_proxy backend:3000
+	}
+
+	handle /api/* {
+		reverse_proxy backend:3000
+	}
+
+	# La app: una sola pagina, las rutas se resuelven en el cliente.
+	# "no-cache" para que, al reinstalar, el navegador no siga con la
+	# version anterior (Flutter no versiona el nombre de sus archivos).
+	handle {
+		root * /srv
+		header Cache-Control "no-cache"
+		try_files {path} /index.html
+		file_server
+	}
+}

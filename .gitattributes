@@ -19,9 +19,17 @@
 *.md        text eol=lf
 Dockerfile  text eol=lf
 Caddyfile   text eol=lf
+Caddyfile.*  text eol=lf
+.dockerignore text eol=lf
 .env.example text eol=lf
 .gitignore  text eol=lf
 .gitattributes text eol=lf
+
+# --- Archivos que corre Windows: saltos de linea de Windows (CRLF) ---
+# instalar.cmd lo ejecuta cmd.exe, y cmd.exe con saltos de Linux puede
+# leer mal las lineas. instalar.ps1 lo corre Windows PowerShell 5.1.
+*.cmd       text eol=crlf
+*.ps1       text eol=crlf
 
 # --- Binarios: Git no debe tocarlos ---
 # Los documentos de Office son ZIP por dentro: si Git los toma por texto y les

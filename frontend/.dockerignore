@@ -1,0 +1,15 @@
+# Lo que NO entra a la imagen de la app (frontend/Dockerfile).
+# Lo compilado y las caches se regeneran adentro; lo de Android no se usa
+# para la web y pesa.
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+.idea/
+*.iml
+android/
+test/
+Dockerfile
+.dockerignore

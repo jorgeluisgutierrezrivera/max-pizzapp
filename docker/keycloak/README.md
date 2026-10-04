@@ -50,6 +50,22 @@ reemplazó por una permanente (abajo), se indica cuál y pide la contraseña sin
 KC_USUARIO=nombre.de.tu.cuenta bash scripts/endurecer-keycloak.sh
 ```
 
+### Una sola fuente: `endurecer.sh`
+
+Lo que el script hace dentro del contenedor de Keycloak está en `docker/keycloak/endurecer.sh`
+(D-64), y lo usan dos caminos:
+
+- **`scripts/endurecer-keycloak.sh`**, en desarrollo y en producción: se lo pasa a
+  `docker exec` en el contenedor `maxpizzapp-auth`.
+- **El servicio `keycloak-config`** de `docker/docker-compose.yml`, en la instalación local de
+  un paso (perfil `completo`): corre una vez en cada arranque, contra Keycloak por la red
+  interna, y termina. Además asigna a `recepcion.demo` y `cocina.demo` la contraseña de
+  `KEYCLOAK_DEMO_PASSWORD`, así quien instala no tiene que hacerlo a mano. Si falla, la app no
+  arranca y el instalador muestra sus últimas líneas.
+
+Así la configuración de seguridad de la instalación local y la de producción no pueden
+desfasarse: son el mismo archivo.
+
 ## Reemplazar la cuenta temporal de administración
 
 Keycloak arranca con una cuenta de administración **temporal**, la del `.env`
