@@ -45,6 +45,7 @@ siguiente hasta cerrar la actual.
 | 10 | Pruebas con evidencia | Los reportes versionados de las suites y de las sondas, la integración continua, RNF-01 (30 propagaciones y k6), RNF-03, RNF-04 y RNF-05 medidos, y la tabla de casos de la que sale el 2.8 | **Hecho** — 2-oct: las 28 filas de la tabla con su evidencia y la integración continua en verde. La numeración de las secciones de la venta pasa al E4 |
 | 11 | Identidad visual del acceso | Tema de Keycloak con la estética de la app y del local (colores, tipografía, marca), solo con estilos | Por hacer — después del E2 |
 | 12 | App Android para cocina | El mismo código de Flutter compilado como APK para el rol cocina (D-43): inicio de sesión en Android, sonido **desde el arranque, sin esperar un toque** (lo que la web no puede, visto en la prueba de la 07), pantalla encendida, firma y descarga. Recepción sigue en la web | **Hecho** — 1-oct: publicado en el Release `apk-cocina-0.1.0` y probado por el autor en su teléfono contra producción |
+| 13 | Instalación local en un solo paso | El sistema completo en una PC que solo tiene Docker Desktop, con un paso (`instalar.cmd`): la app compilada en Docker, Keycloak configurado en el arranque, el `.env` generado y la instalación probada en la integración continua. La prueba: otra persona sigue el manual de instalación (enunciado del E4) | **En curso** — aprobado el 4-oct |
 
 > **Orden modificado el 22-sep.** La tarjeta 02 era *Identidad y roles con Keycloak* y el
 > despliegue público estaba al final, en la 09. Se fundieron y se adelantaron: la dirección
