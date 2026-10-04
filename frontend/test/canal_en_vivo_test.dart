@@ -188,4 +188,17 @@ void main() {
     expect((await cambio)['nuevo'], 'en_preparacion');
     expect((await actualizado)['version'], 2);
   });
+
+  test('un producto que se agota o se repone llega por disponibilidades (RF-13)', () async {
+    canal.conectar();
+    final aviso = canal.disponibilidades.first;
+    socket.emitir('producto:disponibilidad', {
+      'id': 7, 'nombre': 'Hawaiana', 'categoria': 'pizza', 'disponible': false, 'por': 'cocina',
+      'fechaHora': '2026-10-04T20:00:00.000Z',
+    });
+    expect(await aviso, {
+      'id': 7, 'nombre': 'Hawaiana', 'categoria': 'pizza', 'disponible': false, 'por': 'cocina',
+      'fechaHora': '2026-10-04T20:00:00.000Z',
+    });
+  });
 }

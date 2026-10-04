@@ -22,6 +22,7 @@ class CanalDePrueba implements CanalEnVivo {
   final nuevos = StreamController<Map<String, dynamic>>.broadcast();
   final cambios = StreamController<Map<String, dynamic>>.broadcast();
   final actualizados = StreamController<Map<String, dynamic>>.broadcast();
+  final disponibles = StreamController<Map<String, dynamic>>.broadcast();
   final estados = StreamController<bool>.broadcast();
   var conexiones = 0;
   var cerrado = false;
@@ -31,6 +32,8 @@ class CanalDePrueba implements CanalEnVivo {
   Stream<Map<String, dynamic>> get cambiosDeEstado => cambios.stream;
   @override
   Stream<Map<String, dynamic>> get pedidosActualizados => actualizados.stream;
+  @override
+  Stream<Map<String, dynamic>> get disponibilidades => disponibles.stream;
   @override
   Stream<bool> get conexion => estados.stream;
   @override
@@ -72,12 +75,16 @@ Producto producto(String nombre, String categoria, num precio) => Producto.desde
   'disponible': true,
 });
 
-final carta = Carta([
+final _productosDeLaCarta = <Producto>[
   producto('Salame', 'pizza', 45),
   producto('Peperoni', 'pizza', 50),
   producto('Extra queso', 'extra', 8),
   producto('Gaseosa 2 L', 'bebida', 18),
-]);
+];
+
+/// Una carta nueva en cada uso: la carta cambia en el lugar cuando un producto se agota
+/// (RF-13), y una sola compartida pasaría lo agotado de una prueba a la siguiente.
+Carta get carta => Carta(_productosDeLaCarta);
 Producto de(String nombre) =>
     [...carta.pizzas, ...carta.extras, ...carta.bebidas].firstWhere((p) => p.nombre == nombre);
 

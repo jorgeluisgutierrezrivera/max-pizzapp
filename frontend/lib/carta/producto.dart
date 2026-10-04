@@ -1,6 +1,8 @@
 /// Un producto de la carta, tal como lo entrega GET /api/v1/productos, y la carta completa.
 library;
 
+import 'package:flutter/foundation.dart';
+
 enum Categoria { pizza, entrada, bebida, postre, extra }
 
 /// Los precios se guardan en CENTAVOS, como enteros: sumar decimales en coma flotante
@@ -58,6 +60,18 @@ class Producto {
   bool get esBebida => categoria == Categoria.bebida;
   bool get esExtra => categoria == Categoria.extra;
 
+  /// El mismo producto, agotado o disponible (RF-13).
+  Producto conDisponible(bool disponible) => Producto(
+    id: id,
+    nombre: nombre,
+    categoria: categoria,
+    precio: precio,
+    descripcion: descripcion,
+    imagen: imagen,
+    disponible: disponible,
+    soloEntera: soloEntera,
+  );
+
   /// Lo que aporta como mitad de una pizza de dos sabores: la mitad exacta (D-27). Se usa
   /// para mostrarlo; el precio de la pizza se calcula con [precioDeDosMitades].
   int get precioDeMitad => (precio + 1) ~/ 2;
@@ -76,17 +90,68 @@ int precioDeDosMitades(Producto a, Producto b) => (a.precio + b.precio + 1) ~/ 2
 
 /// La carta, separada como la recorre la venta: pizzas, extras y bebidas, cada grupo en
 /// orden alfabético (D-30).
-class Carta {
+///
+/// Avisa cuando un producto se agota o se repone (RF-13, D-67). El aviso en vivo cambia el
+/// producto DENTRO de esta misma carta, sin reemplazarla: la venta que se está armando está
+/// atada a la carta, y una carta nueva la empezaría de cero.
+class Carta extends ChangeNotifier {
   Carta(Iterable<Producto> productos)
-    : pizzas = _ordenados(productos.where((p) => p.esPizza)),
-      extras = _ordenados(productos.where((p) => p.esExtra)),
-      bebidas = _ordenados(productos.where((p) => p.esBebida));
+    : _pizzas = _ordenados(productos.where((p) => p.esPizza)),
+      _extras = _ordenados(productos.where((p) => p.esExtra)),
+      _bebidas = _ordenados(productos.where((p) => p.esBebida));
 
-  final List<Producto> pizzas;
-  final List<Producto> extras;
-  final List<Producto> bebidas;
+  List<Producto> _pizzas;
+  List<Producto> _extras;
+  List<Producto> _bebidas;
 
-  bool get vacia => pizzas.isEmpty && bebidas.isEmpty;
+  List<Producto> get pizzas => _pizzas;
+  List<Producto> get extras => _extras;
+  List<Producto> get bebidas => _bebidas;
+
+  bool get vacia => _pizzas.isEmpty && _bebidas.isEmpty;
+
+  /// Todos, en el orden de la carta del local: pizzas, bebidas y extras.
+  List<Producto> get todos => [..._pizzas, ..._bebidas, ..._extras];
+
+  Producto? porId(int id) => todos.where((p) => p.id == id).firstOrNull;
+
+  /// Si el producto se puede vender ahora, según esta carta. Hace falta porque el producto
+  /// que guarda una venta a medio armar puede ser de antes del aviso.
+  bool estaDisponible(Producto producto) => porId(producto.id)?.disponible ?? producto.disponible;
+
+  /// Agota o repone un producto. Devuelve si cambió algo: un aviso repetido, o el de un
+  /// cambio que esta misma pantalla ya aplicó, no vuelve a dibujar nada.
+  bool marcarDisponibilidad(int id, bool disponible) {
+    final cambio = _marcar(id, disponible);
+    if (cambio) notifyListeners();
+    return cambio;
+  }
+
+  /// La disponibilidad de una carta recién leída, por ejemplo al reconectar el canal, que
+  /// pudo perderse algún aviso. Solo la disponibilidad: los precios los vuelve a controlar
+  /// el servidor al vender (409 PRECIO_CAMBIADO).
+  void aplicarDisponibilidadDe(Carta otra) {
+    var cambio = false;
+    for (final producto in otra.todos) {
+      cambio = _marcar(producto.id, producto.disponible) || cambio;
+    }
+    if (cambio) notifyListeners();
+  }
+
+  bool _marcar(int id, bool disponible) {
+    var cambio = false;
+    List<Producto> reemplazar(List<Producto> lista) {
+      final i = lista.indexWhere((p) => p.id == id);
+      if (i < 0 || lista[i].disponible == disponible) return lista;
+      cambio = true;
+      return List.unmodifiable([...lista]..[i] = lista[i].conDisponible(disponible));
+    }
+
+    _pizzas = reemplazar(_pizzas);
+    _extras = reemplazar(_extras);
+    _bebidas = reemplazar(_bebidas);
+    return cambio;
+  }
 
   static List<Producto> _ordenados(Iterable<Producto> productos) =>
       List.unmodifiable(productos.toList()..sort((a, b) => _clave(a.nombre).compareTo(_clave(b.nombre))));

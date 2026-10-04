@@ -31,8 +31,8 @@ Un flujo acotado y **desplegable**, priorizando profundidad sobre cantidad de m�
 
 | Rol | Qué hace |
 |---|---|
-| **Recepción** | Crea pedidos y ventas directas de bebidas, ve estados en vivo, agrega productos a un pedido ya enviado, cancela mientras el pedido está pendiente, entrega |
-| **Cocina** | Ve pedidos entrantes en vivo, avanza el estado, marca "listo" |
+| **Recepción** | Crea pedidos y ventas directas de bebidas, ve estados en vivo, agrega productos a un pedido ya enviado, cancela mientras el pedido está pendiente, entrega, marca un producto agotado o disponible |
+| **Cocina** | Ve pedidos entrantes en vivo, avanza el estado, marca "listo", marca un producto agotado o disponible |
 
 A un pedido ya enviado se le agrega según su estado:
 
@@ -43,8 +43,11 @@ A un pedido ya enviado se le agrega según su estado:
 | Listo | sí | no |
 | Entregado o cancelado | no | no |
 
-Marcar un producto como agotado (RF-13) está **previsto** para una tarjeta posterior:
-todavía no está implementado.
+**Un producto agotado** (RF-13) se marca desde el botón *Carta* de la barra, en recepción y
+en cocina (también en el APK): un interruptor por producto. En menos de 2 segundos deja de
+ofrecerse en la venta de recepción, sin recargar, y si lo marcó cocina, recepción ve un aviso.
+Los pedidos que ya lo llevaban no cambian, y el servidor rechaza vender un agotado (409).
+Se repone con otro toque.
 
 El sistema tiene **dos roles**. La administración de la carta y el historial quedan fuera
 de alcance y se recogen como trabajo futuro.

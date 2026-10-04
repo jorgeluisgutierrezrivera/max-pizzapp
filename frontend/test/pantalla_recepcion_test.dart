@@ -8,9 +8,11 @@ import 'package:maxpizzapp/api/canal_en_vivo.dart';
 import 'package:maxpizzapp/api/cliente_api.dart';
 import 'package:maxpizzapp/api/usuario.dart';
 import 'package:maxpizzapp/carta/producto.dart';
+import 'package:maxpizzapp/pantallas/panel_de_carta.dart';
 import 'package:maxpizzapp/pantallas/pantalla_recepcion.dart';
 import 'package:maxpizzapp/pantallas/venta/comunes.dart';
 import 'package:maxpizzapp/pantallas/venta/formulario_de_venta.dart';
+import 'package:maxpizzapp/pantallas/venta/modal_bebidas.dart';
 import 'package:maxpizzapp/pantallas/venta/pedido_enviado.dart';
 import 'package:maxpizzapp/tema.dart';
 
@@ -19,6 +21,11 @@ import 'anchos_del_rnf04.dart';
 /// Un canal que ya está conectado y no avisa nada: la venta se prueba en el caso normal, sin
 /// la banda de canal caído, que tiene sus propias pruebas.
 class CanalConectado implements CanalEnVivo {
+  /// Los avisos de disponibilidad (RF-13) que la prueba hace llegar.
+  final disponibles = StreamController<Map<String, dynamic>>.broadcast();
+
+  /// La conexión, para simular un corte y la vuelta.
+  final estados = StreamController<bool>.broadcast();
   @override
   Stream<Map<String, dynamic>> get pedidosNuevos => const Stream.empty();
   @override
@@ -26,7 +33,9 @@ class CanalConectado implements CanalEnVivo {
   @override
   Stream<Map<String, dynamic>> get pedidosActualizados => const Stream.empty();
   @override
-  Stream<bool> get conexion => const Stream.empty();
+  Stream<Map<String, dynamic>> get disponibilidades => disponibles.stream;
+  @override
+  Stream<bool> get conexion => estados.stream;
   @override
   bool get conectado => true;
   @override
@@ -47,7 +56,7 @@ Producto producto(String nombre, String categoria, num precio, {bool disponible 
       'disponible': disponible,
     });
 
-final carta = Carta([
+final _productosDeLaCarta = <Producto>[
   producto('Salame', 'pizza', 45, descripcion: 'Doble queso y salame'),
   producto('Peperoni', 'pizza', 50, descripcion: 'Doble queso, jamón y peperoni'),
   producto('Choclo', 'pizza', 45),
@@ -67,7 +76,11 @@ final carta = Carta([
   producto('Extra queso', 'extra', 8),
   producto('Gaseosa 2 L', 'bebida', 18),
   producto('Agua mineral 600 ml', 'bebida', 6),
-]);
+];
+
+/// Una carta nueva en cada uso: la carta cambia en el lugar cuando un producto se agota
+/// (RF-13), y una sola compartida pasaría lo agotado de una prueba a la siguiente.
+Carta get carta => Carta(_productosDeLaCarta);
 
 Producto de(String nombre) =>
     [...carta.pizzas, ...carta.extras, ...carta.bebidas].firstWhere((p) => p.nombre == nombre);
@@ -870,6 +883,188 @@ void main() {
         await tocarClave(t, 'confirmar-venta');
         expect(texto(t, 'pedido-enviado'), 'Pedido 12 de María Fernanda Gutiérrez de la Fuente enviado a cocina');
         sinDesplazamientoHorizontal(t, 'el aviso de la venta');
+      });
+    }
+  });
+
+  // --- RF-13: la disponibilidad de los productos (tarjeta 08) ---------------------------------
+  group('la disponibilidad de los productos (RF-13)', () {
+    late CanalConectado canal;
+    late List<(int, bool)> marcados;
+    late int lecturas;
+    late List<Map<String, dynamic>> enviados;
+
+    /// Recepción con un canal al que la prueba le hace llegar avisos. La segunda lectura de la
+    /// carta, la de la reconexión, trae la gaseosa agotada.
+    Future<void> abrir(WidgetTester t, {Enviar? enviar}) async {
+      tamano(t, 1400, 1400);
+      canal = CanalConectado();
+      marcados = [];
+      lecturas = 0;
+      enviados = [];
+      await t.pumpWidget(
+        MaterialApp(
+          theme: temaMaxPizzas(),
+          home: PantallaRecepcion(
+            usuario: usuario,
+            alCerrarSesion: () {},
+            cargarCarta: () async {
+              lecturas++;
+              return lecturas == 1
+                  ? carta
+                  : Carta([for (final p in carta.todos) p.nombre == 'Gaseosa 2 L' ? p.conDisponible(false) : p]);
+            },
+            imagen: (ruta, respaldo, ajuste) => respaldo,
+            enviarPedido:
+                enviar ??
+                (pedido) async {
+                  enviados.add(pedido);
+                  return pedidoGuardado(pedido);
+                },
+            marcarDisponibilidad: (producto, disponible) async {
+              marcados.add((producto.id, disponible));
+              return producto.conDisponible(disponible);
+            },
+            crearCanal: () => canal,
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+    }
+
+    Map<String, dynamic> aviso(String nombre, {required bool disponible, String por = 'cocina'}) => {
+      'id': de(nombre).id,
+      'nombre': nombre,
+      'categoria': de(nombre).categoria.name,
+      'disponible': disponible,
+      'por': por,
+      'fechaHora': '2026-10-04T20:00:00.000Z',
+    };
+
+    Finder agotadaEnLaFila(String bebida) =>
+        find.descendant(of: find.widgetWithText(FilaBebida, bebida), matching: find.text('Agotada'));
+
+    testWidgets('cocina agota una bebida: la venta la apaga sin empezar de nuevo, y un aviso lo dice', (t) async {
+      await abrir(t);
+      await escribirCliente(t, nombre: 'Ana Prueba');
+      canal.disponibles.add(aviso('Gaseosa 2 L', disponible: false));
+      await t.pumpAndSettle();
+      expect(agotadaEnLaFila('Gaseosa 2 L'), findsOneWidget);
+      expect(find.text('Cocina marcó agotado: Gaseosa 2 L'), findsOneWidget);
+      // La venta a medio armar sigue ahí: la carta cambió en el lugar.
+      expect(t.widget<TextField>(find.byKey(const Key('cliente-nombre'))).controller!.text, 'Ana Prueba');
+      expect(t.widget<IconButton>(find.byKey(Key('bebida-${de('Gaseosa 2 L').id}-mas'))).onPressed, isNull);
+    });
+
+    testWidgets('cocina la repone: vuelve a ofrecerse, y el aviso lo dice', (t) async {
+      await abrir(t);
+      canal.disponibles.add(aviso('Gaseosa 2 L', disponible: false));
+      await t.pumpAndSettle();
+      canal.disponibles.add(aviso('Gaseosa 2 L', disponible: true));
+      await t.pumpAndSettle();
+      expect(agotadaEnLaFila('Gaseosa 2 L'), findsNothing);
+      // Los avisos van en fila: el de la reposición llega cuando se cierra el anterior.
+      await t.pump(const Duration(seconds: 7));
+      await t.pumpAndSettle();
+      expect(find.text('Cocina volvió a ofrecer: Gaseosa 2 L'), findsOneWidget);
+    });
+
+    testWidgets('si lo marcó recepción, se apaga igual, sin aviso', (t) async {
+      await abrir(t);
+      canal.disponibles.add(aviso('Gaseosa 2 L', disponible: false, por: 'recepcion'));
+      await t.pumpAndSettle();
+      expect(agotadaEnLaFila('Gaseosa 2 L'), findsOneWidget);
+      expect(find.byKey(const Key('aviso-disponibilidad')), findsNothing);
+    });
+
+    testWidgets('una venta en curso con la bebida que se agota: la marca y no confirma hasta quitarla (D-69)', (t) async {
+      await abrir(t);
+      await escribirCliente(t);
+      await agregarPizza(t, 'Salame');
+      final gaseosa = 'bebida-${de('Gaseosa 2 L').id}';
+      await tocarClave(t, '$gaseosa-mas');
+      canal.disponibles.add(aviso('Gaseosa 2 L', disponible: false));
+      await t.pumpAndSettle();
+      expect(agotadaEnLaFila('Gaseosa 2 L'), findsOneWidget);
+      await tocarClave(t, 'confirmar-venta');
+      expect(enviados, isEmpty);
+      expect(find.textContaining('Gaseosa 2 L se agotó: quítalo de la venta.'), findsOneWidget);
+      // Quitarla se puede (el − sigue), y entonces sí se envía.
+      await tocarClave(t, '$gaseosa-menos');
+      await tocarClave(t, 'confirmar-venta');
+      expect(enviados, hasLength(1));
+      expect(enviados.single['lineas'], [
+        {'productoId': de('Salame').id, 'cantidad': 1},
+      ]);
+    });
+
+    testWidgets('una pizza de la venta que se agota: su línea se marca y no confirma', (t) async {
+      await abrir(t);
+      await escribirCliente(t);
+      await agregarPizza(t, 'Peperoni');
+      canal.disponibles.add(aviso('Peperoni', disponible: false));
+      await t.pumpAndSettle();
+      expect(find.byKey(const Key('agotada-pizza-0')), findsOneWidget);
+      await tocarClave(t, 'confirmar-venta');
+      expect(enviados, isEmpty);
+      expect(find.textContaining('Peperoni se agotó: quítalo de la venta.'), findsOneWidget);
+    });
+
+    testWidgets('al volver el canal después de un corte, relee la carta y aplica lo agotado', (t) async {
+      await abrir(t);
+      canal.estados.add(true); // la primera conexión no relee: la carta se acaba de leer
+      await t.pumpAndSettle();
+      expect(lecturas, 1);
+      canal.estados.add(false);
+      await t.pump();
+      canal.estados.add(true);
+      await t.pumpAndSettle();
+      expect(lecturas, 2);
+      expect(agotadaEnLaFila('Gaseosa 2 L'), findsOneWidget);
+    });
+
+    testWidgets('el botón Carta abre el panel, y lo que se marca ahí se apaga en la venta', (t) async {
+      await abrir(t);
+      await tocarClave(t, 'boton-carta');
+      expect(find.byKey(const Key('panel-carta')), findsOneWidget);
+      final id = de('Gaseosa 2 L').id;
+      expect(texto(t, 'estado-$id'), 'Disponible');
+      await t.tap(find.byKey(Key('disponible-$id')));
+      await t.pumpAndSettle();
+      expect(marcados, [(id, false)]);
+      expect(texto(t, 'estado-$id'), 'Agotado');
+      await t.tap(find.byTooltip('Cerrar'));
+      await t.pumpAndSettle();
+      expect(agotadaEnLaFila('Gaseosa 2 L'), findsOneWidget);
+      // El aviso de esta misma marca, que llega después, no repite nada ni avisa.
+      canal.disponibles.add(aviso('Gaseosa 2 L', disponible: false, por: 'recepcion'));
+      await t.pumpAndSettle();
+      expect(find.byKey(const Key('aviso-disponibilidad')), findsNothing);
+    });
+
+    testWidgets('si el servidor responde 409 PRODUCTO_NO_DISPONIBLE, la carta lo marca y la venta lo señala', (t) async {
+      await abrir(
+        t,
+        enviar: (pedido) async => throw ErrorApi(409, 'PRODUCTO_NO_DISPONIBLE', 'Gaseosa 2 L no esta disponible.', {
+          'producto': {'id': de('Gaseosa 2 L').id, 'nombre': 'Gaseosa 2 L'},
+        }),
+      );
+      await escribirCliente(t);
+      await agregarPizza(t, 'Salame');
+      await tocarClave(t, 'bebida-${de('Gaseosa 2 L').id}-mas');
+      await tocarClave(t, 'confirmar-venta');
+      expect(texto(t, 'error-envio'), 'Gaseosa 2 L se agotó. Quítalo de la venta y vuelve a enviarla.');
+      expect(agotadaEnLaFila('Gaseosa 2 L'), findsOneWidget);
+    });
+
+    for (final (ancho, alto) in tamanosDelRnf04) {
+      testWidgets('RNF-04: el panel Carta a ${ancho.toInt()} × ${alto.toInt()}, sin desplazamiento horizontal', (t) async {
+        await abrir(t);
+        tamano(t, ancho, alto);
+        await t.pumpAndSettle();
+        await tocarClave(t, 'boton-carta');
+        expect(find.byType(PanelDeCarta), findsOneWidget);
+        sinDesplazamientoHorizontal(t, 'el panel Carta');
       });
     }
   });

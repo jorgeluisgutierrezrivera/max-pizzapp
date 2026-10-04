@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import '../api/canal_en_vivo.dart';
 import '../api/cliente_api.dart';
 import '../api/usuario.dart';
+import '../carta/producto.dart';
 import '../pedidos/pedido.dart';
 import '../tema.dart';
 import 'aviso_sin_conexion.dart';
 import 'aviso_sin_sonido.dart';
 import 'boton_de_sonido.dart';
 import 'esqueleto_rol.dart';
+import 'panel_de_carta.dart';
 import 'pantalla_encendida.dart';
 import 'red.dart';
 import 'timbre.dart';
@@ -30,6 +32,10 @@ import 'timbre.dart';
 /// se tiene a la vista, para que nadie lo marque listo sin haber visto lo último.
 ///
 /// En el APK, mientras la cola está abierta, la pantalla no se apaga (D-50).
+///
+/// El botón *Carta* de la barra marca lo que se agotó (RF-13, D-68). La carta se lee la
+/// primera vez que se abre, y desde ahí se mantiene al día con el aviso en vivo y al volver
+/// el canal.
 class PantallaCocina extends StatefulWidget {
   const PantallaCocina({
     super.key,
@@ -39,10 +45,14 @@ class PantallaCocina extends StatefulWidget {
     required this.cambiarEstado,
     required this.crearCanal,
     required this.timbre,
+    this.cargarCarta = _sinCarta,
+    this.marcarDisponibilidad = sinMarcarDisponibilidad,
     this.red = const RedSiempreEnLinea(),
     this.pantallaEncendida = const PantallaSegunElSistema(),
     this.reloj = DateTime.now,
   });
+
+  static Future<Carta> _sinCarta() => Future.error(const ErrorApi(0, 'SIN_API', 'Esta pantalla no tiene cómo leer la carta.'));
 
   final Usuario usuario;
   final VoidCallback alCerrarSesion;
@@ -55,6 +65,12 @@ class PantallaCocina extends StatefulWidget {
   final Future<Pedido> Function(Pedido pedido, EstadoPedido hacia) cambiarEstado;
   final CanalEnVivo Function() crearCanal;
   final Timbre timbre;
+
+  /// GET /api/v1/productos, para el panel *Carta*.
+  final Future<Carta> Function() cargarCarta;
+
+  /// PATCH /api/v1/productos/:id/disponibilidad (RF-13).
+  final MarcarDisponibilidad marcarDisponibilidad;
   final Red red;
   final PantallaEncendida pantallaEncendida;
   final DateTime Function() reloj;
@@ -86,6 +102,10 @@ class _PantallaCocinaState extends State<PantallaCocina> {
   /// Lo último que pasó y conviene decir: una cancelación, un cambio que otro hizo antes.
   String? _aviso;
 
+  /// La carta del panel: se lee la primera vez que se abre.
+  Future<Carta>? _carta;
+  Carta? _cartaCargada;
+
   @override
   void initState() {
     super.initState();
@@ -93,6 +113,7 @@ class _PantallaCocinaState extends State<PantallaCocina> {
       ..add(_canal.pedidosNuevos.listen(_alLlegarPedido))
       ..add(_canal.cambiosDeEstado.listen(_alCambiarEstado))
       ..add(_canal.pedidosActualizados.listen(_alActualizarPedido))
+      ..add(_canal.disponibilidades.listen(_alCambiarDisponibilidad))
       ..add(_canal.conexion.listen(_alCambiarConexion));
     // Antes de conectar: así no se pierde el primer "conectado".
     _vigia = VigiaDelCanal(conexion: _canal.conexion, conectado: _canal.conectado, red: widget.red);
@@ -196,7 +217,27 @@ class _PantallaCocinaState extends State<PantallaCocina> {
 
   void _alCambiarConexion(bool conectado) {
     setState(() => _conectado = conectado);
-    if (conectado) _cargar(); // al volver, ponerse al día con la API
+    if (!conectado) return;
+    _cargar(); // al volver, ponerse al día con la API
+    final carta = _cartaCargada;
+    if (carta != null) widget.cargarCarta().then(carta.aplicarDisponibilidadDe, onError: (_) {});
+  }
+
+  /// Otra pantalla agotó o repuso un producto: el panel, si está abierto, mueve el interruptor.
+  void _alCambiarDisponibilidad(Map<String, dynamic> aviso) {
+    final id = aviso['id'];
+    final disponible = aviso['disponible'];
+    if (id is int && disponible is bool) _cartaCargada?.marcarDisponibilidad(id, disponible);
+  }
+
+  /// La carta se lee la primera vez; si falló, se vuelve a intentar al abrir de nuevo.
+  void _abrirCarta() {
+    final carta = _carta ??= widget.cargarCarta();
+    carta.then<void>(
+      (leida) => _cartaCargada = leida,
+      onError: (Object _) => _carta = null,
+    );
+    mostrarPanelDeCarta(context, carta: carta, marcar: widget.marcarDisponibilidad);
   }
 
   Future<void> _avanzar(Pedido pedido) async {
@@ -245,7 +286,7 @@ class _PantallaCocinaState extends State<PantallaCocina> {
       titulo: 'Cocina',
       usuario: widget.usuario,
       alCerrarSesion: widget.alCerrarSesion,
-      acciones: [BotonDeSonido(timbre: widget.timbre)],
+      acciones: [BotonCarta(alTocar: _abrirCarta, anchoConTexto: 600), BotonDeSonido(timbre: widget.timbre)],
       cuerpo: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

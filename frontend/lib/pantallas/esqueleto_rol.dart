@@ -28,8 +28,9 @@ class EsqueletoRol extends StatelessWidget {
   /// misma barra, junto al titulo, para no quitarle alto al contenido; si no, debajo.
   final PreferredSizeWidget? pestanas;
 
-  /// Desde este ancho, las pestanas caben en la barra, junto al titulo.
-  static const anchoPestanasEnLaBarra = 1100.0;
+  /// Desde este ancho, las pestanas caben en la barra, junto al titulo. Era 1100: con el
+  /// boton Carta (RF-13) en la barra, a 1100 px las pestanas ya no entraban.
+  static const anchoPestanasEnLaBarra = 1200.0;
 
   @override
   Widget build(BuildContext context) {

@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:maxpizzapp/api/canal_en_vivo.dart';
 import 'package:maxpizzapp/api/cliente_api.dart';
 import 'package:maxpizzapp/api/usuario.dart';
+import 'package:maxpizzapp/carta/producto.dart';
 import 'package:maxpizzapp/pantallas/pantalla_cocina.dart';
 import 'package:maxpizzapp/pantallas/pantalla_encendida.dart';
 import 'package:maxpizzapp/pantallas/red.dart';
@@ -22,6 +23,7 @@ class CanalDePrueba implements CanalEnVivo {
   final nuevos = StreamController<Map<String, dynamic>>.broadcast();
   final cambios = StreamController<Map<String, dynamic>>.broadcast();
   final actualizados = StreamController<Map<String, dynamic>>.broadcast();
+  final disponibles = StreamController<Map<String, dynamic>>.broadcast();
   final estados = StreamController<bool>.broadcast();
   var conexiones = 0;
   var cerrado = false;
@@ -31,6 +33,8 @@ class CanalDePrueba implements CanalEnVivo {
   Stream<Map<String, dynamic>> get cambiosDeEstado => cambios.stream;
   @override
   Stream<Map<String, dynamic>> get pedidosActualizados => actualizados.stream;
+  @override
+  Stream<Map<String, dynamic>> get disponibilidades => disponibles.stream;
   @override
   Stream<bool> get conexion => estados.stream;
   @override
@@ -164,6 +168,24 @@ class Escena {
   List<Map<String, dynamic>> cola = [];
   Future<Pedido> Function(int, EstadoPedido)? responder;
 
+  /// La carta del panel (RF-13), lo que se marcó y cuántas veces se leyó.
+  final productos = [
+    for (final (id, nombre, categoria) in [(1, 'Peperoni', 'pizza'), (2, 'Gaseosa 2 L', 'bebida'), (3, 'Extra queso', 'extra')])
+      Producto.desdeJson({
+        'id': id,
+        'nombre': nombre,
+        'categoria': categoria,
+        'precio': 10,
+        'descripcion': null,
+        'imagen': null,
+        'disponible': true,
+      }),
+  ];
+  final marcados = <(int, bool)>[];
+  var lecturasDeCarta = 0;
+  var cartaFalla = false;
+  Future<Producto> Function(Producto, bool)? responderMarca;
+
   Widget app() => MaterialApp(
     theme: temaMaxPizzas(),
     home: PantallaCocina(
@@ -183,6 +205,16 @@ class Escena {
       },
       crearCanal: () => canal,
       timbre: timbreDelApk ?? timbre,
+      cargarCarta: () async {
+        lecturasDeCarta++;
+        if (cartaFalla) throw const ErrorApi(0, 'SIN_CONEXION', 'Sin conexion.');
+        return Carta(productos);
+      },
+      marcarDisponibilidad: (producto, disponible) async {
+        marcados.add((producto.id, disponible));
+        if (responderMarca != null) return responderMarca!(producto, disponible);
+        return producto.conDisponible(disponible);
+      },
       red: red,
       pantallaEncendida: pantalla,
       reloj: () => ahora,
@@ -660,6 +692,107 @@ void main() {
         await t.pump(const Duration(seconds: 5));
         expect(find.byKey(const Key('aviso-sin-conexion')), findsOneWidget);
         sinDesplazamientoHorizontal(t, 'la cola con la banda y la franja');
+      });
+    }
+  });
+
+  // --- RF-13: el panel Carta en cocina (tarjeta 08) -------------------------------------------
+  group('el panel Carta (RF-13, D-68)', () {
+    Map<String, dynamic> aviso(int id, {required bool disponible}) => {
+      'id': id,
+      'nombre': 'Peperoni',
+      'categoria': 'pizza',
+      'disponible': disponible,
+      'por': 'recepcion',
+      'fechaHora': '2026-10-04T20:00:00.000Z',
+    };
+
+    Future<Escena> abrirCarta(WidgetTester t, {double ancho = 1400, double alto = 900}) async {
+      final e = await abrir(t, [], ancho: ancho, alto: alto);
+      await t.tap(find.byKey(const Key('boton-carta')));
+      await t.pumpAndSettle();
+      return e;
+    }
+
+    String estado(WidgetTester t, int id) => t.widget<Text>(find.byKey(Key('estado-$id'))).data!;
+
+    testWidgets('abre la carta por categoría, y cocina marca una pizza agotada', (t) async {
+      final e = await abrirCarta(t);
+      expect(e.lecturasDeCarta, 1);
+      expect(find.text('Pizzas'), findsOneWidget);
+      expect(find.text('Bebidas'), findsOneWidget);
+      expect(find.text('Extras'), findsOneWidget);
+      expect(estado(t, 1), 'Disponible');
+      await t.tap(find.byKey(const Key('disponible-1')));
+      await t.pumpAndSettle();
+      expect(e.marcados, [(1, false)]);
+      expect(estado(t, 1), 'Agotado');
+      // Se repone con otro toque.
+      await t.tap(find.byKey(const Key('disponible-1')));
+      await t.pumpAndSettle();
+      expect(e.marcados, [(1, false), (1, true)]);
+      expect(estado(t, 1), 'Disponible');
+    });
+
+    testWidgets('mientras guarda, ese interruptor espera', (t) async {
+      final e = await abrirCarta(t);
+      final respuesta = Completer<Producto>();
+      e.responderMarca = (producto, disponible) => respuesta.future;
+      await t.tap(find.byKey(const Key('disponible-1')));
+      await t.pump();
+      expect(estado(t, 1), 'Guardando…');
+      expect(t.widget<SwitchListTile>(find.byKey(const Key('disponible-1'))).onChanged, isNull);
+      respuesta.complete(e.productos.first.conDisponible(false));
+      await t.pumpAndSettle();
+      expect(estado(t, 1), 'Agotado');
+    });
+
+    testWidgets('si falla, queda como estaba y dice por qué', (t) async {
+      final e = await abrirCarta(t);
+      e.responderMarca = (producto, disponible) async =>
+          throw const ErrorApi(503, 'BASE_NO_DISPONIBLE', 'La base de datos no responde.');
+      await t.tap(find.byKey(const Key('disponible-1')));
+      await t.pumpAndSettle();
+      expect(estado(t, 1), 'Disponible');
+      expect(find.text('La base de datos no responde.'), findsOneWidget);
+    });
+
+    testWidgets('lo que marca otra pantalla mueve el interruptor con el panel abierto', (t) async {
+      final e = await abrirCarta(t);
+      e.canal.disponibles.add(aviso(1, disponible: false));
+      await t.pumpAndSettle();
+      expect(estado(t, 1), 'Agotado');
+      expect(e.marcados, isEmpty);
+    });
+
+    testWidgets('la carta se lee la primera vez; si falló, se vuelve a intentar al abrir de nuevo', (t) async {
+      final e = await abrir(t, []);
+      e.cartaFalla = true;
+      await t.tap(find.byKey(const Key('boton-carta')));
+      await t.pumpAndSettle();
+      expect(find.text('No se pudo cargar la carta. Cierra el panel e intenta de nuevo.'), findsOneWidget);
+      await t.tap(find.byTooltip('Cerrar'));
+      await t.pumpAndSettle();
+      e.cartaFalla = false;
+      await t.tap(find.byKey(const Key('boton-carta')));
+      await t.pumpAndSettle();
+      expect(e.lecturasDeCarta, 2);
+      expect(estado(t, 1), 'Disponible');
+      // Ya leída, no se vuelve a leer al abrir otra vez.
+      await t.tap(find.byTooltip('Cerrar'));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('boton-carta')));
+      await t.pumpAndSettle();
+      expect(e.lecturasDeCarta, 2);
+    });
+
+    for (final (ancho, alto) in [(360.0, 780.0), (768.0, 1024.0)]) {
+      testWidgets('a ${ancho.toInt()} × ${alto.toInt()} (el APK y la tableta), sin desplazamiento horizontal', (t) async {
+        await abrirCarta(t, ancho: ancho, alto: alto);
+        expect(find.byKey(const Key('panel-carta')), findsOneWidget);
+        // En el celular, como hoja desde abajo; en la tableta, como ventana.
+        expect(find.byType(BottomSheet), ancho < 600 ? findsOneWidget : findsNothing);
+        sinDesplazamientoHorizontal(t, 'el panel Carta');
       });
     }
   });

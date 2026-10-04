@@ -103,6 +103,10 @@ class SegunSesion extends StatelessWidget {
           agregarAlPedido: (pedido, cuerpo) async => Pedido.desdeJson(
             (await api.enviar('/pedidos/${pedido.id}/lineas', cuerpo))['pedido'] as Map<String, dynamic>,
           ),
+          marcarDisponibilidad: (producto, disponible) async => Producto.desdeJson(
+            (await api.cambiar('/productos/${producto.id}/disponibilidad', {'disponible': disponible}))['producto']
+                as Map<String, dynamic>,
+          ),
           llamar: llamar,
           crearCanal: crearCanal,
           timbre: timbre,

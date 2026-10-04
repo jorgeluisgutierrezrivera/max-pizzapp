@@ -44,15 +44,14 @@ Regla del módulo: **máximo 2 roles diferenciados**. Decisión:
 
 | Rol | MoSCoW | Funciones | Dispositivo |
 |---|---|---|---|
-| **Recepción** | **Must** | Crea pedidos desde la carta, ve el estado en vivo, cancela mientras está pendiente, marca entregado. *Previsto:* marcar un producto agotado (RF-13) | Tablet / PC |
-| **Cocina** | **Must** | Ve los pedidos entrantes en vivo (orden de llegada), avanza estado, marca "listo". *Previsto:* marcar un producto agotado (RF-13) | Tablet / monitor |
+| **Recepción** | **Must** | Crea pedidos desde la carta, ve el estado en vivo, cancela mientras está pendiente, marca entregado, marca un producto agotado o disponible (RF-13) | Tablet / PC |
+| **Cocina** | **Must** | Ve los pedidos entrantes en vivo (orden de llegada), avanza estado, marca "listo", marca un producto agotado o disponible (RF-13) | Tablet / monitor |
 
 El sistema tiene **exactamente dos roles**: Recepción y Cocina. El rol de administrador
 —gestión de la carta e historial del día— queda **declarado fuera de alcance** y pasa a
 trabajo futuro: sería un tercer rol diferenciado, por encima del máximo que admite el
 módulo. Lo único que de verdad hacía falta de ese rol, que un producto agotado deje de
-ofrecerse, lo resolverán los dos roles existentes con RF-13, previsto y todavía sin
-implementar.
+ofrecerse, lo resuelven los dos roles existentes con RF-13 (tarjeta 08).
 
 **Autorización siempre en el servidor**, no solo en la interfaz. La identidad y las
 credenciales las gestiona **Keycloak** (nunca hay tabla propia de usuarios).
@@ -210,10 +209,10 @@ Must son exactamente el flujo que se demuestra en la defensa.
 **Fuera de alcance (rol administrador).** Gestionar la carta y consultar el historial del
 día exigirían un tercer rol diferenciado, por encima del máximo admitido; se declaran como
 capacidades fuera de alcance y quedan como trabajo futuro. La necesidad concreta que
-justificaba la gestión de la carta —que un producto agotado deje de ofrecerse— se resolverá
-con **RF-13**, que ejecutarán los dos roles existentes desde su propia pantalla. Está
-previsto: la columna `producto.disponible` existe y la carta ya muestra los agotados, pero
-todavía no hay ruta ni pantalla para marcarlos.
+justificaba la gestión de la carta —que un producto agotado deje de ofrecerse— se resuelve
+con **RF-13**, que ejecutan los dos roles existentes desde su propia pantalla: el panel
+*Carta* de la barra, con la ruta de la disponibilidad y el aviso en vivo (tarjeta 08). Solo
+cambia la disponibilidad; precios, nombres y altas siguen fuera de alcance.
 
 ---
 
@@ -236,13 +235,13 @@ GET    /api/v1/pedidos/:id                    Pedido con sus líneas
 POST   /api/v1/pedidos/:id/lineas             Agrega productos a un pedido que no se entregó
 PATCH  /api/v1/pedidos/:id/estado             Avanza estado según rol autorizado
 POST   /api/v1/pedidos/:id/cancelacion        Cancela con motivo (solo si está pendiente)
-PATCH  /api/v1/productos/:id/disponibilidad   PREVISTA (RF-13): marca un producto agotado
-                                              o disponible. Todavía no existe
+PATCH  /api/v1/productos/:id/disponibilidad   Marca un producto agotado o disponible
+                                              (recepción y cocina, RF-13)
 GET    /api/v1/salud                          Estado del servicio
 ```
 Además, canal en tiempo real por **Socket.IO** sobre el mismo origen: eventos
-`pedido:nuevo`, `pedido:estado` y `pedido:actualizado`; `producto:disponibilidad` llegará
-con RF-13. Todas las rutas (salvo salud)
+`pedido:nuevo`, `pedido:estado`, `pedido:actualizado` y `producto:disponibilidad` (RF-13).
+Todas las rutas (salvo salud)
 exigen token válido de Keycloak: el servidor valida la firma del token y **los permisos que
 exige cada ruta**, que no son los mismos en todas. Cuando la operación **cambia el estado de
 un pedido**, comprueba además que la transición solicitada sea válida.

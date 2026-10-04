@@ -434,6 +434,7 @@ class _SeccionPizzas extends StatelessWidget {
           key: Key('pizza-$i'),
           indice: i,
           grupo: g,
+          agotado: [g.pizza.sabor, ?g.pizza.segundaMitad, ...g.pizza.extras].any(formulario.estaAgotado),
           alCambiarCantidad: (n) => formulario.cambiarCantidadDeGrupo(i, n),
           alCorregir: () => alCorregir(i),
         ),
@@ -503,12 +504,17 @@ class _LineaPizza extends StatelessWidget {
     super.key,
     required this.indice,
     required this.grupo,
+    required this.agotado,
     required this.alCambiarCantidad,
     required this.alCorregir,
   });
 
   final int indice;
   final GrupoPizzas grupo;
+
+  /// Un sabor o un extra de la línea se agotó mientras se armaba la venta (D-69): la línea se
+  /// marca, y *Confirmar* dice qué quitar.
+  final bool agotado;
   final ValueChanged<int> alCambiarCantidad;
   final VoidCallback alCorregir;
 
@@ -521,7 +527,7 @@ class _LineaPizza extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: bordeSuave),
+        border: Border.all(color: agotado ? rojoLadrillo : bordeSuave, width: agotado ? 1.5 : 1),
       ),
       child: Row(
         children: [
@@ -548,6 +554,12 @@ class _LineaPizza extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(pizza.titulo, style: tema.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                          if (agotado)
+                            Text(
+                              'Agotado: quítala o corrígela',
+                              key: Key('agotada-pizza-$indice'),
+                              style: tema.textTheme.bodySmall?.copyWith(color: rojoLadrillo, fontWeight: FontWeight.w800),
+                            ),
                           for (final extra in pizza.extras)
                             Text(
                               '+ ${extra.nombre}',

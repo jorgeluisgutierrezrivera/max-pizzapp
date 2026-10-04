@@ -86,6 +86,23 @@ final celularValido = RegExp(r'^[5-7][0-9]{7}$');
 /// El mismo límite que la base para una línea (detalle_pedido_cantidad_valida).
 const maximoPorLinea = 999;
 
+/// Los productos de una venta que la carta ya no ofrece (D-69): llegó el aviso de que se
+/// agotaron mientras se armaba. Cada uno una vez, en el orden en que aparecen.
+List<Producto> _agotadosEn(Carta carta, Iterable<GrupoPizzas> grupos, Iterable<LineaBebida> bebidas) {
+  final agotados = <Producto>{};
+  for (final g in grupos) {
+    for (final p in [g.pizza.sabor, ?g.pizza.segundaMitad, ...g.pizza.extras]) {
+      if (!carta.estaDisponible(p)) agotados.add(p);
+    }
+  }
+  for (final b in bebidas) {
+    if (!carta.estaDisponible(b.bebida)) agotados.add(b.bebida);
+  }
+  return agotados.toList();
+}
+
+String _quitalo(Producto p) => '${p.nombre} se agotó: quítalo de la venta.';
+
 /// Las bebidas de una venta, con sus cantidades. Las usan el formulario y la venta directa.
 class _Bebidas {
   List<LineaBebida> lineas = const [];
@@ -123,9 +140,19 @@ class _Bebidas {
 /// Es lógica pura, sin pantalla: las pruebas arman una venta completa llamando a estos
 /// métodos, y la pantalla solo muestra el estado y llama al que corresponde.
 class FormularioVenta extends ChangeNotifier {
-  FormularioVenta(this.carta);
+  /// Escucha a la carta: si un producto se agota o se repone, la venta se vuelve a dibujar
+  /// sin perder lo que ya tiene (D-67).
+  FormularioVenta(this.carta) {
+    carta.addListener(notifyListeners);
+  }
 
   final Carta carta;
+
+  @override
+  void dispose() {
+    carta.removeListener(notifyListeners);
+    super.dispose();
+  }
 
   static const largoObservacion = 240;
   static const largoNombre = 120;
@@ -148,6 +175,11 @@ class FormularioVenta extends ChangeNotifier {
 
   int get unidadesDePizza => _grupos.fold(0, (s, g) => s + g.cantidad);
   int get total => _grupos.fold(0, (s, g) => s + g.subtotal) + _bebidas.total;
+
+  /// Lo que la venta lleva y se agotó mientras se armaba (D-69). Mientras haya algo, no se
+  /// confirma: la línea se marca y el aviso dice qué quitar.
+  List<Producto> get agotados => _agotadosEn(carta, _grupos, _bebidas.lineas);
+  bool estaAgotado(Producto producto) => !carta.estaDisponible(producto);
 
   /// No hay nada escrito ni elegido: cancelarla no pierde nada.
   bool get vacia =>
@@ -253,6 +285,7 @@ class FormularioVenta extends ChangeNotifier {
       _bebidas.lineas.isEmpty
           ? 'Agrega al menos una pizza.'
           : 'Agrega al menos una pizza. Las bebidas solas se venden con «Vender bebidas».',
+    for (final p in agotados) _quitalo(p),
   ];
 
   /// El cuerpo de POST /api/v1/pedidos. El total es el que se mostró, en bolivianos: el
@@ -289,9 +322,17 @@ class ArmadoDePizza extends ChangeNotifier {
       _primera = desde?.sabor,
       _segunda = desde?.segundaMitad,
       _extras = {...?desde?.extras},
-      _cantidad = cantidad < 1 ? 1 : cantidad;
+      _cantidad = cantidad < 1 ? 1 : cantidad {
+    carta.addListener(notifyListeners);
+  }
 
   final Carta carta;
+
+  @override
+  void dispose() {
+    carta.removeListener(notifyListeners);
+    super.dispose();
+  }
 
   /// Techo del modal: solo ataja un error de tipeo (200 en vez de 20).
   static const maximoPorVez = 50;
@@ -372,6 +413,13 @@ class ArmadoDePizza extends ChangeNotifier {
   String? get falta {
     if (_primera == null) return _mitades ? 'Elige los dos sabores' : 'Elige el sabor';
     if (_mitades && _segunda == null) return 'Elige la segunda mitad';
+    // Un sabor o un extra ya elegido que se agotó con la ventana abierta (D-69).
+    for (final p in [_primera!, ?_segunda]) {
+      if (!carta.estaDisponible(p)) return '${p.nombre} se agotó: elige otro sabor';
+    }
+    for (final e in _extras) {
+      if (!carta.estaDisponible(e)) return '${e.nombre} se agotó: quítalo';
+    }
     return null;
   }
 
@@ -387,9 +435,17 @@ class ArmadoDePizza extends ChangeNotifier {
 
 /// La venta directa de bebidas (D-38): sin nombre ni preguntas, se entrega en el momento.
 class VentaDeBebidas extends ChangeNotifier {
-  VentaDeBebidas(this.carta);
+  VentaDeBebidas(this.carta) {
+    carta.addListener(notifyListeners);
+  }
 
   final Carta carta;
+
+  @override
+  void dispose() {
+    carta.removeListener(notifyListeners);
+    super.dispose();
+  }
   final _bebidas = _Bebidas();
 
   List<LineaBebida> get lineas => _bebidas.lineas;
@@ -406,6 +462,8 @@ class VentaDeBebidas extends ChangeNotifier {
   /// llevar" y sin observación; el servidor la guarda entregada.
   Map<String, dynamic> aVentaDirecta() {
     if (vacia) throw const VentaInvalida('Elige al menos una bebida.');
+    final agotados = _agotadosEn(carta, const [], _bebidas.lineas);
+    if (agotados.isNotEmpty) throw VentaInvalida(_quitalo(agotados.first));
     return {'ventaDirecta': true, 'lineas': _bebidas.aLineas(), 'totalEsperado': total / 100};
   }
 }
@@ -414,10 +472,18 @@ class VentaDeBebidas extends ChangeNotifier {
 /// pizza, sin hacer otro pedido. Las pizzas, solo mientras cocina no lo terminó; las bebidas,
 /// hasta que se entregue. El servidor vuelve a decidirlo con el estado de ese momento.
 class AgregadoAPedido extends ChangeNotifier {
-  AgregadoAPedido(this.carta, {required this.permitePizzas});
+  AgregadoAPedido(this.carta, {required this.permitePizzas}) {
+    carta.addListener(notifyListeners);
+  }
 
   final Carta carta;
   final bool permitePizzas;
+
+  @override
+  void dispose() {
+    carta.removeListener(notifyListeners);
+    super.dispose();
+  }
 
   List<GrupoPizzas> _grupos = const [];
   final _bebidas = _Bebidas();
@@ -458,6 +524,8 @@ class AgregadoAPedido extends ChangeNotifier {
   /// bolivianos: el servidor lo compara con el suyo.
   Map<String, dynamic> aCuerpo() {
     if (vacio) throw const VentaInvalida('Elige al menos un producto para agregar.');
+    final agotados = _agotadosEn(carta, _grupos, _bebidas.lineas);
+    if (agotados.isNotEmpty) throw VentaInvalida(_quitalo(agotados.first));
     return {
       'lineas': [for (final g in _grupos) g.pizza.aLinea(g.cantidad), ..._bebidas.aLineas()],
       'totalEsperado': total / 100,

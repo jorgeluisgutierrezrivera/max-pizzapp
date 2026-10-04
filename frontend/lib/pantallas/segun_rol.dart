@@ -5,6 +5,7 @@ import '../api/cliente_api.dart';
 import '../api/usuario.dart';
 import '../carta/producto.dart';
 import '../pedidos/pedido.dart';
+import 'panel_de_carta.dart';
 import 'pantalla_cargando.dart';
 import 'pantalla_cocina.dart';
 import 'pantalla_encendida.dart';
@@ -36,6 +37,7 @@ class PantallaSegunRol extends StatefulWidget {
     this.cambiarEstado = _sinApi,
     this.cancelarPedido = _sinApi,
     this.agregarAlPedido = _sinApi,
+    this.marcarDisponibilidad = sinMarcarDisponibilidad,
     this.crearCanal = _sinCanal,
     this.timbre,
     this.red = const RedSiempreEnLinea(),
@@ -57,6 +59,9 @@ class PantallaSegunRol extends StatefulWidget {
   final Future<Pedido> Function(Pedido pedido, EstadoPedido hacia) cambiarEstado;
   final Future<Pedido> Function(Pedido pedido, String motivo) cancelarPedido;
   final Future<Pedido> Function(Pedido pedido, Map<String, dynamic> cuerpo) agregarAlPedido;
+
+  /// PATCH /api/v1/productos/:id/disponibilidad (RF-13): lo usan los dos roles.
+  final MarcarDisponibilidad marcarDisponibilidad;
   final CanalEnVivo Function() crearCanal;
   final Timbre? timbre;
   final Red red;
@@ -124,6 +129,7 @@ class _PantallaSegunRolState extends State<PantallaSegunRol> {
             cambiarEstado: widget.cambiarEstado,
             cancelarPedido: widget.cancelarPedido,
             agregarAlPedido: widget.agregarAlPedido,
+            marcarDisponibilidad: widget.marcarDisponibilidad,
             crearCanal: widget.crearCanal,
             timbre: widget.timbre,
             red: widget.red,
@@ -134,6 +140,8 @@ class _PantallaSegunRolState extends State<PantallaSegunRol> {
             alCerrarSesion: widget.alCerrarSesion,
             cargarCola: widget.cargarCola,
             cambiarEstado: widget.cambiarEstado,
+            cargarCarta: widget.cargarCarta,
+            marcarDisponibilidad: widget.marcarDisponibilidad,
             crearCanal: widget.crearCanal,
             timbre: widget.timbre ?? TimbreMudo(),
             red: widget.red,

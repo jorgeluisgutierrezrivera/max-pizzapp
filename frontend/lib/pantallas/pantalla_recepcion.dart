@@ -15,6 +15,7 @@ import 'aviso_sin_conexion.dart';
 import 'aviso_sin_sonido.dart';
 import 'boton_de_sonido.dart';
 import 'esqueleto_rol.dart';
+import 'panel_de_carta.dart';
 import 'pedidos_de_recepcion.dart';
 import 'red.dart';
 import 'timbre.dart';
@@ -55,6 +56,11 @@ void ponerTituloDeLaPestana(int listos) {
 /// (D-45): también en *Nueva venta*, porque sin canal no llega el aviso de pedido listo.
 /// *Recargar* vuelve a leer los pedidos, no la carta: recargar la carta reiniciaría la venta
 /// que se está armando.
+///
+/// La carta se mantiene al día sin reiniciar la venta (RF-13, D-67): el botón *Carta* de la
+/// barra marca lo que se agotó; el aviso en vivo apaga o repone el producto en la misma
+/// carta, y si lo marcó cocina, un aviso lo dice; y al volver el canal después de un corte,
+/// se relee solo la disponibilidad.
 class PantallaRecepcion extends StatefulWidget {
   const PantallaRecepcion({
     super.key,
@@ -67,6 +73,7 @@ class PantallaRecepcion extends StatefulWidget {
     this.cambiarEstado = _sinApi,
     this.cancelarPedido = _sinApi,
     this.agregarAlPedido = _sinApi,
+    this.marcarDisponibilidad = sinMarcarDisponibilidad,
     this.crearCanal = _sinCanal,
     this.timbre,
     this.red = const RedSiempreEnLinea(),
@@ -95,6 +102,9 @@ class PantallaRecepcion extends StatefulWidget {
 
   /// POST /api/v1/pedidos/:id/lineas.
   final Future<Pedido> Function(Pedido pedido, Map<String, dynamic> cuerpo) agregarAlPedido;
+
+  /// PATCH /api/v1/productos/:id/disponibilidad (RF-13).
+  final MarcarDisponibilidad marcarDisponibilidad;
   final CanalEnVivo Function() crearCanal;
   final Timbre? timbre;
   final Red red;
@@ -121,6 +131,9 @@ class _PantallaRecepcionState extends State<PantallaRecepcion> with SingleTicker
   late final VigiaDelCanal _vigia;
   late final Timbre _timbre = widget.timbre ?? TimbreMudo();
   StreamSubscription<Pedido>? _listos;
+  StreamSubscription<Map<String, dynamic>>? _disponibilidades;
+  StreamSubscription<bool>? _conexion;
+  bool _seCorto = false;
   int _listosEnElTitulo = 0;
 
   @override
@@ -132,12 +145,16 @@ class _PantallaRecepcionState extends State<PantallaRecepcion> with SingleTicker
     _pedidos.addListener(_alCambiarPedidos);
     // Antes de iniciar, que es cuando se conecta el canal: así no se pierde el primer "conectado".
     _vigia = VigiaDelCanal(conexion: _pedidos.canal.conexion, conectado: _pedidos.canal.conectado, red: widget.red);
+    _disponibilidades = _pedidos.canal.disponibilidades.listen(_alCambiarDisponibilidad);
+    _conexion = _pedidos.canal.conexion.listen(_alCambiarConexion);
     _pedidos.iniciar();
   }
 
   @override
   void dispose() {
     _listos?.cancel();
+    _disponibilidades?.cancel();
+    _conexion?.cancel();
     _vigia.dispose();
     _pedidos.removeListener(_alCambiarPedidos);
     _pedidos.dispose();
@@ -166,6 +183,46 @@ class _PantallaRecepcionState extends State<PantallaRecepcion> with SingleTicker
     }
     if (mounted) setState(() {});
   }
+
+  /// Un producto se agotó o se repuso (D-67): cambia en la misma carta, sin reiniciar la venta.
+  /// Si lo marcó cocina, un aviso lo dice; va en fila detrás del que se esté mostrando, para
+  /// no tapar un pedido listo. Si el cambio ya estaba (lo marcó esta pantalla), no se avisa.
+  void _alCambiarDisponibilidad(Map<String, dynamic> aviso) {
+    final id = aviso['id'];
+    final disponible = aviso['disponible'];
+    if (id is! int || disponible is! bool) return;
+    final cambio = _cartaCargada?.marcarDisponibilidad(id, disponible) ?? false;
+    if (!cambio || aviso['por'] != 'cocina' || !mounted) return;
+    final nombre = aviso['nombre'] is String ? aviso['nombre'] as String : 'un producto';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        key: const Key('aviso-disponibilidad'),
+        behavior: SnackBarBehavior.floating,
+        width: MediaQuery.sizeOf(context).width >= anchoConPanelLateral ? 560 : null,
+        duration: const Duration(seconds: 6),
+        content: Text(
+          disponible ? 'Cocina volvió a ofrecer: $nombre' : 'Cocina marcó agotado: $nombre',
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
+    );
+  }
+
+  /// Al volver el canal después de un corte, pudo perderse un aviso: se relee la carta y se
+  /// aplica solo su disponibilidad, sin reiniciar la venta.
+  void _alCambiarConexion(bool conectado) {
+    if (!conectado) {
+      _seCorto = true;
+      return;
+    }
+    if (!_seCorto) return;
+    _seCorto = false;
+    final carta = _cartaCargada;
+    if (carta == null) return;
+    widget.cargarCarta().then(carta.aplicarDisponibilidadDe, onError: (_) {});
+  }
+
+  void _abrirCarta() => mostrarPanelDeCarta(context, carta: _carta, marcar: widget.marcarDisponibilidad);
 
   /// Cocina marcó un pedido listo: suena, y un aviso lo dice con un botón para ir a verlo.
   void _alQuedarListo(Pedido pedido) {
@@ -225,6 +282,14 @@ class _PantallaRecepcionState extends State<PantallaRecepcion> with SingleTicker
       _avisar(pedido);
     } catch (error) {
       if (!mounted) return;
+      // Un producto se agotó y esta pantalla no se había enterado: la carta lo marca, y la
+      // línea queda señalada.
+      if (error is ErrorApi && error.codigo == 'PRODUCTO_NO_DISPONIBLE') {
+        final producto = error.datos['producto'];
+        if (producto is Map && producto['id'] is int) {
+          _cartaCargada?.marcarDisponibilidad(producto['id'] as int, false);
+        }
+      }
       // No se guardó: la venta queda tal cual, para corregirla o volver a enviarla.
       setState(() {
         _enviando = false;
@@ -263,7 +328,7 @@ class _PantallaRecepcionState extends State<PantallaRecepcion> with SingleTicker
       titulo: 'Recepción',
       usuario: widget.usuario,
       alCerrarSesion: widget.alCerrarSesion,
-      acciones: [BotonDeSonido(timbre: _timbre)],
+      acciones: [BotonCarta(alTocar: _abrirCarta), BotonDeSonido(timbre: _timbre)],
       pestanas: TabBar(
         controller: _pestanas,
         isScrollable: !angosta,
