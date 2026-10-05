@@ -133,6 +133,40 @@ Falta **cómo se marca** y **cómo llega en vivo**.
 
 ---
 
+### D-70 · Una categoría entera, con una sola consulta y un solo aviso (revisión del 4-oct)
+
+- **El caso:** se acaba la masa, y ya no se puede hacer ninguna pizza aunque haya toppings.
+  Con D-66, cocina tendría que tocar quince interruptores, y recepción recibiría quince avisos
+  seguidos. La pregunta la hizo el autor el 4-oct, pensando en el local en funcionamiento.
+- **`PATCH /api/v1/productos/disponibilidad`**, con el cuerpo exacto
+  `{ "categoria": "pizza", "disponible": false }`, para los dos roles. Agota o repone **todos**
+  los productos de esa categoría.
+  - **Valida antes de tocar la base:** una categoría que no existe o un cuerpo distinto de esos
+    dos campos responden 400 `DISPONIBILIDAD_INVALIDA`.
+  - **Una sola consulta parametrizada:**
+    `UPDATE … WHERE categoria = $1 AND disponible <> $2 RETURNING id`, que cambia solo lo que
+    hacía falta.
+  - Responde 200 con la categoría, el valor y los productos que cambiaron.
+- **Un solo aviso, `categoria:disponibilidad`**, con
+  `{ categoria, disponible, ids, por, fechaHora }`, a las dos salas. Sale solo si cambió algo.
+  Recepción ve un aviso: *"Cocina marcó agotadas todas las pizzas"*.
+- **No es control de inventario:** el sistema no cuenta cuántas pizzas rinde la masa ni se
+  agota solo. Eso sigue fuera de alcance (Tabla 9) y queda para las recomendaciones del
+  Capítulo 3.
+- **Se descartó** que la app mande quince `PATCH` seguidos: no es atómico, porque una falla a
+  mitad deja la carta a medias, y serían quince avisos.
+
+### D-71 · El botón *Agotar todas* del panel, y la venta sin pizzas (revisión del 4-oct)
+
+- **En el panel *Carta*, al lado del título de cada categoría:** *Agotar todas* mientras quede
+  alguna disponible, y *Reponer todas* cuando están todas agotadas.
+  - **Este sí pide confirmación** (*"¿Agotar todas las pizzas?"*), porque cambia toda una parte
+    de la carta. El interruptor de un producto sigue sin pedirla (D-68).
+  - Mientras se guarda, los interruptores de esa categoría esperan.
+- **En la venta de recepción, si no queda ninguna pizza disponible:** una banda clara, *"No
+  quedan pizzas. Solo se venden bebidas, con «Vender bebidas»."*, y *Agregar pizza* apagado.
+  La vendedora no tiene que descubrirlo tocando.
+
 ## 4. Fases y checklist
 
 Cada fase se prueba y se sube por separado.
@@ -165,21 +199,37 @@ Cada fase se prueba y se sube por separado.
   - al reconectar, la carta se vuelve a leer;
   - el panel a 1366 × 768 y a 768 × 1024 (RNF-04).
 - [x] En local: dos navegadores, cocina marca y recepción lo ve apagado al instante.
-- [ ] La instalación local en un paso sigue en verde en la integración continua.
+- [x] La instalación local en un paso sigue en verde en la integración continua (corridas de `5ac2269`, `108279a` y `39462a7`: *Pruebas* e *Instalacion*, las seis en verde).
 
 ### Fase C — En producción
-- [ ] El autor despliega la API (`git pull` y `up -d --build`). **No hay migración.**
-- [ ] La app web publicada (`scripts/publicar-web.sh`).
-- [ ] El APK 0.2.0 compilado y firmado; el autor crea el *Release* `apk-cocina-0.2.0`.
-- [ ] Las sondas contra producción, con un producto **ficticio** (una bebida), fuera del
+- [x] El autor despliega la API (`git pull` y `up -d --build`). **No hay migración.**
+- [x] La app web publicada (`scripts/publicar-web.sh`).
+- [x] El APK 0.2.0 compilado y firmado; el autor crea el *Release* `apk-cocina-0.2.0`.
+- [x] Las sondas contra producción, con un producto **ficticio** (una bebida), fuera del
       horario de atención (antes de las 18:00), y dejándolo como estaba:
   - marcar y reponer con cada cuenta;
   - 401, 403, 400 y 404;
   - la propagación hasta la otra pantalla, **30 mediciones** (como el RNF-01).
 
+### Fase B2 — Una categoría entera (revisión del 4-oct)
+- [x] La ruta `PATCH /productos/disponibilidad` y el aviso `categoria:disponibilidad`, con sus
+      pruebas (`npm test`) y el contrato OpenAPI.
+- [x] En la app: el botón con confirmación en el panel, el aviso en recepción y la banda de la
+      venta sin pizzas, con sus pruebas (`flutter test`).
+- [x] La sonda (`probar_disponibilidad.py`) agota y repone **los extras**, que son ficticios, y
+      deja cada uno como estaba.
+- [x] En local, de punta a punta.
+
+### Fase C2 — En producción otra vez
+- [ ] El autor actualiza la API; yo publico la web.
+- [ ] El APK 0.3.0, firmado; el autor crea el *Release* `apk-cocina-0.3.0`.
+- [ ] Las sondas contra producción.
+
 ### Fase D — La prueba del autor y el cierre
 - [ ] El autor, con recepción en la computadora y cocina en el APK:
   - cocina marca una pizza agotada y recepción la ve apagada al instante, con el aviso;
+  - cocina agota todas las pizzas: un solo aviso y la banda *"No quedan pizzas"* en la venta;
+    después las repone;
   - recepción no puede venderla;
   - un pedido que ya la llevaba sigue igual;
   - cocina la repone y vuelve a ofrecerse;
@@ -264,7 +314,9 @@ Cada fase se prueba y se sube por separado.
 |---|---|---|---|
 | A — La API | ✅ Verificada | 2026-10-04 | **La ruta** `PATCH /productos/:id/disponibilidad` en `rutas/productos.js`: los dos roles; `leerId` (400 `ID_INVALIDO`) y `leerDisponibilidad` (exactamente `{ disponible: boolean }`, si no 400 `DISPONIBILIDAD_INVALIDA`), los dos antes de tocar la base. Una sola consulta (`WITH anterior … FOR UPDATE` y `UPDATE … RETURNING`) devuelve el producto y cómo estaba; 404 `PRODUCTO_NO_ENCONTRADO`; avisa solo si cambió, después de responder. **El aviso** `disponibilidadCambiada` en `tiempo-real.js` emite `producto:disponibilidad` a las dos salas con `{ id, nombre, categoria, disponible, por, fechaHora }`; está en `SIN_AVISOS` y en los avisos de `servidor.js`. El `avisar` de los pedidos pasó a `tiempo-real.js` y lo usan las dos rutas. **`npm test`: 312 de 312** (las 288 de antes y 24 nuevas): sin token 401 y sin rol 403, sin tocar la base; 200 con cada rol, con el producto y el aviso que dice quién lo marcó; una sola consulta, parametrizada (`[7, false]`), que no nombra ningún pedido (CA-13.2); reponer avisa; marcar lo mismo dos veces avisa una sola; 404 sin aviso; seis números inválidos; siete cuerpos inválidos (vacío, texto, nulo, número, un campo de más, solo otro campo, una lista); un cuerpo que no es JSON; y un booleano suelto, que rechaza el lector de JSON con `JSON_INVALIDO`. En `tiempo-real.test.js`: el aviso llega a las dos salas con su contenido y llega por los avisos de la API. **El contrato:** `contrato.test.js` falló hasta sumar la ruta a `openapi.yaml` (con `IdProducto`, `CambioDeDisponibilidad` y el evento en la descripción del canal), y después pasó. **Contra la API local, con la base y el Keycloak reales:** `probar_disponibilidad.py` dio TODO CORRECTO. Recepción vendió una pizza y la Gaseosa 2 L; cocina la marcó agotada; marcarla de nuevo respondió 200 sin cambios; el pedido siguió con sus 2 líneas, Bs 68 y *pendiente* (**CA-13.2**); una venta nueva con la bebida recibió 409 `PRODUCTO_NO_DISPONIBLE` con su id (**CA-13.1**); recepción la repuso; 401, 404, 400 por el número y 400 por un campo de más, con el precio sin cambios. La bebida quedó disponible, como estaba, y el pedido de prueba, cancelado. `probar_errores.py`: **20 de 20**, con los cuatro casos nuevos. `medir_aviso.py` con la cuarta medición (cocina marca la bebida, alternando agotada y disponible, hasta el aviso en recepción), 4 repeticiones en local: mediana de 12 ms y máximo de 13 ms. El reporte versionado de producción se restauró sin cambios: se rehace en la fase C. `correr_sondas.py` suma `sonda-disponibilidad.txt` |
 | B — La app | ✅ Verificada | 2026-10-04 | **La carta cambia en el lugar.** `Carta` pasa a avisar sus cambios (`ChangeNotifier`), con `marcarDisponibilidad`, `aplicarDisponibilidadDe`, `estaDisponible` y `porId`; `Producto.conDisponible`. Hacía falta: la venta en curso está atada a la carta, y reemplazarla la reiniciaba. La venta, la pizza a medio armar, la venta directa y lo que se agrega a un pedido escuchan a la carta y dejan de escucharla al cerrarse. Lo que se agotó mientras se armaba se lista (`agotados`); la línea de la pizza se marca *"Agotado: quítala o corrígela"*, la de la bebida ya mostraba *Agotada*, y *Confirmar* dice *"X se agotó: quítalo de la venta."* (D-69). **El canal:** `disponibilidades`, con el evento `producto:disponibilidad`. **El panel *Carta*** (`panel_de_carta.dart`): una ventana desde 600 px y una hoja desde abajo más angosto; por categoría; interruptor con *Disponible* o *Agotado* escrito; *Guardando…* mientras viaja; el mensaje si falla. **Recepción:** el botón en la barra; el aviso apaga el producto sin reiniciar la venta, y si lo marcó cocina, aparece *"Cocina marcó agotado: X"*, en fila detrás del aviso que haya; al volver el canal después de un corte se relee solo la disponibilidad; un 409 `PRODUCTO_NO_DISPONIBLE` marca el producto en la carta. **Cocina:** el botón en la barra (en la web y en el APK); la carta se lee al abrir el panel por primera vez y se mantiene al día con el aviso y al reconectar. **Lo que encontraron las pruebas:** (1) las de recepción compartían una carta global y, con la carta que cambia en el lugar, la prueba del 409 pasaba lo agotado a las siguientes: ahora cada prueba recibe una carta nueva. (2) A 1100 y a 1400 px, el botón nuevo dejaba sin lugar a las pestañas de recepción en la barra: las pestañas suben a la barra desde **1200 px** (antes, 1100), y el botón lleva texto solo desde 1700 px en recepción y desde 600 px en cocina, que no tiene pestañas. (3) En cocina, si la carta no cargaba, el manejador del error de `Future.then` devolvía un tipo inválido y lanzaba una excepción en vez de permitir reintentar: corregido (`then<void>`). **`flutter test`: 322 de 322** (las 289 de antes y 33 nuevas): 15 del modelo (la carta en el lugar, la venta, la pizza a medio armar, la venta directa y lo agregado con un producto que se agota), 10 de recepción (el aviso de cocina sin reiniciar la venta; la reposición; sin aviso si lo marcó recepción; la venta en curso con la bebida y con la pizza agotadas; la relectura al reconectar; el panel desde la barra; el 409; el panel a 1366 × 768 y a 768 × 1024, RNF-04), 7 de cocina (marcar y reponer, *Guardando…*, el error, el aviso de otra pantalla, la lectura y el reintento, y el panel a 360 × 780 como hoja y a 768 × 1024) y 1 del canal. `flutter analyze`, sin avisos. **En local, con la instalación en un paso reconstruida** (la app compilada en Docker, 134 s con caché) contra la API de la fase A: cocina abrió el panel, marcó *Carnívora* (pasó por *Guardando…* y quedó *Agotado*), y la API la devolvió agotada. Recepción la repuso por la API, y **el interruptor del panel de cocina, abierto, volvió solo a *Disponible***. Con recepción en la venta, cocina marcó la *Gaseosa 2 L* por la API: **la venta la mostró *Agotada* y apagada, sin recargar**. Al reponerla, volvió con su precio y apareció *"Cocina volvió a ofrecer: Gaseosa 2 L"*. El README y el BRIEF ya no dicen *previsto* |
-| C — En producción | ⏳ | | |
+| C — En producción | ✅ Verificada | 2026-10-04 | **4-oct, desde las 18:40, dentro del horario: ese día el local no atendía** (revisión del plan). **La API:** el autor trajo el código y reconstruyó solo la API (`up -d --build backend`), sin migración. La API arrancó sana (*"limite: 600 peticiones por minuto por IP"*) y la base, Keycloak y Caddy siguieron arriba sin recrearse. Desde afuera, `PATCH /productos/1/disponibilidad` sin token responde **401** (antes, 404) y la salud, 200. **La web:** `publicar-web.sh`, versión `20261004-185714` (129,9 s de compilación); el `main.dart.js` de producción trae el panel y el evento. **El APK 0.2.0+2:** `compilar-apk.sh`, 52 MB en 339 s, firmado con la misma llave que el 0.1.0 (certificado `3c:32:be:ac…ba:06:b0:1a`), SHA-256 `119cc9ab213c8b44db04764d7a520d0992505ad739eb979bd3b8e1281b97add3`. **Las sondas contra producción** (`correr_sondas.py`, 19:08 a 19:11): las **seis**, TODO CORRECTO (acceso, salud, carta, pedidos, errores y disponibilidad). `sonda-disponibilidad.txt`: con la *Gaseosa 2 L* (id 17), recepción vendió una pizza y la bebida; cocina la marcó agotada; marcarla de nuevo, 200 sin cambios; el pedido siguió con 2 líneas, Bs 68 y *pendiente* (**CA-13.2**); una venta nueva, 409 `PRODUCTO_NO_DISPONIBLE` (**CA-13.1**); recepción la repuso; 401, 404, 400 y 400 con el precio intacto. Quedó disponible y el pedido 414, cancelado. `sonda-errores.txt`: 20 de 20. **La propagación, 30 repeticiones** (`tiempo-real.txt`, 23:11 UTC, por WebSocket): pedido nuevo a cocina, máximo 167 ms; cambio de estado a recepción, 165 ms; lo agregado a cocina, 164 ms; **la disponibilidad a recepción, mediana de 159 ms, p95 de 162 ms y máximo de 164 ms**, todo bajo 2 s. Se cerraron los 30 pedidos de la medición y la bebida quedó como estaba. **El *Release*:** el autor publicó `apk-cocina-0.2.0` desde la web de GitHub, sobre `39462a7` y marcado *Latest*. Verificado en la API pública: el archivo `max-pizzapp-cocina.apk` pesa 54 464 911 bytes, igual que el compilado, y su `digest` es la misma SHA-256. El enlace de Moodle (`…/releases/latest/download/max-pizzapp-cocina.apk`) redirige a la 0.2.0 |
+| B2 — Una categoría entera | ✅ Verificada | 2026-10-04 | **La API:** `PATCH /productos/disponibilidad`, para los dos roles, con el cuerpo exacto `{ categoria, disponible }` (si no, 400 `DISPONIBILIDAD_INVALIDA`). Una sola consulta (`UPDATE … WHERE categoria = $1 AND disponible <> $2 RETURNING id`) responde con los que cambiaron, y solo entonces sale **un** aviso, `categoria:disponibilidad`, a las dos salas. **`npm test`: 327 de 327** (15 nuevas: 401, 403, 200 con cada rol con un solo aviso y una sola consulta parametrizada que no nombra pedidos, reponer, nada que cambiar sin aviso, siete cuerpos inválidos, el evento a las dos salas y por los avisos de la API); el contrato OpenAPI con la ruta y `CambioDeCategoria`. **La app:** `Carta.marcarCategoria` y `sinPizzas`; el canal, `disponibilidadesDeCategoria`; en el panel, *Agotar todas* o *Reponer todas* (*todos* en los extras) al lado de cada categoría, con confirmación, y la categoría espera mientras guarda; en recepción, un solo aviso (*"Cocina marcó agotadas todas las pizzas"*); en la venta, la banda *"No quedan pizzas. Solo se venden bebidas, con «Vender bebidas»."* y *Agregar pizza* apagado. **`flutter test`: 336 de 336** (14 nuevas: el modelo, el botón con confirmación y su cancelación, el error, el aviso de otra pantalla, la banda y su retiro, el panel de recepción y la banda a 1366 × 768 y a 768 × 1024); `flutter analyze` sin avisos. **Contra la base y el Keycloak locales:** `probar_disponibilidad.py`, TODO CORRECTO con la sección nueva. Cocina agotó los extras (cambiaron los 4); las pizzas y las bebidas no se tocaron; una venta con un extra agotado recibió 409; agotarlos de nuevo cambió 0; recepción los repuso; una categoría inexistente, 400; sin token, 401. Cada extra quedó como estaba. `probar_errores.py`: **21 de 21**. **En pantalla, con la app reconstruida, a ancho de celular:** cocina agotó las pizzas por la API (cambiaron 15) y la venta de recepción mostró la banda, *Agregar pizza* apagado, las bebidas a la venta y **un solo aviso**. Después se repusieron las 15 |
+| C2 — En producción otra vez | ⏳ | | |
 | D — La prueba del autor | ⏳ | | |
 
 ---
@@ -276,6 +328,8 @@ Cada fase se prueba y se sube por separado.
 | 2026-10-04 | Versión inicial propuesta | El negocio va a probar el sistema en el local y necesita controlar lo que no hay. La tarjeta 13 espera la prueba de la encargada (miércoles 7), y esta se jala mientras tanto (como en D-23) |
 | 2026-10-04 | **Aprobado** por el autor, sin cambios | Decisiones D-66 a D-69 registradas en la bitácora |
 | 2026-10-04 | Fase B: la `Carta` avisa sus cambios y se actualiza en el lugar; las pestañas de recepción suben a la barra desde 1200 px (antes, 1100); el botón *Carta* lleva texto desde 1700 px en recepción y desde 600 px en cocina | La venta en curso está atada a la carta, y reemplazarla la reiniciaba. Con el botón nuevo, a 1100 y a 1400 px las pestañas de recepción no entraban en la barra (lo encontraron las pruebas de anchos) |
+| 2026-10-04 | Fase C: en producción el **4-oct desde las 18:40**, dentro del horario del local, y el APK sube a **0.2.0+2** | El autor confirmó que ese día el local no atendía. Es el mismo criterio que D-61: la regla protege el servicio, no el reloj, y la hora real queda en los reportes |
+| 2026-10-04 | **Revisión aprobada por el autor:** agotar o reponer una categoría entera (D-70) y la venta sin pizzas (D-71), en las fases B2 y C2, antes de su prueba. Límite: unas 4 horas; si no alcanza, queda como recomendación | El autor preguntó qué pasa si se acaba la masa: con lo de la fase B eran quince interruptores y quince avisos. Lo aprobó con "lo comencemos ahorita" y fijó tener todo listo el jueves 8, con la defensa el lunes 12 |
 
 ---
 

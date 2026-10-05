@@ -1,5 +1,5 @@
 Max Pizzapp - reporte de la sonda errores
-Fecha:    2026-10-02T15:27:44+00:00 (duro 13.3 s)
+Fecha:    2026-10-04T23:10:34+00:00 (duro 14.6 s)
 API:      https://maxpizzapp.tech/api/v1
 Keycloak: https://auth.maxpizzapp.tech
 Comando:  python pruebas/api/probar_errores.py   (todas: python pruebas/correr_sondas.py)
@@ -26,7 +26,11 @@ Keycloak: https://auth.maxpizzapp.tech
 | 400 MOTIVO_INVALIDO | Cancelar sin motivo | `POST /pedidos/1/cancelacion` | 400 MOTIVO_INVALIDO | OK |
 | 413 CUERPO_DEMASIADO_GRANDE | Cuerpo de 150 KB, sin token | `POST /pedidos` | 413 CUERPO_DEMASIADO_GRANDE | OK |
 | 415 FORMATO_NO_SOPORTADO | Cuerpo con otro juego de caracteres, sin token | `POST /pedidos` | 415 FORMATO_NO_SOPORTADO | OK |
+| 401 TOKEN_AUSENTE | Marcar un producto agotado sin token | `PATCH /productos/1/disponibilidad` | 401 TOKEN_AUSENTE | OK |
+| 400 ID_INVALIDO | Numero de producto que no es valido | `PATCH /productos/abc/disponibilidad` | 400 ID_INVALIDO | OK |
+| 400 DISPONIBILIDAD_INVALIDA | Marcar con un campo de mas (el precio) | `PATCH /productos/1/disponibilidad` | 400 DISPONIBILIDAD_INVALIDA | OK |
+| 404 PRODUCTO_NO_ENCONTRADO | Marcar un producto que no existe | `PATCH /productos/2147483647/disponibilidad` | 404 PRODUCTO_NO_ENCONTRADO | OK |
 | sin token | Acceso con la contrasena equivocada (CA-01.2) | Keycloak, recepcion.demo | el acceso no se completo: credenciales rechazadas | OK |
 
-16 de 16 como se esperaba
+20 de 20 como se esperaba
 TODO CORRECTO

@@ -1,5 +1,5 @@
-Max Pizzapp - reporte de la propagacion del aviso en vivo (RNF-01)
-Fecha:    2026-10-03T00:03:57+00:00 (duro 46.3 s)
+Max Pizzapp - reporte de la propagacion del aviso en vivo (RNF-01 y CA-13.1)
+Fecha:    2026-10-04T23:11:05+00:00 (duro 36.5 s)
 API:      https://maxpizzapp.tech/api/v1
 Keycloak: https://auth.maxpizzapp.tech
 Comando:  python pruebas/tiempo-real/medir_aviso.py   (las mediciones: medir-aviso.js, con socket.io-client)
@@ -9,9 +9,10 @@ Cuentas de prueba reales por PKCE; la contrasena y los tokens no se imprimen.
 Resultado: TODO BAJO 2 s
 ------------------------------------------------------------------------------
 Canal: https://maxpizzapp.tech · transporte websocket
-Del envio al aviso: la venta en cocina, el cambio de estado en recepcion y lo agregado en cocina:
-  pedido nuevo -> cocina         30 mediciones · minimo 233 ms · mediana 236 ms · p95 290 ms · maximo 303 ms
-  cambio de estado -> recepcion  30 mediciones · minimo 227 ms · mediana 231 ms · p95 258 ms · maximo 262 ms
-  lo agregado -> cocina          30 mediciones · minimo 230 ms · mediana 239 ms · p95 247 ms · maximo 705 ms
-Pedidos de la medicion cerrados: 30
+Del envio al aviso: la venta en cocina, el cambio de estado en recepcion, lo agregado en cocina y la disponibilidad en recepcion:
+  pedido nuevo -> cocina         30 mediciones · minimo 162 ms · mediana 164 ms · p95 167 ms · maximo 167 ms
+  cambio de estado -> recepcion  30 mediciones · minimo 155 ms · mediana 159 ms · p95 161 ms · maximo 165 ms
+  lo agregado -> cocina          30 mediciones · minimo 157 ms · mediana 159 ms · p95 163 ms · maximo 164 ms
+  disponibilidad -> recepcion    30 mediciones · minimo 158 ms · mediana 159 ms · p95 162 ms · maximo 164 ms
+Pedidos de la medicion cerrados: 30 · Gaseosa 2 L, como estaba al empezar
 TODO BAJO 2000 ms
