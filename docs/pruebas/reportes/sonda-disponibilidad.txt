@@ -1,5 +1,5 @@
 Max Pizzapp - reporte de la sonda disponibilidad
-Fecha:    2026-10-04T23:10:48+00:00 (duro 12.8 s)
+Fecha:    2026-10-05T02:14:48+00:00 (duro 19.1 s)
 API:      https://maxpizzapp.tech/api/v1
 Keycloak: https://auth.maxpizzapp.tech
 Comando:  python pruebas/api/probar_disponibilidad.py   (todas: python pruebas/correr_sondas.py)
@@ -22,13 +22,24 @@ Producto de la prueba: Gaseosa 2 L (id 17), disponible al empezar.
   OK  recepcion la repone                                        (200, True)
   OK    la carta la vuelve a ofrecer                             True
 
+--- una categoria entera: los extras (D-70) ---
+  OK  cocina agota todos los extras: los que estaban disponibles (200, [19, 20, 21, 22])
+  OK    la carta los muestra todos agotados                      True
+  OK    las pizzas y las bebidas no se tocaron                   (True, True)
+  OK  una venta con un extra agotado: 409                        (409, 'PRODUCTO_NO_DISPONIBLE')
+  OK  agotarlos otra vez: 200, nada que cambiar                  (200, [])
+  OK  recepcion los repone todos                                 (200, 4)
+  OK  una categoria que no existe: 400                           (400, 'DISPONIBILIDAD_INVALIDA')
+  OK  sin token: 401                                             (401, 'TOKEN_AUSENTE')
+
 --- los errores ---
   OK  sin token: 401                                             (401, 'TOKEN_AUSENTE')
   OK  un producto que no existe: 404                             (404, 'PRODUCTO_NO_ENCONTRADO')
   OK  un numero de producto invalido: 400                        (400, 'ID_INVALIDO')
   OK  un campo de mas (el precio): 400                           (400, 'DISPONIBILIDAD_INVALIDA')
   OK    y la bebida sigue disponible, con su precio              (True, 18)
+Los extras, como estaban: si.
 
-Al terminar: Gaseosa 2 L quedo disponible, como estaba; el pedido de prueba 414, cancelado.
+Al terminar: Gaseosa 2 L quedo disponible, como estaba; el pedido de prueba 480, cancelado.
 
 TODO CORRECTO

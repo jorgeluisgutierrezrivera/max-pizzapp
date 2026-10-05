@@ -1,5 +1,5 @@
 Max Pizzapp - reporte de la sonda pedidos
-Fecha:    2026-10-04T23:09:06+00:00 (duro 87.2 s)
+Fecha:    2026-10-05T02:13:06+00:00 (duro 87.1 s)
 API:      https://maxpizzapp.tech/api/v1
 Keycloak: https://auth.maxpizzapp.tech
 Comando:  python pruebas/api/probar_pedidos.py   (todas: python pruebas/correr_sondas.py)
@@ -17,19 +17,19 @@ Keycloak: https://auth.maxpizzapp.tech
   OK  POST /pedidos con el token de cocina                       403  ROL_SIN_PERMISO
 
 --- la tabla del plan 05, seccion 6, guardada en la base real ---
-  OK  1 Peperoni                                                 (201, 50, 'pendiente')  Pedido 1 (#379)
-  OK  1 mitad Salame, mitad Peperoni                             (201, 47.5, 'pendiente')  Pedido 2 (#380)
-  OK  1 mitad Carnívora, mitad Cuatro quesos                     (201, 57.5, 'pendiente')  Pedido 3 (#381)
-  OK  2 mitad Salame, mitad Peperoni                             (201, 95, 'pendiente')  Pedido 4 (#382)
-  OK  1 Hawaiana con extra queso                                 (201, 58, 'pendiente')  Pedido 5 (#383)
-  OK  3 Choclo, cada una con extra choclo                        (201, 150, 'pendiente')  Pedido 6 (#384)
+  OK  1 Peperoni                                                 (201, 50, 'pendiente')  Pedido 66 (#445)
+  OK  1 mitad Salame, mitad Peperoni                             (201, 47.5, 'pendiente')  Pedido 67 (#446)
+  OK  1 mitad Carnívora, mitad Cuatro quesos                     (201, 57.5, 'pendiente')  Pedido 68 (#447)
+  OK  2 mitad Salame, mitad Peperoni                             (201, 95, 'pendiente')  Pedido 69 (#448)
+  OK  1 Hawaiana con extra queso                                 (201, 58, 'pendiente')  Pedido 70 (#449)
+  OK  3 Choclo, cada una con extra choclo                        (201, 150, 'pendiente')  Pedido 71 (#450)
 
 --- el numero del dia (D-35) ---
-  OK  cada pedido lleva su numero del dia                        True  1 2 3 4 5 6
+  OK  cada pedido lleva su numero del dia                        True  66 67 68 69 70 71
   OK    seguidos, en el orden en que se vendieron                True
 
 --- lo que devuelve un pedido recien creado ---
-  OK  venta mixta de Bs 189                                      (201, 189)  #385
+  OK  venta mixta de Bs 189                                      (201, 189)  #451
   OK    el cliente, con su celular (recepcion lo ve)             {'nombre': 'Ana Prueba', 'celular': '70000001'}
   OK    para llevar y la observacion                             (True, 'sin cebolla')
   OK    tres lineas; el extra no es una de ellas                 3
@@ -44,7 +44,7 @@ Keycloak: https://auth.maxpizzapp.tech
   OK  la API y la base lo aceptan                                (201, '50000001')
 
 --- la venta directa de bebidas (D-38) ---
-  OK  2 gaseosas, sin nombre: nace entregada                     (201, 'entregado', 36)  #388
+  OK  2 gaseosas, sin nombre: nace entregada                     (201, 'entregado', 36)  #454
   OK    sin cliente, sin para llevar y sin numero del dia        (None, None, None)
   OK    queda quien la vendio, en el historial                   [('entregado', False)]
   OK    y no aparece entre los activos                           False
@@ -66,7 +66,7 @@ Keycloak: https://auth.maxpizzapp.tech
   OK  una venta vacia                                            (400, 'VENTA_INVALIDA')
 
 --- el ciclo completo, con los dos roles ---
-  OK  cocina lo empieza                                          (200, 'en_preparacion')  #389
+  OK  cocina lo empieza                                          (200, 'en_preparacion')  #455
   OK  cocina lo marca listo                                      (200, 'listo')
   OK  recepcion lo entrega                                       (200, 'entregado')
   OK    el historial cuenta los cuatro pasos, con quien hizo cada uno [('pendiente', 'recepcion'), ('en_preparacion', 'cocina'), ('listo', 'cocina'), ('entregado', 'recepcion')]
@@ -79,18 +79,18 @@ Keycloak: https://auth.maxpizzapp.tech
   OK  cancelar sin motivo                                        (400, 'MOTIVO_INVALIDO')
 
 --- la baja: cancelar con motivo (D-33) ---
-  OK  recepcion lo cancela                                       (200, 'cancelado')  #390
+  OK  recepcion lo cancela                                       (200, 'cancelado')  #456
   OK    el pedido no se borra: se sigue pudiendo leer            200
   OK    y el motivo queda en el historial                        ('cancelado', 'El cliente se fue')
   OK  cancelarlo de nuevo                                        (409, 'TRANSICION_NO_PERMITIDA')
   OK  uno que cocina ya empezo no se cancela (D-41)              (409, 'TRANSICION_NO_PERMITIDA', 'en_preparacion')
 
 --- la carrera: dos cambios a la vez sobre el mismo pedido ---
-  OK  uno pasa y el otro recibe 409                              [200, 409]  #392
+  OK  uno pasa y el otro recibe 409                              [200, 409]  #458
   OK    y el historial registra un solo "listo"                  1
 
 --- agregar a un pedido ya enviado (D-37) ---
-  OK  una soda a un pedido pendiente                             (200, 68, 2)  #393
+  OK  una soda a un pedido pendiente                             (200, 68, 2)  #459
   OK    la soda queda marcada como agregada; la pizza del principio, no [False, True]
   OK    cocina ve lo agregado, sin el celular                    (2, False)
   OK  cocina no agrega                                           (403, 'ROL_SIN_PERMISO')
@@ -105,7 +105,7 @@ Keycloak: https://auth.maxpizzapp.tech
 
 --- la carrera: muchas ventas a la vez y el numero del dia (D-35) ---
   OK  12 ventas lanzadas a la vez: todas se guardan              12
-  OK    sin repetir ni saltar un numero                          True  15 a 26
+  OK    sin repetir ni saltar un numero                          True  80 a 91
   OK    y el orden de los numeros es el orden de llegada         True
 
 --- la carrera: "Listo" y "Agregar una pizza" a la vez (D-37) ---
