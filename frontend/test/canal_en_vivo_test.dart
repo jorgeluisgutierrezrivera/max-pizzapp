@@ -201,4 +201,11 @@ void main() {
       'fechaHora': '2026-10-04T20:00:00.000Z',
     });
   });
+
+  test('una categoría entera llega por disponibilidadesDeCategoria (D-70)', () async {
+    canal.conectar();
+    final aviso = canal.disponibilidadesDeCategoria.first;
+    socket.emitir('categoria:disponibilidad', {'categoria': 'pizza', 'disponible': false, 'ids': [1, 2], 'por': 'cocina'});
+    expect((await aviso)['ids'], [1, 2]);
+  });
 }

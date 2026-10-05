@@ -23,6 +23,10 @@ abstract class CanalEnVivo {
   /// { id, nombre, categoria, disponible, por, fechaHora }.
   Stream<Map<String, dynamic>> get disponibilidades;
 
+  /// Cada categoría entera que se agotó o se repuso (D-70):
+  /// { categoria, disponible, ids, por, fechaHora }.
+  Stream<Map<String, dynamic>> get disponibilidadesDeCategoria;
+
   /// true al conectarse (también al reconectarse); false al perder la conexión.
   Stream<bool> get conexion;
 
@@ -115,6 +119,7 @@ class CanalSocketIo implements CanalEnVivo {
   final _cambios = StreamController<Map<String, dynamic>>.broadcast();
   final _actualizados = StreamController<Map<String, dynamic>>.broadcast();
   final _disponibilidades = StreamController<Map<String, dynamic>>.broadcast();
+  final _categorias = StreamController<Map<String, dynamic>>.broadcast();
   final _conexion = StreamController<bool>.broadcast();
 
   @override
@@ -125,6 +130,8 @@ class CanalSocketIo implements CanalEnVivo {
   Stream<Map<String, dynamic>> get pedidosActualizados => _actualizados.stream;
   @override
   Stream<Map<String, dynamic>> get disponibilidades => _disponibilidades.stream;
+  @override
+  Stream<Map<String, dynamic>> get disponibilidadesDeCategoria => _categorias.stream;
   @override
   Stream<bool> get conexion => _conexion.stream;
   @override
@@ -158,6 +165,7 @@ class CanalSocketIo implements CanalEnVivo {
     socket.on('pedido:estado', (datos) => _cambios.add(_comoJson(datos)));
     socket.on('pedido:actualizado', (datos) => _actualizados.add(_comoJson(datos)));
     socket.on('producto:disponibilidad', (datos) => _disponibilidades.add(_comoJson(datos)));
+    socket.on('categoria:disponibilidad', (datos) => _categorias.add(_comoJson(datos)));
     socket.connect();
   }
 
@@ -199,6 +207,8 @@ class CanalApagado implements CanalEnVivo {
   Stream<Map<String, dynamic>> get pedidosActualizados => const Stream.empty();
   @override
   Stream<Map<String, dynamic>> get disponibilidades => const Stream.empty();
+  @override
+  Stream<Map<String, dynamic>> get disponibilidadesDeCategoria => const Stream.empty();
   @override
   Stream<bool> get conexion => const Stream.empty();
   @override

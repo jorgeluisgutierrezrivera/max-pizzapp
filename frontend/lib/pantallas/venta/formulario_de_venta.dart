@@ -439,22 +439,44 @@ class _SeccionPizzas extends StatelessWidget {
           alCorregir: () => alCorregir(i),
         ),
     ];
+    // No queda ninguna pizza (D-71): se dice claro y Agregar pizza se apaga.
+    final sinPizzas = formulario.carta.sinPizzas;
     final boton = SizedBox(
       height: denso ? 44 : 52,
       child: OutlinedButton.icon(
         key: const Key('agregar-pizza'),
-        onPressed: alAgregar,
+        onPressed: sinPizzas ? null : alAgregar,
         icon: const Icon(Icons.add),
         label: Text(grupos.isEmpty ? 'Agregar pizza' : 'Agregar otra pizza'),
       ),
     );
     final falta = Text('Un pedido lleva al menos una pizza.', style: TextStyle(color: tema.colorScheme.error));
+    final banda = Container(
+      key: const Key('sin-pizzas'),
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(color: rojoSuave, borderRadius: BorderRadius.circular(10)),
+      child: const Row(
+        children: [
+          Icon(Icons.block, color: rojoLadrillo),
+          SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'No quedan pizzas. Solo se venden bebidas, con «Vender bebidas».',
+              style: TextStyle(color: rojoLadrillo, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ],
+      ),
+    );
 
     if (!llenar) {
       return Seccion(
         titulo: '2 · Pizzas',
         denso: denso,
         hijos: [
+          if (sinPizzas) banda,
           if (grupos.isEmpty && marcar) Padding(padding: const EdgeInsets.only(bottom: 8), child: falta),
           ...lineas,
           boton,
@@ -465,6 +487,7 @@ class _SeccionPizzas extends StatelessWidget {
       titulo: '2 · Pizzas',
       denso: denso,
       hijos: [
+        if (sinPizzas) banda,
         Expanded(
           child: grupos.isEmpty
               ? Center(

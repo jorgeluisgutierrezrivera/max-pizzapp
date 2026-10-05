@@ -36,7 +36,9 @@ info:
     `/socket.io`, autenticado con el mismo token. Emite `pedido:nuevo`,
     `pedido:actualizado` y `pedido:estado` después de confirmar cada cambio en la base, y
     `producto:disponibilidad` cuando un producto se marca agotado o disponible
-    (`{ id, nombre, categoria, disponible, por, fechaHora }`, a los dos roles).
+    (`{ id, nombre, categoria, disponible, por, fechaHora }`, a los dos roles), y
+    `categoria:disponibilidad` cuando se agota o se repone una categoría entera
+    (`{ categoria, disponible, ids, por, fechaHora }`).
 servers:
   - url: https://maxpizzapp.tech/api/v1
     description: Producción
@@ -113,6 +115,39 @@ paths:
                   productos:
                     type: array
                     items: { $ref: '#/components/schemas/Producto' }
+        '400': { $ref: '#/components/responses/PeticionInvalida' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '403': { $ref: '#/components/responses/SinPermiso' }
+        '503': { $ref: '#/components/responses/BaseNoDisponible' }
+
+  /productos/disponibilidad:
+    patch:
+      tags: [Carta]
+      summary: Agotar o reponer una categoría entera
+      description: |
+        Roles: recepcion o cocina (RF-13, D-70). Por ejemplo, cuando se acaba la masa: todas las
+        pizzas a la vez, en una sola consulta. Cambia solo los productos que hacían falta y, si
+        cambió alguno, el canal en vivo avisa `categoria:disponibilidad` una sola vez.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CambioDeCategoria' }
+            example: { categoria: pizza, disponible: false }
+      responses:
+        '200':
+          description: La categoría, el valor y los productos que cambiaron (vacío si ya estaban así).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [categoria, disponible, cambiados]
+                properties:
+                  categoria: { $ref: '#/components/schemas/Categoria' }
+                  disponible: { type: boolean }
+                  cambiados:
+                    type: array
+                    items: { type: integer }
         '400': { $ref: '#/components/responses/PeticionInvalida' }
         '401': { $ref: '#/components/responses/NoAutenticado' }
         '403': { $ref: '#/components/responses/SinPermiso' }
@@ -596,6 +631,14 @@ components:
           minimum: 1
           maximum: 100000
           description: Cuántas líneas tenía el pedido en la pantalla de quien toca el botón.
+
+    CambioDeCategoria:
+      type: object
+      required: [categoria, disponible]
+      additionalProperties: false
+      properties:
+        categoria: { $ref: '#/components/schemas/Categoria' }
+        disponible: { type: boolean, description: 'false: agota toda la categoría; true: la repone.' }
 
     CambioDeDisponibilidad:
       type: object

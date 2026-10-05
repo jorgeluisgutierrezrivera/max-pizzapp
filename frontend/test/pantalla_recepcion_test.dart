@@ -24,6 +24,9 @@ class CanalConectado implements CanalEnVivo {
   /// Los avisos de disponibilidad (RF-13) que la prueba hace llegar.
   final disponibles = StreamController<Map<String, dynamic>>.broadcast();
 
+  /// Los avisos de una categoría entera (D-70).
+  final categorias = StreamController<Map<String, dynamic>>.broadcast();
+
   /// La conexión, para simular un corte y la vuelta.
   final estados = StreamController<bool>.broadcast();
   @override
@@ -34,6 +37,8 @@ class CanalConectado implements CanalEnVivo {
   Stream<Map<String, dynamic>> get pedidosActualizados => const Stream.empty();
   @override
   Stream<Map<String, dynamic>> get disponibilidades => disponibles.stream;
+  @override
+  Stream<Map<String, dynamic>> get disponibilidadesDeCategoria => categorias.stream;
   @override
   Stream<bool> get conexion => estados.stream;
   @override
@@ -1065,6 +1070,91 @@ void main() {
         await tocarClave(t, 'boton-carta');
         expect(find.byType(PanelDeCarta), findsOneWidget);
         sinDesplazamientoHorizontal(t, 'el panel Carta');
+      });
+    }
+  });
+
+  group('una categoría entera (D-70, D-71)', () {
+    late CanalConectado canal;
+    late List<(Categoria, bool)> marcadas;
+
+    Future<void> abrir(WidgetTester t) async {
+      tamano(t, 1400, 1400);
+      canal = CanalConectado();
+      marcadas = [];
+      final cartaDeLaPrueba = carta;
+      await t.pumpWidget(
+        MaterialApp(
+          theme: temaMaxPizzas(),
+          home: PantallaRecepcion(
+            usuario: usuario,
+            alCerrarSesion: () {},
+            cargarCarta: () async => cartaDeLaPrueba,
+            imagen: (ruta, respaldo, ajuste) => respaldo,
+            enviarPedido: (pedido) async => pedidoGuardado(pedido),
+            marcarCategoria: (categoria, disponible) async => marcadas.add((categoria, disponible)),
+            crearCanal: () => canal,
+          ),
+        ),
+      );
+      await t.pumpAndSettle();
+    }
+
+    Map<String, dynamic> aviso({required bool disponible, String por = 'cocina'}) => {
+      'categoria': 'pizza',
+      'disponible': disponible,
+      'ids': [for (final p in carta.pizzas) p.id],
+      'por': por,
+      'fechaHora': '2026-10-04T20:00:00.000Z',
+    };
+
+    testWidgets('cocina agota todas las pizzas: un solo aviso, la banda y Agregar pizza apagado', (t) async {
+      await abrir(t);
+      canal.categorias.add(aviso(disponible: false));
+      await t.pumpAndSettle();
+      expect(find.text('Cocina marcó agotadas todas las pizzas'), findsOneWidget);
+      expect(find.byKey(const Key('aviso-disponibilidad')), findsNothing, reason: 'no uno por pizza');
+      expect(find.byKey(const Key('sin-pizzas')), findsOneWidget);
+      expect(t.widget<OutlinedButton>(find.byKey(const Key('agregar-pizza'))).onPressed, isNull);
+      // Las bebidas se siguen vendiendo.
+      expect(t.widget<OutlinedButton>(find.byKey(const Key('vender-bebidas'))).onPressed, isNotNull);
+    });
+
+    testWidgets('al reponerlas, la banda se va y Agregar pizza vuelve', (t) async {
+      await abrir(t);
+      canal.categorias.add(aviso(disponible: false));
+      await t.pumpAndSettle();
+      canal.categorias.add(aviso(disponible: true));
+      await t.pumpAndSettle();
+      expect(find.byKey(const Key('sin-pizzas')), findsNothing);
+      expect(t.widget<OutlinedButton>(find.byKey(const Key('agregar-pizza'))).onPressed, isNotNull);
+    });
+
+    testWidgets('desde el panel de recepción también se agotan todas, con confirmación', (t) async {
+      await abrir(t);
+      await tocarClave(t, 'boton-carta');
+      await t.tap(find.byKey(const Key('categoria-pizza')));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('confirmar-categoria-si')));
+      await t.pumpAndSettle();
+      expect(marcadas, [(Categoria.pizza, false)]);
+      await t.tap(find.byTooltip('Cerrar'));
+      await t.pumpAndSettle();
+      expect(find.byKey(const Key('sin-pizzas')), findsOneWidget);
+      // El aviso de esta misma marca, que llega después, no repite nada.
+      canal.categorias.add(aviso(disponible: false, por: 'recepcion'));
+      await t.pumpAndSettle();
+      expect(find.byKey(const Key('aviso-categoria')), findsNothing);
+    });
+
+    for (final (ancho, alto) in tamanosDelRnf04) {
+      testWidgets('RNF-04: la banda sin pizzas a ${ancho.toInt()} × ${alto.toInt()}', (t) async {
+        await abrir(t);
+        tamano(t, ancho, alto);
+        canal.categorias.add(aviso(disponible: false, por: 'recepcion'));
+        await t.pumpAndSettle();
+        expect(find.byKey(const Key('sin-pizzas')), findsOneWidget);
+        sinDesplazamientoHorizontal(t, 'la venta sin pizzas');
       });
     }
   });

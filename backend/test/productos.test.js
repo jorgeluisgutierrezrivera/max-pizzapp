@@ -343,3 +343,95 @@ test('un booleano suelto como cuerpo: 400 JSON_INVALIDO, lo rechaza el lector de
   assert.equal(cuerpo.error.codigo, 'JSON_INVALIDO');
   assert.equal(consultas.length, 0);
 }));
+
+// --- PATCH /productos/disponibilidad: una categoria entera (D-70) -------------------------
+// La base responde al UPDATE como PostgreSQL: devuelve solo las filas que cambio.
+
+function baseDeLaCategoria(estado = { 3: true, 4: false, 7: true }) {
+  return poolQueAnota(async (sql, [categoria, disponible]) => {
+    if (categoria !== 'pizza') return { rows: [] };
+    const cambiados = Object.keys(estado).map(Number).filter((id) => estado[id] !== disponible);
+    for (const id of cambiados) estado[id] = disponible;
+    return { rows: cambiados.map((id) => ({ id })) };
+  });
+}
+
+async function conLaCategoria(probar, estado) {
+  const base = baseDeLaCategoria(estado);
+  const avisados = [];
+  const avisos = { categoriaCambiada: (aviso) => avisados.push(aviso) };
+  const otra = await levantarApp(crearApp({ pool: base, autenticar: emisor.autenticar, avisos }));
+  try {
+    return await probar({ base: otra.base, consultas: base.consultas, avisados });
+  } finally {
+    otra.cerrar();
+  }
+}
+
+async function marcarCategoria(base, cuerpo, token) {
+  const cabeceras = { 'content-type': 'application/json' };
+  if (token) cabeceras.authorization = `Bearer ${token}`;
+  const r = await fetch(`${base}/productos/disponibilidad`, {
+    method: 'PATCH', headers: cabeceras, body: typeof cuerpo === 'string' ? cuerpo : JSON.stringify(cuerpo),
+  });
+  return { estado: r.status, cuerpo: await r.json() };
+}
+
+test('categoria entera sin token: 401 y la base ni se consulta', () => conLaCategoria(async ({ base, consultas }) => {
+  const { estado } = await marcarCategoria(base, { categoria: 'pizza', disponible: false });
+  assert.equal(estado, 401);
+  assert.equal(consultas.length, 0);
+}));
+
+test('categoria entera con un token sin los roles del sistema: 403', () => conLaCategoria(async ({ base, consultas }) => {
+  const { estado, cuerpo } = await marcarCategoria(base, { categoria: 'pizza', disponible: false }, firmar(sinRol));
+  assert.equal(estado, 403);
+  assert.equal(cuerpo.error.codigo, 'ROL_SIN_PERMISO');
+  assert.equal(consultas.length, 0);
+}));
+
+for (const [rol, token] of [['cocina', cocina], ['recepcion', recepcion]]) {
+  test(`${rol} agota todas las pizzas: una consulta, los que cambiaron y un solo aviso`, () => conLaCategoria(async ({ base, consultas, avisados }) => {
+    const { estado, cuerpo } = await marcarCategoria(base, { categoria: 'pizza', disponible: false }, token);
+    assert.equal(estado, 200);
+    // La 4 ya estaba agotada: cambian la 3 y la 7.
+    assert.deepEqual(cuerpo, { categoria: 'pizza', disponible: false, cambiados: [3, 7] });
+    assert.deepEqual(avisados, [{ categoria: 'pizza', disponible: false, ids: [3, 7], por: rol }]);
+    assert.equal(consultas.length, 1);
+    assert.deepEqual(consultas[0].parametros, ['pizza', false]);
+    assert.match(consultas[0].sql, /UPDATE producto/);
+    assert.match(consultas[0].sql, /disponible <> \$2/);
+    assert.doesNotMatch(consultas[0].sql, /pedido/i);
+  }));
+}
+
+test('reponer todas: 200 y avisa con las que vuelven', () => conLaCategoria(async ({ base, avisados }) => {
+  const { cuerpo } = await marcarCategoria(base, { categoria: 'pizza', disponible: true }, cocina);
+  assert.deepEqual(cuerpo.cambiados, [4]);
+  assert.deepEqual(avisados.map((a) => [a.disponible, a.ids]), [[true, [4]]]);
+}));
+
+test('si no cambia nada, 200 sin aviso (dos toques seguidos no repiten el aviso)', () => conLaCategoria(async ({ base, avisados }) => {
+  await marcarCategoria(base, { categoria: 'pizza', disponible: false }, cocina);
+  const segundo = await marcarCategoria(base, { categoria: 'pizza', disponible: false }, recepcion);
+  assert.equal(segundo.estado, 200);
+  assert.deepEqual(segundo.cuerpo.cambiados, []);
+  assert.equal(avisados.length, 1);
+}));
+
+for (const [caso, cuerpoInvalido] of [
+  ['vacio', {}],
+  ['sin categoria', { disponible: false }],
+  ['sin disponible', { categoria: 'pizza' }],
+  ['una categoria que no existe', { categoria: 'pasta', disponible: false }],
+  ['disponible como texto', { categoria: 'pizza', disponible: 'false' }],
+  ['con otro campo', { categoria: 'pizza', disponible: false, precio: 1 }],
+  ['una lista', ['pizza', false]],
+]) {
+  test(`categoria entera, cuerpo invalido (${caso}): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base`, () => conLaCategoria(async ({ base, consultas }) => {
+    const { estado, cuerpo } = await marcarCategoria(base, cuerpoInvalido, cocina);
+    assert.equal(estado, 400);
+    assert.equal(cuerpo.error.codigo, 'DISPONIBILIDAD_INVALIDA');
+    assert.equal(consultas.length, 0);
+  }));
+}

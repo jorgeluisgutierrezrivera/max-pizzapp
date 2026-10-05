@@ -23,6 +23,7 @@ class CanalDePrueba implements CanalEnVivo {
   final cambios = StreamController<Map<String, dynamic>>.broadcast();
   final actualizados = StreamController<Map<String, dynamic>>.broadcast();
   final disponibles = StreamController<Map<String, dynamic>>.broadcast();
+  final categorias = StreamController<Map<String, dynamic>>.broadcast();
   final estados = StreamController<bool>.broadcast();
   var conexiones = 0;
   var cerrado = false;
@@ -34,6 +35,8 @@ class CanalDePrueba implements CanalEnVivo {
   Stream<Map<String, dynamic>> get pedidosActualizados => actualizados.stream;
   @override
   Stream<Map<String, dynamic>> get disponibilidades => disponibles.stream;
+  @override
+  Stream<Map<String, dynamic>> get disponibilidadesDeCategoria => categorias.stream;
   @override
   Stream<bool> get conexion => estados.stream;
   @override

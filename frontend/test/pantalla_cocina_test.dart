@@ -24,6 +24,7 @@ class CanalDePrueba implements CanalEnVivo {
   final cambios = StreamController<Map<String, dynamic>>.broadcast();
   final actualizados = StreamController<Map<String, dynamic>>.broadcast();
   final disponibles = StreamController<Map<String, dynamic>>.broadcast();
+  final categorias = StreamController<Map<String, dynamic>>.broadcast();
   final estados = StreamController<bool>.broadcast();
   var conexiones = 0;
   var cerrado = false;
@@ -35,6 +36,8 @@ class CanalDePrueba implements CanalEnVivo {
   Stream<Map<String, dynamic>> get pedidosActualizados => actualizados.stream;
   @override
   Stream<Map<String, dynamic>> get disponibilidades => disponibles.stream;
+  @override
+  Stream<Map<String, dynamic>> get disponibilidadesDeCategoria => categorias.stream;
   @override
   Stream<bool> get conexion => estados.stream;
   @override
@@ -182,6 +185,8 @@ class Escena {
       }),
   ];
   final marcados = <(int, bool)>[];
+  final categoriasMarcadas = <(Categoria, bool)>[];
+  Future<void> Function(Categoria, bool)? responderCategoria;
   var lecturasDeCarta = 0;
   var cartaFalla = false;
   Future<Producto> Function(Producto, bool)? responderMarca;
@@ -214,6 +219,10 @@ class Escena {
         marcados.add((producto.id, disponible));
         if (responderMarca != null) return responderMarca!(producto, disponible);
         return producto.conDisponible(disponible);
+      },
+      marcarCategoria: (categoria, disponible) async {
+        categoriasMarcadas.add((categoria, disponible));
+        if (responderCategoria != null) await responderCategoria!(categoria, disponible);
       },
       red: red,
       pantallaEncendida: pantalla,
@@ -795,5 +804,71 @@ void main() {
         sinDesplazamientoHorizontal(t, 'el panel Carta');
       });
     }
+  });
+
+  group('agotar una categoría entera (D-70, D-71)', () {
+    Future<Escena> abrirCarta(WidgetTester t) async {
+      final e = await abrir(t, []);
+      await t.tap(find.byKey(const Key('boton-carta')));
+      await t.pumpAndSettle();
+      return e;
+    }
+
+    String estado(WidgetTester t, int id) => t.widget<Text>(find.byKey(Key('estado-$id'))).data!;
+    String boton(WidgetTester t, String categoria) =>
+        t.widget<Text>(find.descendant(of: find.byKey(Key('categoria-$categoria')), matching: find.byType(Text))).data!;
+
+    testWidgets('pide confirmación: si se cancela, no cambia nada', (t) async {
+      final e = await abrirCarta(t);
+      expect(boton(t, 'pizza'), 'Agotar todas');
+      expect(boton(t, 'extra'), 'Agotar todos');
+      await t.tap(find.byKey(const Key('categoria-pizza')));
+      await t.pumpAndSettle();
+      expect(find.text('¿Agotar todas las pizzas?'), findsOneWidget);
+      await t.tap(find.text('Cancelar'));
+      await t.pumpAndSettle();
+      expect(e.categoriasMarcadas, isEmpty);
+      expect(estado(t, 1), 'Disponible');
+    });
+
+    testWidgets('confirmado, agota todas las pizzas de una vez y el botón pasa a Reponer todas', (t) async {
+      final e = await abrirCarta(t);
+      await t.tap(find.byKey(const Key('categoria-pizza')));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('confirmar-categoria-si')));
+      await t.pumpAndSettle();
+      expect(e.categoriasMarcadas, [(Categoria.pizza, false)]);
+      expect(e.marcados, isEmpty, reason: 'una sola llamada, no una por pizza');
+      expect(estado(t, 1), 'Agotado');
+      expect(estado(t, 2), 'Disponible', reason: 'las bebidas siguen');
+      expect(boton(t, 'pizza'), 'Reponer todas');
+      // Y se reponen igual.
+      await t.tap(find.byKey(const Key('categoria-pizza')));
+      await t.pumpAndSettle();
+      expect(find.text('¿Reponer todas las pizzas?'), findsOneWidget);
+      await t.tap(find.byKey(const Key('confirmar-categoria-si')));
+      await t.pumpAndSettle();
+      expect(e.categoriasMarcadas.last, (Categoria.pizza, true));
+      expect(estado(t, 1), 'Disponible');
+    });
+
+    testWidgets('si falla, nada cambia y el panel dice por qué', (t) async {
+      final e = await abrirCarta(t);
+      e.responderCategoria = (categoria, disponible) async =>
+          throw const ErrorApi(503, 'BASE_NO_DISPONIBLE', 'La base de datos no responde.');
+      await t.tap(find.byKey(const Key('categoria-pizza')));
+      await t.pumpAndSettle();
+      await t.tap(find.byKey(const Key('confirmar-categoria-si')));
+      await t.pumpAndSettle();
+      expect(estado(t, 1), 'Disponible');
+      expect(find.text('La base de datos no responde.'), findsOneWidget);
+    });
+
+    testWidgets('lo que otra pantalla agota entero mueve los interruptores', (t) async {
+      final e = await abrirCarta(t);
+      e.canal.categorias.add({'categoria': 'pizza', 'disponible': false, 'ids': [1], 'por': 'recepcion'});
+      await t.pumpAndSettle();
+      expect(estado(t, 1), 'Agotado');
+    });
   });
 }

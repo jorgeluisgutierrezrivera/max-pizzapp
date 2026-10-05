@@ -49,6 +49,12 @@ ofrecerse en la venta de recepción, sin recargar, y si lo marcó cocina, recepc
 Los pedidos que ya lo llevaban no cambian, y el servidor rechaza vender un agotado (409).
 Se repone con otro toque.
 
+**Si se acaba la masa**, *Agotar todas*, al lado de *Pizzas* en el mismo panel, las marca de
+una vez, con confirmación: una sola consulta y un solo aviso. La venta de recepción muestra
+*"No quedan pizzas"* y deja de ofrecer *Agregar pizza*; las bebidas se siguen vendiendo. *Reponer
+todas* las vuelve a ofrecer. El sistema no cuenta existencias: eso es control de inventario,
+fuera de alcance.
+
 El sistema tiene **dos roles**. La administración de la carta y el historial quedan fuera
 de alcance y se recogen como trabajo futuro.
 

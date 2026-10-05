@@ -18,9 +18,10 @@ Contra el despliegue publico (fuera del horario de atencion, de 18:00 a 23:30):
         python3 pruebas/api/probar_disponibilidad.py
 
 Usa UNA BEBIDA, que en la carta son ficticias (por omision, "Gaseosa 2 L"; otra con
-PRODUCTO="..."), y una pizza para el pedido de prueba, que nunca se marca. Al terminar deja la
-bebida como estaba y cancela el pedido que creo ("Prueba Disponibilidad", 70000009). La
-contrasena se lee del .env y nunca se imprime; los tokens tampoco.
+PRODUCTO="..."), y una pizza para el pedido de prueba, que nunca se marca. La categoria entera
+(D-70) se prueba con los EXTRAS, tambien ficticios. Al terminar deja la bebida y cada extra como
+estaban y cancela el pedido que creo ("Prueba Disponibilidad", 70000009). La contrasena se lee
+del .env y nunca se imprime; los tokens tampoco.
 """
 import importlib.util
 import json
@@ -63,6 +64,10 @@ def marcar(producto_id, token, disponible):
     return llamar('PATCH', '/productos/%s/disponibilidad' % producto_id, token, {'disponible': disponible})
 
 
+def marcar_categoria(categoria, token, disponible):
+    return llamar('PATCH', '/productos/disponibilidad', token, {'categoria': categoria, 'disponible': disponible})
+
+
 def carta(token):
     _, cuerpo = pedir('/productos', token)
     return {p['nombre']: p for p in cuerpo['productos']}
@@ -93,6 +98,7 @@ if __name__ == '__main__':
     if bebida['categoria'] != 'bebida':
         sys.exit('%s no es una bebida: esta prueba solo marca bebidas.' % BEBIDA)
     original = bebida['disponible']
+    extras_originales = {p['id']: p['disponible'] for p in productos.values() if p['categoria'] == 'extra'}
     pedido_id = None
     print('Producto de la prueba: %s (id %s), %s al empezar.' % (
         BEBIDA, bebida['id'], 'disponible' if original else 'agotado'))
@@ -133,6 +139,29 @@ if __name__ == '__main__':
         comprobar('recepcion la repone', (estado, cuerpo['producto']['disponible']), (200, True))
         comprobar('  la carta la vuelve a ofrecer', carta(cocina)[BEBIDA]['disponible'], True)
 
+        print('\n--- una categoria entera: los extras (D-70) ---')
+        estado, cuerpo = marcar_categoria('extra', cocina, False)
+        disponibles_antes = sorted(i for i, d in extras_originales.items() if d)
+        comprobar('cocina agota todos los extras: los que estaban disponibles',
+                  (estado, cuerpo.get('cambiados')), (200, disponibles_antes))
+        extras = {p['id']: p for p in carta(recepcion).values() if p['categoria'] == 'extra'}
+        comprobar('  la carta los muestra todos agotados', all(not p['disponible'] for p in extras.values()), True)
+        comprobar('  las pizzas y las bebidas no se tocaron',
+                  (carta(recepcion)[PIZZA]['disponible'], carta(recepcion)[BEBIDA]['disponible']), (True, True))
+        un_extra = sorted(extras)[0]
+        con_extra = [{'productoId': pizza['id'], 'cantidad': 1, 'extras': [un_extra]}]
+        estado, cuerpo = llamar('POST', '/pedidos', recepcion,
+                                venta(con_extra, round(pizza['precio'] + extras[un_extra]['precio'], 2)))
+        comprobar('una venta con un extra agotado: 409', (estado, codigo(cuerpo)), (409, 'PRODUCTO_NO_DISPONIBLE'))
+        estado, cuerpo = marcar_categoria('extra', recepcion, False)
+        comprobar('agotarlos otra vez: 200, nada que cambiar', (estado, cuerpo.get('cambiados')), (200, []))
+        estado, cuerpo = marcar_categoria('extra', recepcion, True)
+        comprobar('recepcion los repone todos', (estado, len(cuerpo.get('cambiados', []))), (200, len(extras)))
+        estado, cuerpo = marcar_categoria('pasta', cocina, False)
+        comprobar('una categoria que no existe: 400', (estado, codigo(cuerpo)), (400, 'DISPONIBILIDAD_INVALIDA'))
+        estado, cuerpo = llamar('PATCH', '/productos/disponibilidad', None, {'categoria': 'extra', 'disponible': False})
+        comprobar('sin token: 401', (estado, codigo(cuerpo)), (401, 'TOKEN_AUSENTE'))
+
         print('\n--- los errores ---')
         estado, cuerpo = llamar('PATCH', '/productos/%s/disponibilidad' % bebida['id'], None, {'disponible': False})
         comprobar('sin token: 401', (estado, codigo(cuerpo)), (401, 'TOKEN_AUSENTE'))
@@ -150,6 +179,11 @@ if __name__ == '__main__':
         if pedido_id is not None:
             llamar('POST', '/pedidos/%s/cancelacion' % pedido_id, recepcion, {'motivo': 'prueba de la tarjeta 08'})
         marcar(bebida['id'], recepcion, original)
+        for extra_id, disponible in extras_originales.items():
+            marcar(extra_id, recepcion, disponible)
+        finales = {p['id']: p['disponible'] for p in carta(recepcion).values() if p['categoria'] == 'extra'}
+        print('Los extras, como estaban: %s.' % ('si' if finales == extras_originales else 'NO'))
+        resultados.append(finales == extras_originales)
         final = carta(recepcion)[BEBIDA]['disponible']
         print('\nAl terminar: %s quedo %s, como estaba; el pedido de prueba %s, cancelado.' % (
             BEBIDA, 'disponible' if final else 'agotado', pedido_id))

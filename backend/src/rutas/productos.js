@@ -8,6 +8,8 @@ const { avisar } = require('../tiempo-real');
 //   GET   /api/v1/productos?categoria=pizza&disponible=true   leerla (los dos roles)
 //   PATCH /api/v1/productos/:id/disponibilidad                marcarlo agotado o disponible
 //                                                             (los dos roles, RF-13, D-66)
+//   PATCH /api/v1/productos/disponibilidad                    agotar o reponer una categoria
+//                                                             entera: se acabo la masa (D-70)
 //
 // Recepcion la usa para armar el pedido, y cocina para marcar lo que se acabo. Sin filtros
 // devuelve TODA la carta, agotados incluidos: la pantalla los muestra atenuados, y un
@@ -46,6 +48,14 @@ const SQL_DISPONIBILIDAD = `
    WHERE p.id = anterior.id
   RETURNING p.id, p.nombre, p.categoria, p.precio, p.descripcion, p.imagen, p.disponible,
             p.solo_entera, anterior.disponible AS disponible_antes`;
+
+// Agota o repone una categoria entera (D-70): una sola consulta, que cambia solo lo que hacia
+// falta y devuelve que cambio. Sin cambios, no hay nada que avisar.
+const SQL_DISPONIBILIDAD_DE_CATEGORIA = `
+  UPDATE producto
+     SET disponible = $2
+   WHERE categoria = $1::categoria_producto AND disponible <> $2
+  RETURNING id`;
 
 function filtroInvalido(mensaje) {
   return new ErrorApi(400, 'FILTRO_INVALIDO', mensaje);
@@ -90,6 +100,18 @@ function leerDisponibilidad(cuerpo) {
   return cuerpo.disponible;
 }
 
+// El cuerpo de la categoria entera: exactamente { "categoria": "pizza", "disponible": false }.
+function leerCambioDeCategoria(cuerpo) {
+  const valido = cuerpo !== null && typeof cuerpo === 'object' && !Array.isArray(cuerpo)
+    && Object.keys(cuerpo).length === 2 && CATEGORIAS.includes(cuerpo.categoria)
+    && typeof cuerpo.disponible === 'boolean';
+  if (!valido) {
+    throw new ErrorApi(400, 'DISPONIBILIDAD_INVALIDA',
+      'Indica la categoria y si queda disponible: { "categoria": "pizza", "disponible": false }.');
+  }
+  return { categoria: cuerpo.categoria, disponible: cuerpo.disponible };
+}
+
 // PostgreSQL devuelve los numeric como texto, para no perder precision. Los precios de la
 // carta tienen dos decimales y caben sin perdida en un numero de JSON: la app los recibe
 // listos para mostrar. La imagen es solo el nombre del archivo; la app sabe donde buscarlo.
@@ -116,6 +138,19 @@ function rutasProductos({ pool, autenticar, avisos }) {
     const { categoria, disponible } = leerFiltros(req.query);
     const { rows } = await pool.query(SQL_CARTA, [categoria, disponible]);
     res.json({ productos: rows.map(aProducto) });
+  });
+
+  // Una categoria entera (D-70). Va antes que la de un producto solo por claridad: no chocan,
+  // porque esta tiene un tramo menos. Un solo aviso, con todos los que cambiaron.
+  rutas.patch('/productos/disponibilidad', autenticar, exigirRol(...ROLES_DEL_SISTEMA), async (req, res) => {
+    const { categoria, disponible } = leerCambioDeCategoria(req.body);
+    const { rows } = await pool.query(SQL_DISPONIBILIDAD_DE_CATEGORIA, [categoria, disponible]);
+    const ids = rows.map((fila) => fila.id).sort((a, b) => a - b);
+    res.json({ categoria, disponible, cambiados: ids });
+    if (ids.length > 0) {
+      const por = req.usuario.roles[0];
+      avisar(() => avisos.categoriaCambiada({ categoria, disponible, ids, por }));
+    }
   });
 
   // Se valida todo ANTES de tocar la base. Marcar lo que ya estaba igual responde 200 y no

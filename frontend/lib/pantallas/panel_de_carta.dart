@@ -10,6 +10,12 @@ typedef MarcarDisponibilidad = Future<Producto> Function(Producto producto, bool
 Future<Producto> sinMarcarDisponibilidad(Producto producto, bool disponible) =>
     Future.error(const ErrorApi(0, 'SIN_API', 'Esta pantalla no tiene cómo marcar productos.'));
 
+/// PATCH /api/v1/productos/disponibilidad: agota o repone una categoría entera (D-70).
+typedef MarcarCategoria = Future<void> Function(Categoria categoria, bool disponible);
+
+Future<void> sinMarcarCategoria(Categoria categoria, bool disponible) =>
+    Future.error(const ErrorApi(0, 'SIN_API', 'Esta pantalla no tiene cómo marcar productos.'));
+
 /// Desde este ancho el panel se abre como ventana; más angosto, como hoja desde abajo.
 const anchoPanelEnVentana = 600.0;
 
@@ -49,6 +55,7 @@ Future<void> mostrarPanelDeCarta(
   BuildContext context, {
   required Future<Carta> carta,
   required MarcarDisponibilidad marcar,
+  MarcarCategoria? marcarCategoria,
 }) {
   final tamano = MediaQuery.sizeOf(context);
   if (tamano.width >= anchoPanelEnVentana) {
@@ -58,7 +65,7 @@ Future<void> mostrarPanelDeCarta(
         insetPadding: const EdgeInsets.all(24),
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 520, maxHeight: tamano.height * 0.85),
-          child: PanelDeCarta(carta: carta, marcar: marcar),
+          child: PanelDeCarta(carta: carta, marcar: marcar, marcarCategoria: marcarCategoria),
         ),
       ),
     );
@@ -69,7 +76,7 @@ Future<void> mostrarPanelDeCarta(
     useSafeArea: true,
     builder: (context) => FractionallySizedBox(
       heightFactor: 0.9,
-      child: PanelDeCarta(carta: carta, marcar: marcar),
+      child: PanelDeCarta(carta: carta, marcar: marcar, marcarCategoria: marcarCategoria),
     ),
   );
 }
@@ -79,11 +86,17 @@ Future<void> mostrarPanelDeCarta(
 /// con otro toque. Mientras se guarda, ese interruptor espera; si falla, queda como estaba
 /// y el panel dice por qué. Si otra pantalla marca algo, el interruptor se mueve solo: la
 /// carta avisa sus cambios.
+///
+/// Al lado del título de cada categoría, *Agotar todas* o *Reponer todas* (D-71): por ejemplo,
+/// cuando se acaba la masa. Ese sí pide confirmación, porque cambia toda una parte de la carta.
 class PanelDeCarta extends StatefulWidget {
-  const PanelDeCarta({super.key, required this.carta, required this.marcar});
+  const PanelDeCarta({super.key, required this.carta, required this.marcar, this.marcarCategoria});
 
   final Future<Carta> carta;
   final MarcarDisponibilidad marcar;
+
+  /// Sin ella, el panel no ofrece agotar una categoría entera.
+  final MarcarCategoria? marcarCategoria;
 
   @override
   State<PanelDeCarta> createState() => _PanelDeCartaState();
@@ -91,7 +104,52 @@ class PanelDeCarta extends StatefulWidget {
 
 class _PanelDeCartaState extends State<PanelDeCarta> {
   final _guardando = <int>{};
+  final _guardandoCategoria = <Categoria>{};
   String? _error;
+
+  /// Agotar (o reponer) toda la categoría, después de confirmarlo.
+  Future<void> _marcarCategoria(Carta carta, Categoria categoria, List<Producto> productos) async {
+    final agotar = productos.any((p) => p.disponible);
+    final todas = todosLos(categoria);
+    final verbo = agotar ? 'Agotar' : 'Reponer';
+    final reponer = 'Reponer ${esFemenina(categoria) ? 'todas' : 'todos'}';
+    final confirmado = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        key: const Key('confirmar-categoria'),
+        title: Text('¿$verbo $todas?'),
+        content: Text(
+          agotar
+              ? 'Dejan de ofrecerse en la venta, en todas las pantallas. Se vuelven a ofrecer con «$reponer».'
+              : 'Vuelven a ofrecerse en la venta, en todas las pantallas.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Cancelar')),
+          FilledButton(
+            key: const Key('confirmar-categoria-si'),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text('$verbo $todas'),
+          ),
+        ],
+      ),
+    );
+    if (confirmado != true || !mounted) return;
+    setState(() {
+      _guardandoCategoria.add(categoria);
+      _error = null;
+    });
+    try {
+      await widget.marcarCategoria!(categoria, !agotar);
+      carta.marcarCategoria(categoria, !agotar);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _error = error is ErrorApi ? error.mensaje : 'No se pudo guardar. Revisa la conexión e intenta de nuevo.';
+      });
+    } finally {
+      if (mounted) setState(() => _guardandoCategoria.remove(categoria));
+    }
+  }
 
   Future<void> _marcar(Carta carta, Producto producto, bool disponible) async {
     setState(() {
@@ -179,20 +237,41 @@ class _PanelDeCartaState extends State<PanelDeCarta> {
                     shrinkWrap: true,
                     padding: const EdgeInsets.only(bottom: 16),
                     children: [
-                      for (final (titulo, productos) in [
-                        ('Pizzas', carta.pizzas),
-                        ('Bebidas', carta.bebidas),
-                        ('Extras', carta.extras),
+                      for (final (titulo, categoria, productos) in [
+                        ('Pizzas', Categoria.pizza, carta.pizzas),
+                        ('Bebidas', Categoria.bebida, carta.bebidas),
+                        ('Extras', Categoria.extra, carta.extras),
                       ])
                         if (productos.isNotEmpty) ...[
                           Padding(
-                            padding: const EdgeInsets.fromLTRB(20, 16, 20, 4),
-                            child: Text(titulo, style: tema.textTheme.titleSmall?.copyWith(color: textoSecundario)),
+                            padding: const EdgeInsets.fromLTRB(20, 12, 12, 0),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    titulo,
+                                    style: tema.textTheme.titleSmall?.copyWith(color: textoSecundario),
+                                  ),
+                                ),
+                                if (widget.marcarCategoria != null)
+                                  TextButton(
+                                    key: Key('categoria-${categoria.name}'),
+                                    onPressed: _guardandoCategoria.contains(categoria)
+                                        ? null
+                                        : () => _marcarCategoria(carta, categoria, productos),
+                                    child: Text(
+                                      '${productos.any((p) => p.disponible) ? 'Agotar' : 'Reponer'} '
+                                      '${esFemenina(categoria) ? 'todas' : 'todos'}',
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                           for (final producto in productos)
                             _FilaDeProducto(
                               producto: producto,
-                              guardando: _guardando.contains(producto.id),
+                              guardando:
+                                  _guardando.contains(producto.id) || _guardandoCategoria.contains(categoria),
                               alCambiar: (disponible) => _marcar(carta, producto, disponible),
                             ),
                         ],

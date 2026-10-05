@@ -38,6 +38,7 @@ class PantallaSegunRol extends StatefulWidget {
     this.cancelarPedido = _sinApi,
     this.agregarAlPedido = _sinApi,
     this.marcarDisponibilidad = sinMarcarDisponibilidad,
+    this.marcarCategoria = sinMarcarCategoria,
     this.crearCanal = _sinCanal,
     this.timbre,
     this.red = const RedSiempreEnLinea(),
@@ -62,6 +63,9 @@ class PantallaSegunRol extends StatefulWidget {
 
   /// PATCH /api/v1/productos/:id/disponibilidad (RF-13): lo usan los dos roles.
   final MarcarDisponibilidad marcarDisponibilidad;
+
+  /// PATCH /api/v1/productos/disponibilidad: una categoría entera (D-70).
+  final MarcarCategoria marcarCategoria;
   final CanalEnVivo Function() crearCanal;
   final Timbre? timbre;
   final Red red;
@@ -130,6 +134,7 @@ class _PantallaSegunRolState extends State<PantallaSegunRol> {
             cancelarPedido: widget.cancelarPedido,
             agregarAlPedido: widget.agregarAlPedido,
             marcarDisponibilidad: widget.marcarDisponibilidad,
+            marcarCategoria: widget.marcarCategoria,
             crearCanal: widget.crearCanal,
             timbre: widget.timbre,
             red: widget.red,
@@ -142,6 +147,7 @@ class _PantallaSegunRolState extends State<PantallaSegunRol> {
             cambiarEstado: widget.cambiarEstado,
             cargarCarta: widget.cargarCarta,
             marcarDisponibilidad: widget.marcarDisponibilidad,
+            marcarCategoria: widget.marcarCategoria,
             crearCanal: widget.crearCanal,
             timbre: widget.timbre ?? TimbreMudo(),
             red: widget.red,

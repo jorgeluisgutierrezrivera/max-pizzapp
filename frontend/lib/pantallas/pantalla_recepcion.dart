@@ -74,6 +74,7 @@ class PantallaRecepcion extends StatefulWidget {
     this.cancelarPedido = _sinApi,
     this.agregarAlPedido = _sinApi,
     this.marcarDisponibilidad = sinMarcarDisponibilidad,
+    this.marcarCategoria = sinMarcarCategoria,
     this.crearCanal = _sinCanal,
     this.timbre,
     this.red = const RedSiempreEnLinea(),
@@ -105,6 +106,9 @@ class PantallaRecepcion extends StatefulWidget {
 
   /// PATCH /api/v1/productos/:id/disponibilidad (RF-13).
   final MarcarDisponibilidad marcarDisponibilidad;
+
+  /// PATCH /api/v1/productos/disponibilidad: una categoría entera (D-70).
+  final MarcarCategoria marcarCategoria;
   final CanalEnVivo Function() crearCanal;
   final Timbre? timbre;
   final Red red;
@@ -132,6 +136,7 @@ class _PantallaRecepcionState extends State<PantallaRecepcion> with SingleTicker
   late final Timbre _timbre = widget.timbre ?? TimbreMudo();
   StreamSubscription<Pedido>? _listos;
   StreamSubscription<Map<String, dynamic>>? _disponibilidades;
+  StreamSubscription<Map<String, dynamic>>? _categorias;
   StreamSubscription<bool>? _conexion;
   bool _seCorto = false;
   int _listosEnElTitulo = 0;
@@ -146,6 +151,7 @@ class _PantallaRecepcionState extends State<PantallaRecepcion> with SingleTicker
     // Antes de iniciar, que es cuando se conecta el canal: así no se pierde el primer "conectado".
     _vigia = VigiaDelCanal(conexion: _pedidos.canal.conexion, conectado: _pedidos.canal.conectado, red: widget.red);
     _disponibilidades = _pedidos.canal.disponibilidades.listen(_alCambiarDisponibilidad);
+    _categorias = _pedidos.canal.disponibilidadesDeCategoria.listen(_alCambiarCategoria);
     _conexion = _pedidos.canal.conexion.listen(_alCambiarConexion);
     _pedidos.iniciar();
   }
@@ -154,6 +160,7 @@ class _PantallaRecepcionState extends State<PantallaRecepcion> with SingleTicker
   void dispose() {
     _listos?.cancel();
     _disponibilidades?.cancel();
+    _categorias?.cancel();
     _conexion?.cancel();
     _vigia.dispose();
     _pedidos.removeListener(_alCambiarPedidos);
@@ -208,6 +215,31 @@ class _PantallaRecepcionState extends State<PantallaRecepcion> with SingleTicker
     );
   }
 
+  /// Una categoría entera se agotó o se repuso (D-70): un solo aviso, aunque sean quince
+  /// pizzas. Si fue cocina, lo dice: "Cocina marcó agotadas todas las pizzas".
+  void _alCambiarCategoria(Map<String, dynamic> aviso) {
+    final nombre = aviso['categoria'];
+    final disponible = aviso['disponible'];
+    final categoria = Categoria.values.where((c) => c.name == nombre).firstOrNull;
+    if (categoria == null || disponible is! bool) return;
+    final cambiados = _cartaCargada?.marcarCategoria(categoria, disponible) ?? 0;
+    if (cambiados == 0 || aviso['por'] != 'cocina' || !mounted) return;
+    final todas = todosLos(categoria);
+    final agotadas = esFemenina(categoria) ? 'agotadas' : 'agotados';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        key: const Key('aviso-categoria'),
+        behavior: SnackBarBehavior.floating,
+        width: MediaQuery.sizeOf(context).width >= anchoConPanelLateral ? 560 : null,
+        duration: const Duration(seconds: 8),
+        content: Text(
+          disponible ? 'Cocina volvió a ofrecer $todas' : 'Cocina marcó $agotadas $todas',
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+      ),
+    );
+  }
+
   /// Al volver el canal después de un corte, pudo perderse un aviso: se relee la carta y se
   /// aplica solo su disponibilidad, sin reiniciar la venta.
   void _alCambiarConexion(bool conectado) {
@@ -222,7 +254,12 @@ class _PantallaRecepcionState extends State<PantallaRecepcion> with SingleTicker
     widget.cargarCarta().then(carta.aplicarDisponibilidadDe, onError: (_) {});
   }
 
-  void _abrirCarta() => mostrarPanelDeCarta(context, carta: _carta, marcar: widget.marcarDisponibilidad);
+  void _abrirCarta() => mostrarPanelDeCarta(
+    context,
+    carta: _carta,
+    marcar: widget.marcarDisponibilidad,
+    marcarCategoria: widget.marcarCategoria,
+  );
 
   /// Cocina marcó un pedido listo: suena, y un aviso lo dice con un botón para ir a verlo.
   void _alQuedarListo(Pedido pedido) {

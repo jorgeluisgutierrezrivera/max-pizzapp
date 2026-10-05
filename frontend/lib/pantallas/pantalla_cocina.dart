@@ -47,6 +47,7 @@ class PantallaCocina extends StatefulWidget {
     required this.timbre,
     this.cargarCarta = _sinCarta,
     this.marcarDisponibilidad = sinMarcarDisponibilidad,
+    this.marcarCategoria = sinMarcarCategoria,
     this.red = const RedSiempreEnLinea(),
     this.pantallaEncendida = const PantallaSegunElSistema(),
     this.reloj = DateTime.now,
@@ -71,6 +72,9 @@ class PantallaCocina extends StatefulWidget {
 
   /// PATCH /api/v1/productos/:id/disponibilidad (RF-13).
   final MarcarDisponibilidad marcarDisponibilidad;
+
+  /// PATCH /api/v1/productos/disponibilidad: una categoría entera, cuando se acaba la masa (D-70).
+  final MarcarCategoria marcarCategoria;
   final Red red;
   final PantallaEncendida pantallaEncendida;
   final DateTime Function() reloj;
@@ -114,6 +118,7 @@ class _PantallaCocinaState extends State<PantallaCocina> {
       ..add(_canal.cambiosDeEstado.listen(_alCambiarEstado))
       ..add(_canal.pedidosActualizados.listen(_alActualizarPedido))
       ..add(_canal.disponibilidades.listen(_alCambiarDisponibilidad))
+      ..add(_canal.disponibilidadesDeCategoria.listen(_alCambiarCategoria))
       ..add(_canal.conexion.listen(_alCambiarConexion));
     // Antes de conectar: así no se pierde el primer "conectado".
     _vigia = VigiaDelCanal(conexion: _canal.conexion, conectado: _canal.conectado, red: widget.red);
@@ -230,6 +235,13 @@ class _PantallaCocinaState extends State<PantallaCocina> {
     if (id is int && disponible is bool) _cartaCargada?.marcarDisponibilidad(id, disponible);
   }
 
+  /// Otra pantalla agotó o repuso una categoría entera (D-70).
+  void _alCambiarCategoria(Map<String, dynamic> aviso) {
+    final categoria = Categoria.values.where((c) => c.name == aviso['categoria']).firstOrNull;
+    final disponible = aviso['disponible'];
+    if (categoria != null && disponible is bool) _cartaCargada?.marcarCategoria(categoria, disponible);
+  }
+
   /// La carta se lee la primera vez; si falló, se vuelve a intentar al abrir de nuevo.
   void _abrirCarta() {
     final carta = _carta ??= widget.cargarCarta();
@@ -237,7 +249,12 @@ class _PantallaCocinaState extends State<PantallaCocina> {
       (leida) => _cartaCargada = leida,
       onError: (Object _) => _carta = null,
     );
-    mostrarPanelDeCarta(context, carta: carta, marcar: widget.marcarDisponibilidad);
+    mostrarPanelDeCarta(
+      context,
+      carta: carta,
+      marcar: widget.marcarDisponibilidad,
+      marcarCategoria: widget.marcarCategoria,
+    );
   }
 
   Future<void> _avanzar(Pedido pedido) async {

@@ -174,4 +174,39 @@ void main() {
       expect(agregado.aCuerpo, throwsA(isA<VentaInvalida>()));
     });
   });
+
+  group('una categoría entera (D-70)', () {
+    test('agotar todas las pizzas las cambia de una vez, avisa una sola vez y dice cuántas', () {
+      final carta = cartaNueva();
+      var avisos = 0;
+      carta.addListener(() => avisos++);
+      expect(carta.sinPizzas, isFalse);
+      expect(carta.marcarCategoria(Categoria.pizza, false), 2);
+      expect(carta.pizzas.every((p) => !p.disponible), isTrue);
+      expect(carta.sinPizzas, isTrue);
+      expect(carta.estaDisponible(gaseosa), isTrue, reason: 'las bebidas siguen');
+      expect(avisos, 1);
+    });
+
+    test('si ya estaban así, no cambia nada ni avisa', () {
+      final carta = cartaNueva()..marcarCategoria(Categoria.pizza, false);
+      var avisos = 0;
+      carta.addListener(() => avisos++);
+      expect(carta.marcarCategoria(Categoria.pizza, false), 0);
+      expect(avisos, 0);
+    });
+
+    test('reponer las vuelve a ofrecer a todas', () {
+      final carta = cartaNueva()..marcarCategoria(Categoria.pizza, false);
+      expect(carta.marcarCategoria(Categoria.pizza, true), 2);
+      expect(carta.sinPizzas, isFalse);
+    });
+
+    test('los textos: todas las pizzas, todos los extras', () {
+      expect(todosLos(Categoria.pizza), 'todas las pizzas');
+      expect(todosLos(Categoria.extra), 'todos los extras');
+      expect(esFemenina(Categoria.bebida), isTrue);
+      expect(esFemenina(Categoria.extra), isFalse);
+    });
+  });
 }

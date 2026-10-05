@@ -177,6 +177,18 @@ test('un producto agotado les llega a los dos roles, con quien lo marco y cuando
   }
 });
 
+test('una categoria entera agotada les llega a los dos roles en un solo aviso (D-70)', async () => {
+  const { socket: deCocinaSocket } = await entrar(firmar(deCocina));
+  const { socket: deRecepcionSocket } = await entrar(firmar(deRecepcion));
+  const enCocina = esperar(deCocinaSocket, 'categoria:disponibilidad');
+  const enRecepcion = esperar(deRecepcionSocket, 'categoria:disponibilidad');
+  canal.categoriaCambiada({ categoria: 'pizza', disponible: false, ids: [3, 7], por: 'cocina' });
+  for (const aviso of [await enCocina, await enRecepcion]) {
+    assert.deepEqual([aviso.categoria, aviso.disponible, aviso.ids, aviso.por], ['pizza', false, [3, 7], 'cocina']);
+    assert.ok(!Number.isNaN(Date.parse(aviso.fechaHora)));
+  }
+});
+
 // --- por donde avisa la API -----------------------------------------------------------------
 // Las rutas no llaman al canal: llaman a los avisos que les pasa crearServidor. Las pruebas de
 // arriba iban directo al canal y no vieron que faltaba el de lo agregado (D-37): recepcion
@@ -199,6 +211,13 @@ for (const [aviso, evento, datos] of [
     assert.equal((await llegada)?.id, datos.id);
   });
 }
+
+test('categoriaCambiada, avisado como lo avisa la API, le llega a cocina con sus ids', async () => {
+  const { socket } = await entrar(firmar(deCocina));
+  const llegada = esperar(socket, 'categoria:disponibilidad');
+  avisos.categoriaCambiada({ categoria: 'pizza', disponible: true, ids: [52, 53], por: 'cocina' });
+  assert.deepEqual((await llegada)?.ids, [52, 53]);
+});
 
 test('el aviso llega en mucho menos de 2 segundos', async () => {
   const { socket } = await entrar(firmar(deCocina));

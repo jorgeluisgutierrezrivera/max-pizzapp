@@ -103,6 +103,12 @@ function crearCanal(servidorHttp, { usuarioDelToken, reloj = { setTimeout, clear
       io.to(SALA.recepcion).to(SALA.cocina).emit('producto:disponibilidad', aviso);
     },
 
+    // Una categoria entera se agoto o se repuso (D-70): un solo aviso, con los que cambiaron.
+    categoriaCambiada({ categoria, disponible, ids, por }) {
+      const aviso = { categoria, disponible, ids, por, fechaHora: new Date().toISOString() };
+      io.to(SALA.recepcion).to(SALA.cocina).emit('categoria:disponibilidad', aviso);
+    },
+
     // Cierra el canal Y el servidor HTTP que comparte con la API: corta las conexiones en
     // vivo, deja de aceptar peticiones y llama a "listo" cuando terminaron las que estaban.
     cerrar: (listo) => io.close(listo),
@@ -110,7 +116,9 @@ function crearCanal(servidorHttp, { usuarioDelToken, reloj = { setTimeout, clear
 }
 
 // Para las pruebas y para arrancar sin canal: avisos que no hacen nada.
-const SIN_AVISOS = { pedidoNuevo() {}, pedidoActualizado() {}, estadoCambiado() {}, disponibilidadCambiada() {} };
+const SIN_AVISOS = {
+  pedidoNuevo() {}, pedidoActualizado() {}, estadoCambiado() {}, disponibilidadCambiada() {}, categoriaCambiada() {},
+};
 
 // Un aviso que falla no deshace nada: la operacion ya se guardo y se respondio. Se anota y
 // la pantalla se pone al dia la proxima vez que lea la lista.

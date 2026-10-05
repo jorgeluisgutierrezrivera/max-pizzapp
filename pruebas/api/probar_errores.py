@@ -106,6 +106,8 @@ if __name__ == '__main__':
          '/productos/1/disponibilidad', cocina, {'disponible': False, 'precio': 1}, None, None),
         (404, 'PRODUCTO_NO_ENCONTRADO', 'Marcar un producto que no existe', 'PATCH',
          '/productos/2147483647/disponibilidad', recepcion, {'disponible': False}, None, None),
+        (400, 'DISPONIBILIDAD_INVALIDA', 'Agotar una categoria que no existe', 'PATCH',
+         '/productos/disponibilidad', cocina, {'categoria': 'pasta', 'disponible': False}, None, None),
     ]
 
     print('\n| Esperado | Caso | Peticion | Obtenido | Resultado |')

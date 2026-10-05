@@ -107,6 +107,9 @@ class SegunSesion extends StatelessWidget {
             (await api.cambiar('/productos/${producto.id}/disponibilidad', {'disponible': disponible}))['producto']
                 as Map<String, dynamic>,
           ),
+          marcarCategoria: (categoria, disponible) async {
+            await api.cambiar('/productos/disponibilidad', {'categoria': categoria.name, 'disponible': disponible});
+          },
           llamar: llamar,
           crearCanal: crearCanal,
           timbre: timbre,

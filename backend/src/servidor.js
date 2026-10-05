@@ -23,6 +23,7 @@ function crearServidor({ pool, autenticar, limitePorMinuto }) {
     pedidoActualizado: (pedido) => canal.pedidoActualizado(pedido),
     estadoCambiado: (aviso) => canal.estadoCambiado(aviso),
     disponibilidadCambiada: (aviso) => canal.disponibilidadCambiada(aviso),
+    categoriaCambiada: (aviso) => canal.categoriaCambiada(aviso),
   };
   const servidor = http.createServer(crearApp({ pool, autenticar, avisos, limitePorMinuto }));
   canal = crearCanal(servidor, { usuarioDelToken: autenticar.usuarioDelToken });

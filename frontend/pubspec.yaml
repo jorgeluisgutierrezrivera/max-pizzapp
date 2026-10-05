@@ -1,7 +1,7 @@
 name: maxpizzapp
 description: "Max Pizzapp: pedidos entre recepcion y cocina en tiempo real"
 publish_to: 'none'
-version: 0.1.0+1
+version: 0.3.0+3
 
 environment:
   sdk: ^3.12.2

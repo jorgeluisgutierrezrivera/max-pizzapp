@@ -5,6 +5,18 @@ import 'package:flutter/foundation.dart';
 
 enum Categoria { pizza, entrada, bebida, postre, extra }
 
+/// "todas las pizzas", "todos los extras": para los avisos y el panel (D-70, D-71).
+String todosLos(Categoria categoria) => switch (categoria) {
+  Categoria.pizza => 'todas las pizzas',
+  Categoria.entrada => 'todas las entradas',
+  Categoria.bebida => 'todas las bebidas',
+  Categoria.postre => 'todos los postres',
+  Categoria.extra => 'todos los extras',
+};
+
+/// Si la palabra de la categoría es femenina: "agotadas" o "agotados".
+bool esFemenina(Categoria categoria) => categoria != Categoria.postre && categoria != Categoria.extra;
+
 /// Los precios se guardan en CENTAVOS, como enteros: sumar decimales en coma flotante
 /// termina, tarde o temprano, en un total de 79,99999. La API los manda como números con
 /// dos decimales; aquí se convierten una sola vez.
@@ -126,6 +138,20 @@ class Carta extends ChangeNotifier {
     if (cambio) notifyListeners();
     return cambio;
   }
+
+  /// Agota o repone una categoría entera (D-70), por ejemplo todas las pizzas cuando se acaba
+  /// la masa. Devuelve cuántos productos cambiaron y avisa una sola vez.
+  int marcarCategoria(Categoria categoria, bool disponible) {
+    var cambiados = 0;
+    for (final producto in todos.where((p) => p.categoria == categoria)) {
+      if (_marcar(producto.id, disponible)) cambiados++;
+    }
+    if (cambiados > 0) notifyListeners();
+    return cambiados;
+  }
+
+  /// La carta tiene pizzas y no queda ninguna disponible: la venta lo dice (D-71).
+  bool get sinPizzas => _pizzas.isNotEmpty && _pizzas.every((p) => !p.disponible);
 
   /// La disponibilidad de una carta recién leída, por ejemplo al reconectar el canal, que
   /// pudo perderse algún aviso. Solo la disponibilidad: los precios los vuelve a controlar
