@@ -75,9 +75,10 @@ la pantalla, una lista que se desplazaba de lado y un desborde.
 
 ## La tabla de casos
 
-Camino feliz y error de cada requisito *Must* (RF-01 a RF-07), los casos de seguridad y los
-requisitos no funcionales. **Obtenido** es lo que dio la última corrida; **Evidencia**, dónde
-verlo: un reporte de esta carpeta, una prueba automática por su nombre o un commit.
+Camino feliz y error de cada requisito *Must* (RF-01 a RF-07), los casos de seguridad, los
+requisitos no funcionales y RF-13, la disponibilidad de los productos. **Obtenido** es lo que
+dio la última corrida; **Evidencia**, dónde verlo: un reporte de esta carpeta, una prueba
+automática por su nombre, un commit o una captura.
 
 ### Los requisitos *Must*
 
@@ -125,3 +126,14 @@ verlo: un reporte de esta carpeta, una prueba automática por su nombre o un com
 **Lo que el sondeo no ve.** Uno cada 5 minutos no ve un corte más corto que eso, como los
 segundos que tarda en reiniciarse la API en un despliegue. El RNF-05 define la medición así,
 y por eso el 100 % se declara con su método y sus fechas, no como «nunca se cortó».
+
+### RF-13: la disponibilidad de los productos (*Should*)
+
+Cada rol agota y repone lo que maneja (D-76): cocina, las pizzas y los extras; recepción, las
+bebidas, que tiene en el mostrador.
+
+| ID | Criterio | Escenario | Esperado | Obtenido | Estado | Evidencia |
+|---|---|---|---|---|---|---|
+| CP-29 | CA-13.1 | Cocina agota una pizza, o todas; recepción, una bebida o todas | La venta deja de ofrecerlo en menos de 2 s, sin recargar, y el servidor rechaza venderlo | La venta lo apaga al instante, y sin pizzas muestra *"No quedan pizzas: las repone cocina"*. Venderlo, 409 `PRODUCTO_NO_DISPONIBLE`. El aviso a recepción, peor caso de 315 ms en 30 repeticiones (mediana 158 ms). En producción, el 7-oct | ✅ | [`sonda-disponibilidad.txt`](reportes/sonda-disponibilidad.txt) (*CA-13.1: una venta nueva con la bebida agotada: 409*, *una venta con un extra agotado: 409*); [`tiempo-real.txt`](reportes/tiempo-real.txt) (*disponibilidad -> recepcion*); app: *cocina agota una pizza: la venta la apaga sin empezar de nuevo, y un aviso lo dice*, *cocina agota todas las pizzas: un solo aviso, la banda y Agregar pizza apagado*; capturas del 7-oct, `apk-16` a `21` y `pc-11` a `24` |
+| CP-30 | CA-13.2 | Se agota un producto que ya está en un pedido | El pedido no cambia; solo se impiden las ventas nuevas | El pedido siguió con sus 2 líneas, Bs 70 y *pendiente* | ✅ | [`sonda-disponibilidad.txt`](reportes/sonda-disponibilidad.txt) (*CA-13.2: el pedido sigue con sus lineas, total y estado*); API: *cocina marca una pizza agotada: 200 con el producto, y avisa quien la marco* (una sola consulta, que no nombra ningún pedido) |
+| CP-31 | D-76 | Un rol intenta agotar o reponer lo del otro: recepción, una pizza o los extras; cocina, una bebida | 403, sin cambiar nada; su panel ni lo muestra | 403 `ROL_SIN_PERMISO` en las dos rutas y en los dos sentidos, con la categoría; nada cambió. El panel de cocina muestra pizzas y extras; el de recepción, solo bebidas | ✅ | [`sonda-errores.txt`](reportes/sonda-errores.txt) (los cuatro *intenta reponer*); [`sonda-disponibilidad.txt`](reportes/sonda-disponibilidad.txt) (*cocina no puede agotarla*, *recepcion no puede agotarlos*); API: *… (D-76): 403 ROL_SIN_PERMISO, no cambia nada y no avisa*; app: *abre lo de cocina por categoría, sin las bebidas…*; capturas `apk-13` a `15` y `pc-13` |

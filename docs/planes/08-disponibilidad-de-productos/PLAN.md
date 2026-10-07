@@ -5,9 +5,9 @@
 
 - **Tarjeta:** 08 — Disponibilidad de productos (RF-13)
 - **Incremento:** tiempo real completo (cierra el incremento 3)
-- **Estado:** 🔨 **En curso** — aprobado el 2026-10-04. **Revisión del 7-oct (D-76) aprobada**
-  ese mismo día: cada rol agota y repone solo lo que maneja. Su fase B3, verificada en local
-  el 7-oct; la C3, en producción, sigue
+- **Estado:** ✅ **Hecho** — 2026-10-07, en producción y probada por el autor en la PC y en el
+  APK 0.4.0. Aprobado el 2026-10-04, con dos revisiones: la categoría entera (4-oct, D-70 y
+  D-71) y cada rol con lo suyo (7-oct, D-76)
 - **Entrada al tablero:** 2026-09-22, como la 08 del índice; la cancelación (RF-09) se adelantó
   a la 06 (D-33)
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
@@ -295,7 +295,7 @@ Cada fase se prueba y se sube por separado.
 - [x] Las sondas contra producción.
 
 ### Fase D — La prueba del autor y el cierre
-- [ ] El autor, con recepción en la computadora y cocina en el APK:
+- [x] El autor, con recepción en la computadora y cocina en el APK:
   - cocina marca una pizza agotada y recepción la ve apagada al instante, con el aviso;
   - cocina agota todas las pizzas: un solo aviso y la banda *"No quedan pizzas"* en la venta;
     después las repone;
@@ -307,10 +307,10 @@ Cada fase se prueba y se sube por separado.
 
   La primera parte ya se probó el 7-oct, con las reglas de antes, en el APK 0.3.0 y la PC:
   `apk-10` a `12` y `pc-07` a `10`.
-- [ ] Capturas con datos ficticios.
-- [ ] Las filas de RF-13 en la tabla de casos (`docs/pruebas/README.md`), con el 403 de lo
-      ajeno.
-- [ ] Evidencia en la sección 9 y cierre.
+- [x] Capturas con datos ficticios.
+- [x] Las filas de RF-13 en la tabla de casos (`docs/pruebas/README.md`), con el 403 de lo
+      ajeno: CP-29 a CP-31.
+- [x] Evidencia en la sección 9 y cierre.
 
 ---
 
@@ -365,7 +365,8 @@ Cada fase se prueba y se sube por separado.
   quitar, y el servidor rechaza vender un agotado.
 - La ruta valida en el servidor (400, 404) y respeta los roles (401, 403), con el formato de
   error único y consultas parametrizadas.
-- El APK de cocina, en su versión 0.2.0, también marca y repone.
+- El APK de cocina, en su versión 0.2.0, también marca y repone (desde la revisión del 7-oct,
+  la 0.4.0).
 - La instalación local y las dos suites siguen en verde.
 
 ---
@@ -395,7 +396,7 @@ Cada fase se prueba y se sube por separado.
 | C2 — En producción otra vez | ✅ Verificada | 2026-10-04 | **4-oct, de noche; ese día el local no atendía.** **La API:** el autor corrió la actualización del servidor mientras subía el `08-3`, antes del `08-4`: el servidor trajo solo el `08-3`, no reconstruyó la API y `PATCH /productos/disponibilidad` respondía **404**. Repetida después del último push, la API se reconstruyó (sana a los segundos) y la ruta responde **401** sin token; la base, Keycloak y Caddy siguieron arriba sin recrearse. Lección anotada en `MANUAL_GIT.md`: el servidor se actualiza después del último push, nunca en paralelo. *Pruebas* e *Instalacion* en verde para `5c71d2f` y `3d58147`. **La web:** `publicar-web.sh`, versión `20261004-220756` (131,9 s de compilación); `version.json` dice 0.3.0+3 y el `main.dart.js` de producción trae la ruta nueva y la banda *"No quedan pizzas"*. **El APK 0.3.0+3:** 54 464 971 bytes, firmado con la misma llave (certificado `3c:32:be:ac…ba:06:b0:1a`), SHA-256 `c0e032af9cd8c58c593b4bfef4ec3987e3ea1ea0a4cb34ea2d91c4057994fbb9`. **Las sondas contra producción** (`correr_sondas.py`, 02:12 a 02:15 UTC): las **seis**, TODO CORRECTO. `sonda-disponibilidad.txt` suma la categoría entera con los **extras**, que son ficticios: cocina los agotó (200, los ids 19 a 22, los que estaban disponibles); la carta los mostró todos agotados y las pizzas y bebidas, intactas; una venta con un extra, 409 `PRODUCTO_NO_DISPONIBLE`; agotarlos otra vez, 200 sin cambios; recepción repuso los 4; una categoría que no existe, 400 `DISPONIBILIDAD_INVALIDA`; sin token, 401. Cada extra quedó como estaba, la *Gaseosa 2 L* disponible y el pedido de prueba 480, cancelado. `sonda-errores.txt`: **21 de 21**, con la categoría inexistente. La propagación no se volvió a medir: el aviso de la categoría viaja por el mismo canal y las mismas salas que el de la fase C (máximo de 164 ms en 30 mediciones). **El *Release*:** el autor publicó `apk-cocina-0.3.0` desde la web de GitHub, sobre `main`, marcado *Latest*, con la huella en la descripción. Verificado en la API pública: `max-pizzapp-cocina.apk` pesa 54 464 971 bytes y su `digest` es la misma SHA-256; el enlace de Moodle (`…/releases/latest/download/max-pizzapp-cocina.apk`) entrega ese mismo archivo, con la misma huella |
 | B3 — Cada rol, lo suyo (D-76) | ✅ Verificada | 2026-10-07 | **La API** (`rutas/productos.js`): `CATEGORIAS_DEL_ROL` dice qué maneja cada rol (cocina: pizza, extra, entrada y postre; recepción: bebida) y `categoriasDe` lo calcula con los roles del token. **La ruta de una categoría** rechaza la ajena antes de tocar la base: 403 `ROL_SIN_PERMISO`, con un mensaje que dice de quién es (*"Las bebidas las agota y repone recepcion."*) y la `categoria`. **La ruta de un producto** sigue siendo una sola consulta parametrizada: recibe las categorías del rol (`$3`), el `UPDATE` solo cambia si la del producto está entre ellas, y un `LEFT JOIN` distingue los tres casos (sin fila, 404; fila sin cambio, 403; fila cambiada, 200). **`npm test`: 332 de 332.** Cocina marca una pizza (parámetros `[7, false, [pizza, entrada, postre, extra]]`); recepción marca una bebida y el aviso dice `por: recepcion`; recepción con una pizza y cocina con una bebida, 403 sin aviso; en la ruta de la categoría, cocina agota las pizzas y recepción las bebidas, y recepción con pizzas o extras y cocina con bebidas reciben 403 **sin ninguna consulta** y sin aviso. **El contrato:** la respuesta `DeOtroRol` en las dos rutas, con su ejemplo, y la regla en cada descripción; `contrato.test.js` en verde. **La app:** `categoriasDeCocina` y `categoriasDeRecepcion` en `carta/producto.dart`, lo mismo que comprueba el servidor; `PanelDeCarta` exige las `categorias` del rol y no muestra las otras; la banda dice *"No quedan pizzas: las repone cocina. Solo se venden bebidas, con «Vender bebidas»."*. **`flutter test`: 338 de 338**, con las pruebas que marcaban lo ajeno reescritas: en recepción, los avisos de cocina son de una pizza (*Peperoni* aparece *Agotada* en el modal de la pizza, y vuelve al reponerla), una bebida que agota otra pantalla de recepción se apaga sin aviso, el panel muestra solo *Bebidas* y *Agotar todas* agota las bebidas con confirmación, sin ofrecer las pizzas ni los extras, y la banda dice quién las repone; en cocina, el panel muestra *Pizzas* y *Extras*, sin las bebidas, y agotar las pizzas deja los extras. El panel a 1366 × 768 y a 768 × 1024 en recepción, y a 360 × 780 y 768 × 1024 en cocina, sin desplazamiento horizontal (RNF-04). `flutter analyze`, sin avisos. **Contra la API local reconstruida** (`up -d --build backend`), con la base y el Keycloak reales: `probar_disponibilidad.py`, TODO CORRECTO. Con la *Soda 2 L*: cocina no pudo agotarla (403, categoría `bebida`) y siguió disponible; recepción la agotó; marcarla de nuevo, 200 sin cambios; cocina tampoco pudo reponerla (403); el pedido siguió con 2 líneas, Bs 70 y *pendiente* (**CA-13.2**); una venta nueva, 409 (**CA-13.1**); recepción la repuso. Con los extras: recepción no pudo agotarlos (403, categoría `extra`) y ninguno cambió; cocina agotó los 4; las pizzas y las bebidas, intactas; una venta con un extra, 409; agotarlos otra vez, 200 sin cambios; recepción no pudo reponer uno (403) y siguió agotado; cocina repuso los 4. Todo quedó como estaba y el pedido 767, cancelado. `probar_errores.py`: **25 de 25**, con cuatro 403 nuevos (recepción con una pizza y con todas las pizzas, cocina con una bebida y con todas las bebidas); piden **reponer** y no agotar, para que, corrida por error contra un servidor sin la D-76, nunca deje al local sin pizzas. `medir_aviso.py`, 30 repeticiones, con la cuarta medición ahora sobre un **extra que marca cocina** (*Extra queso*): pedido nuevo a cocina, máximo 56 ms; cambio de estado, 35 ms; lo agregado, 95 ms; **la disponibilidad a recepción, mediana de 13 ms, p95 de 28 ms y máximo de 56 ms**. El reporte versionado de producción se restauró sin cambios: se rehace en la fase C3. El README y el BRIEF dicen quién marca qué. **No cambian** la base, el realm ni la comanda: cocina sigue viendo las bebidas del pedido en la línea gris |
 | C3 — En producción otra vez | ✅ Verificada | 2026-10-07 | **7-oct, desde las 17:20, dentro del horario: ese día el local vendía a mano** (revisión del plan). Antes de tocar producción, *Pruebas* e *Instalacion* en verde para `fd9c4a3`, el código de la fase B3. **La API:** el autor trajo el código y reconstruyó solo la API (`up -d --build backend`), sin migración. Arrancó sana (*"limite: 600 peticiones por minuto por IP"*); la base, Keycloak y Caddy siguieron arriba sin recrearse. Verificado desde aquí: el `productos.js` del contenedor trae `CATEGORIAS_DEL_ROL`, la salud responde 200 y la ruta de la categoría, 401 sin token. **La web:** `publicar-web.sh`, versión `20261007-171823` (139 s); `version.json` dice 0.4.0+4 y el `main.dart.js` de producción trae la banda *"No quedan pizzas: las repone cocina"*. **El APK 0.4.0+4:** `compilar-apk.sh`, 54 464 971 bytes en 327 s, firmado con la misma llave que las versiones anteriores (certificado `3c:32:be:ac…ba:06:b0:1a`), SHA-256 `49675491ea8c66e84ab21b48980909828ba95e0fac4459ef7aaf7a3c5bf53310`. **Las sondas contra producción** (`correr_sondas.py`, corridas por el autor de 17:23 a 17:26, con la contraseña leída del `.env` del servidor): las **seis**, TODO CORRECTO. `sonda-disponibilidad.txt`, con la *Soda 2 L* (id 17): cocina no pudo agotarla (403, categoría `bebida`) y siguió disponible; recepción la agotó; marcarla de nuevo, 200 sin cambios; cocina no pudo reponerla (403); el pedido siguió con 2 líneas, Bs 70 y *pendiente* (**CA-13.2**); una venta nueva, 409 `PRODUCTO_NO_DISPONIBLE` (**CA-13.1**); recepción la repuso. Con los extras (ids 19 a 22): recepción no pudo agotarlos (403, categoría `extra`) y ninguno cambió; cocina agotó los 4; las pizzas y las bebidas, intactas; una venta con un extra, 409; agotarlos otra vez, 200 sin cambios; recepción no pudo reponer uno (403) y siguió agotado; cocina repuso los 4. Todo quedó como estaba y el pedido de prueba 553, cancelado. `sonda-errores.txt`: **25 de 25**, con los cuatro 403 de la D-76. `sonda-pedidos.txt`: TODO CORRECTO, 31 pedidos de prueba cerrados. **La propagación, 30 repeticiones** (`tiempo-real.txt`, 17:27, por WebSocket): pedido nuevo a cocina, máximo 162 ms; cambio de estado a recepción, mediana de 155 ms y máximo de 450 ms; lo agregado a cocina, 166 ms; **la disponibilidad a recepción, ahora un extra que marca cocina: mediana de 158 ms, p95 de 163 ms y máximo de 315 ms**. Todo bajo 2 s; se cerraron los 30 pedidos de la medición y el *Extra queso* quedó como estaba |
-| D — La prueba del autor | ⏳ | | |
+| D — La prueba del autor | ✅ Verificada | 2026-10-07 | **En dos partes, las dos contra producción.** **A la mañana, con las reglas de antes** (APK 0.3.0 y la PC): cocina marcó *Champiñones* agotada y la venta la apagó; cocina agotó todas las pizzas y la venta mostró la banda y el aviso; recepción agotó todas las bebidas y la venta quedó sin nada que vender (capturas `apk-10` a `12` y `pc-07` a `10`). **De 18:37 a 18:42, con la D-76** (el APK 0.4.0 instalado encima del 0.3.0, sin desinstalar, y recepción en Chrome): **el panel *Carta* de cocina tiene las 15 pizzas y los 4 extras, sin las bebidas** (`apk-13` a `15`). Cocina marcó *Champiñones* agotada (`apk-16`) y en la venta de recepción apareció *Agotada* y sin poder elegirse en el modal de la pizza (`pc-11`). Recepción vendió el pedido 102, de *Pedrito Mexicano*, con una *Carnívora* y un *Jugo 1 L*, Bs 75 (`pc-12`); en la comanda de cocina, el jugo va en la línea gris, debajo de la pizza (`apk-17`): **la comanda no cambió**. Cocina agotó todas las pizzas, con su confirmación (`apk-18` y `19`). En recepción, **el panel *Carta* muestra solo las bebidas** (`pc-13`), y la venta, la banda *"No quedan pizzas: las repone cocina. Solo se venden bebidas, con «Vender bebidas»."*, con *Agregar pizza* apagado y las bebidas a la venta (`pc-14`). **Recepción manejó sus bebidas:** agotó la *Soda 1 L*, que se apagó en la venta (`pc-15` y `16`), y después todas, con confirmación (`pc-17` y `18`), y la venta quedó sin pizzas ni bebidas (`pc-19`). Cocina repuso todas las pizzas (`apk-20` y `21`) y recepción recibió *"Cocina volvió a ofrecer todas las pizzas"* (`pc-20`); recepción repuso sus bebidas (`pc-21` y `22`) y la venta volvió a ofrecer todo (`pc-23`). El pedido 102, vendido antes de agotar las pizzas, siguió su curso hasta *listo*, con su aviso en recepción (`pc-24`): **CA-13.2**. Capturas con datos ficticios; a las de la PC se les recortó la barra del navegador, que mostraba los marcadores del autor |
 
 ---
 
@@ -416,4 +417,36 @@ Cada fase se prueba y se sube por separado.
 
 ## 11. Cierre
 
-*(Se completa al cerrar la tarjeta: commits de cada fase y estado final.)*
+- **Commits de la tarjeta**, uno por fase probada:
+  - `5ac2269` el plan (08-P);
+  - `108279a` la API (A) y `39462a7` la app (B);
+  - `5c71d2f` producción con el APK 0.2.0 (C);
+  - `3d58147` la categoría entera (B2) y `908b8d2` su producción con el APK 0.3.0 (C2);
+  - `5930dbb` el plan revisado con la D-76 (08-P2);
+  - `fd9c4a3` cada rol con lo suyo (B3) y `13e5155` su producción con el APK 0.4.0 (C3).
+
+  El cierre (08-E) lleva este apartado, la fila D, las filas CP-29 a CP-31 de la tabla de
+  casos, los reportes de las dos suites y el índice de planes.
+- **Los *Release* del APK:** `apk-cocina-0.2.0`, `0.3.0` y `0.4.0`. El de la 0.4.0 se publicó a
+  las 18:21:50, segundos antes del `13e5155`, y su etiqueta quedó sobre `fd9c4a3`, cuyo
+  `pubspec.yaml` todavía dice 0.3.0+3. El código de la app es el mismo: solo cambia ese
+  número, como pasó con la 0.2.0. No se movió la etiqueta, porque ya estaba publicada.
+  Verificado en la API pública de GitHub: `max-pizzapp-cocina.apk` pesa 54 464 971 bytes, su
+  `digest` es la SHA-256 del compilado (`49675491…3310`) y es el *Latest*. El enlace de Moodle
+  (`…/releases/latest/download/max-pizzapp-cocina.apk`), descargado, da la misma SHA-256.
+- **Criterios de aceptación (sección 7):** los seis cumplidos.
+  - **Cada rol marca y repone lo suyo desde su pantalla:** fase D, en la PC y en el APK; con lo
+    ajeno, 403 y el panel no lo muestra (CP-31).
+  - **En menos de 2 s, sin recargar, y el aviso si lo marcó cocina:** peor caso de 315 ms en
+    30 repeticiones en producción; *"Cocina volvió a ofrecer todas las pizzas"* en la prueba.
+  - **El pedido que ya lo llevaba no cambia y el servidor rechaza venderlo:** CP-30 y el pedido
+    102 de la prueba; 409 `PRODUCTO_NO_DISPONIBLE` (CP-29); la venta sin confirmar avisa qué
+    quitar (D-69, pruebas de la app).
+  - **Validación y roles en el servidor:** `sonda-errores.txt`, 25 de 25, con consultas
+    parametrizadas.
+  - **El APK marca y repone:** desde la 0.2.0; probado con la 0.4.0.
+  - **La instalación local y las dos suites en verde:** *Pruebas* e *Instalacion* para
+    `13e5155`; `api.txt` 332 de 332 y `app.txt` 338 de 338, regenerados en el cierre.
+- **Requisitos:** RF-13 (*Should*), con CA-13.1 y CA-13.2 (CP-29 y CP-30); RNF-01, medido en
+  producción; RNF-04, el panel en los dos anchos y en el APK. La cancelación (RF-09) se
+  adelantó a la 06 (D-33). Decisiones: D-66 a D-71 y D-76.
