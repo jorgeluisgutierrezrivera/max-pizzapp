@@ -212,19 +212,26 @@ test('un error de SQL es un fallo nuestro: 500, sin el texto del error', async (
   assert.ok(!JSON.stringify(cuerpo).includes('FORM'));
 });
 
-// --- PATCH /productos/:id/disponibilidad (RF-13, D-66) ------------------------------
-// La misma app con una base que responde al UPDATE como lo haria PostgreSQL: devuelve la fila
-// con el valor nuevo y el que tenia antes, o nada si el producto no existe. Los avisos se
-// anotan, para comprobar cuando se avisa y que lleva el aviso.
+// --- PATCH /productos/:id/disponibilidad (RF-13, D-66; cada rol lo suyo, D-76) -------------
+// La misma app con una base que responde a la consulta como lo haria PostgreSQL: nada si el
+// producto no existe; la categoria sin "id" si es de otro rol, sin cambiarlo; o la fila con el
+// valor nuevo y el que tenia antes. Los avisos se anotan, para comprobar cuando se avisa y que
+// lleva el aviso.
 
 const HAWAIANA = { ...FILAS[0], disponible: true };
+const GASEOSA = { ...FILAS[3] };
+const DE_COCINA = ['pizza', 'entrada', 'postre', 'extra'];
+const DE_RECEPCION = ['bebida'];
 
 function baseDeLaCarta(fila = HAWAIANA) {
-  return poolQueAnota(async (sql, [id, disponible]) => {
+  return poolQueAnota(async (sql, [id, disponible, categorias]) => {
     if (fila === null || id !== fila.id) return { rows: [] };
-    const actualizada = { ...fila, disponible, disponible_antes: fila.disponible };
+    const antes = fila.disponible;
+    if (!categorias.includes(fila.categoria)) {
+      return { rows: [{ categoria_actual: fila.categoria, disponible_antes: antes, id: null }] };
+    }
     fila = { ...fila, disponible };
-    return { rows: [actualizada] };
+    return { rows: [{ ...fila, categoria_actual: fila.categoria, disponible_antes: antes }] };
   });
 }
 
@@ -263,22 +270,46 @@ test('disponibilidad con un token sin los roles del sistema: 403', () => conLaCa
   assert.equal(consultas.length, 0);
 }));
 
-for (const [rol, token] of [['recepcion', recepcion], ['cocina', cocina]]) {
-  test(`${rol} marca un producto agotado: 200 con el producto, y avisa quien lo marco`, () => conLaCarta(async ({ base, consultas, avisados }) => {
-    const { estado, cuerpo } = await marcar(base, 7, { disponible: false }, token);
-    assert.equal(estado, 200);
-    assert.deepEqual(cuerpo.producto, {
-      id: 7, nombre: 'Hawaiana', categoria: 'pizza', precio: 50, descripcion: 'Doble queso, jamón y piña caramelizada',
-      imagen: 'hawaiana.png', disponible: false, soloEntera: false,
-    });
-    assert.deepEqual(avisados, [{ id: 7, nombre: 'Hawaiana', categoria: 'pizza', disponible: false, por: rol }]);
-    // Una sola consulta, parametrizada, que solo toca la carta: ningun pedido cambia (CA-13.2).
+test('cocina marca una pizza agotada: 200 con el producto, y avisa quien la marco', () => conLaCarta(async ({ base, consultas, avisados }) => {
+  const { estado, cuerpo } = await marcar(base, 7, { disponible: false }, cocina);
+  assert.equal(estado, 200);
+  assert.deepEqual(cuerpo.producto, {
+    id: 7, nombre: 'Hawaiana', categoria: 'pizza', precio: 50, descripcion: 'Doble queso, jamón y piña caramelizada',
+    imagen: 'hawaiana.png', disponible: false, soloEntera: false,
+  });
+  assert.deepEqual(avisados, [{ id: 7, nombre: 'Hawaiana', categoria: 'pizza', disponible: false, por: 'cocina' }]);
+  // Una sola consulta, parametrizada, que solo toca la carta: ningun pedido cambia (CA-13.2).
+  // Las categorias de quien llama viajan como parametro (D-76).
+  assert.equal(consultas.length, 1);
+  assert.deepEqual(consultas[0].parametros, [7, false, DE_COCINA]);
+  assert.match(consultas[0].sql, /UPDATE producto/);
+  assert.match(consultas[0].sql, /ANY\(\$3/);
+  assert.doesNotMatch(consultas[0].sql, /pedido/i);
+}));
+
+test('recepcion marca una bebida agotada: 200, y avisa que la marco recepcion (D-76)', () => conLaCarta(async ({ base, consultas, avisados }) => {
+  const { estado, cuerpo } = await marcar(base, 10, { disponible: false }, recepcion);
+  assert.equal(estado, 200);
+  assert.equal(cuerpo.producto.disponible, false);
+  assert.deepEqual(avisados, [{ id: 10, nombre: 'Gaseosa 2 L', categoria: 'bebida', disponible: false, por: 'recepcion' }]);
+  assert.deepEqual(consultas[0].parametros, [10, false, DE_RECEPCION]);
+}, GASEOSA));
+
+for (const [caso, token, fila, mensaje] of [
+  ['recepcion no repone una pizza: la maneja cocina', recepcion, HAWAIANA, /cocina/],
+  ['cocina no agota una bebida: la maneja recepcion', cocina, GASEOSA, /recepcion/],
+]) {
+  test(`${caso} (D-76): 403 ROL_SIN_PERMISO, no cambia nada y no avisa`, () => conLaCarta(async ({ base, consultas, avisados }) => {
+    const { estado, cuerpo } = await marcar(base, fila.id, { disponible: false }, token);
+    assert.equal(estado, 403);
+    assert.equal(cuerpo.error.codigo, 'ROL_SIN_PERMISO');
+    assert.match(cuerpo.error.mensaje, mensaje);
+    assert.equal(avisados.length, 0);
+    // La misma consulta de siempre: con lo ajeno no actualiza; la siguiente lectura lo prueba.
     assert.equal(consultas.length, 1);
-    assert.deepEqual(consultas[0].parametros, [7, false]);
-    assert.match(consultas[0].sql, /UPDATE producto/);
-    assert.match(consultas[0].sql, /\$1/);
-    assert.doesNotMatch(consultas[0].sql, /pedido/i);
-  }));
+    const otraVez = await marcar(base, fila.id, { disponible: false }, token);
+    assert.equal(otraVez.estado, 403);
+  }, fila));
 }
 
 test('reponer un agotado: 200, disponible otra vez, y avisa', () => conLaCarta(async ({ base, avisados }) => {
@@ -291,7 +322,7 @@ test('reponer un agotado: 200, disponible otra vez, y avisa', () => conLaCarta(a
 
 test('marcar lo que ya estaba igual: 200 y no avisa (dos toques a la vez no repiten el aviso)', () => conLaCarta(async ({ base, avisados }) => {
   const primero = await marcar(base, 7, { disponible: false }, cocina);
-  const segundo = await marcar(base, 7, { disponible: false }, recepcion);
+  const segundo = await marcar(base, 7, { disponible: false }, cocina);
   assert.equal(primero.estado, 200);
   assert.equal(segundo.estado, 200);
   assert.equal(segundo.cuerpo.producto.disponible, false);
@@ -349,7 +380,7 @@ test('un booleano suelto como cuerpo: 400 JSON_INVALIDO, lo rechaza el lector de
 
 function baseDeLaCategoria(estado = { 3: true, 4: false, 7: true }) {
   return poolQueAnota(async (sql, [categoria, disponible]) => {
-    if (categoria !== 'pizza') return { rows: [] };
+    if (categoria !== 'pizza') return { rows: [{ id: 10 }] };
     const cambiados = Object.keys(estado).map(Number).filter((id) => estado[id] !== disponible);
     for (const id of cambiados) estado[id] = disponible;
     return { rows: cambiados.map((id) => ({ id })) };
@@ -390,18 +421,39 @@ test('categoria entera con un token sin los roles del sistema: 403', () => conLa
   assert.equal(consultas.length, 0);
 }));
 
-for (const [rol, token] of [['cocina', cocina], ['recepcion', recepcion]]) {
-  test(`${rol} agota todas las pizzas: una consulta, los que cambiaron y un solo aviso`, () => conLaCategoria(async ({ base, consultas, avisados }) => {
-    const { estado, cuerpo } = await marcarCategoria(base, { categoria: 'pizza', disponible: false }, token);
-    assert.equal(estado, 200);
-    // La 4 ya estaba agotada: cambian la 3 y la 7.
-    assert.deepEqual(cuerpo, { categoria: 'pizza', disponible: false, cambiados: [3, 7] });
-    assert.deepEqual(avisados, [{ categoria: 'pizza', disponible: false, ids: [3, 7], por: rol }]);
-    assert.equal(consultas.length, 1);
-    assert.deepEqual(consultas[0].parametros, ['pizza', false]);
-    assert.match(consultas[0].sql, /UPDATE producto/);
-    assert.match(consultas[0].sql, /disponible <> \$2/);
-    assert.doesNotMatch(consultas[0].sql, /pedido/i);
+test('cocina agota todas las pizzas: una consulta, los que cambiaron y un solo aviso', () => conLaCategoria(async ({ base, consultas, avisados }) => {
+  const { estado, cuerpo } = await marcarCategoria(base, { categoria: 'pizza', disponible: false }, cocina);
+  assert.equal(estado, 200);
+  // La 4 ya estaba agotada: cambian la 3 y la 7.
+  assert.deepEqual(cuerpo, { categoria: 'pizza', disponible: false, cambiados: [3, 7] });
+  assert.deepEqual(avisados, [{ categoria: 'pizza', disponible: false, ids: [3, 7], por: 'cocina' }]);
+  assert.equal(consultas.length, 1);
+  assert.deepEqual(consultas[0].parametros, ['pizza', false]);
+  assert.match(consultas[0].sql, /UPDATE producto/);
+  assert.match(consultas[0].sql, /disponible <> \$2/);
+  assert.doesNotMatch(consultas[0].sql, /pedido/i);
+}));
+
+test('recepcion agota todas las bebidas: 200 y un aviso que dice que fue recepcion (D-76)', () => conLaCategoria(async ({ base, consultas, avisados }) => {
+  const { estado, cuerpo } = await marcarCategoria(base, { categoria: 'bebida', disponible: false }, recepcion);
+  assert.equal(estado, 200);
+  assert.deepEqual(cuerpo.cambiados, [10]);
+  assert.deepEqual(avisados, [{ categoria: 'bebida', disponible: false, ids: [10], por: 'recepcion' }]);
+  assert.deepEqual(consultas[0].parametros, ['bebida', false]);
+}));
+
+for (const [caso, token, categoria, mensaje] of [
+  ['recepcion no agota las pizzas', recepcion, 'pizza', /cocina/],
+  ['recepcion no repone los extras', recepcion, 'extra', /cocina/],
+  ['cocina no agota las bebidas', cocina, 'bebida', /recepcion/],
+]) {
+  test(`categoria entera: ${caso} (D-76): 403 ROL_SIN_PERMISO sin tocar la base`, () => conLaCategoria(async ({ base, consultas, avisados }) => {
+    const { estado, cuerpo } = await marcarCategoria(base, { categoria, disponible: false }, token);
+    assert.equal(estado, 403);
+    assert.equal(cuerpo.error.codigo, 'ROL_SIN_PERMISO');
+    assert.match(cuerpo.error.mensaje, mensaje);
+    assert.equal(consultas.length, 0);
+    assert.equal(avisados.length, 0);
   }));
 }
 
@@ -413,7 +465,7 @@ test('reponer todas: 200 y avisa con las que vuelven', () => conLaCategoria(asyn
 
 test('si no cambia nada, 200 sin aviso (dos toques seguidos no repiten el aviso)', () => conLaCategoria(async ({ base, avisados }) => {
   await marcarCategoria(base, { categoria: 'pizza', disponible: false }, cocina);
-  const segundo = await marcarCategoria(base, { categoria: 'pizza', disponible: false }, recepcion);
+  const segundo = await marcarCategoria(base, { categoria: 'pizza', disponible: false }, cocina);
   assert.equal(segundo.estado, 200);
   assert.deepEqual(segundo.cuerpo.cambiados, []);
   assert.equal(avisados.length, 1);

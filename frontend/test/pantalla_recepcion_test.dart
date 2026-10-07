@@ -965,36 +965,48 @@ void main() {
     Finder agotadaEnLaFila(String bebida) =>
         find.descendant(of: find.widgetWithText(FilaBebida, bebida), matching: find.text('Agotada'));
 
-    testWidgets('cocina agota una bebida: la venta la apaga sin empezar de nuevo, y un aviso lo dice', (t) async {
+    /// Abre el modal de la pizza, mira si el sabor dice *Agotada* y lo cierra.
+    Future<bool> agotadaEnElModal(WidgetTester t, String sabor) async {
+      await tocarClave(t, 'agregar-pizza');
+      final tarjeta = find.byKey(Key('sabor-$sabor'));
+      final grilla = find.descendant(of: find.byKey(const Key('grilla-sabores')), matching: find.byType(Scrollable)).first;
+      await t.scrollUntilVisible(tarjeta, 150, scrollable: grilla);
+      final agotada = find.descendant(of: tarjeta, matching: find.text('Agotada')).evaluate().isNotEmpty;
+      await tocarClave(t, 'cerrar-modal');
+      return agotada;
+    }
+
+    // Las pizzas las agota y repone cocina; las bebidas, recepción (D-76).
+    testWidgets('cocina agota una pizza: la venta la apaga sin empezar de nuevo, y un aviso lo dice', (t) async {
       await abrir(t);
       await escribirCliente(t, nombre: 'Ana Prueba');
-      canal.disponibles.add(aviso('Soda 2 L', disponible: false));
+      canal.disponibles.add(aviso('Peperoni', disponible: false));
       await t.pumpAndSettle();
-      expect(agotadaEnLaFila('Soda 2 L'), findsOneWidget);
-      expect(find.text('Cocina marcó agotado: Soda 2 L'), findsOneWidget);
+      expect(find.text('Cocina marcó agotado: Peperoni'), findsOneWidget);
+      expect(await agotadaEnElModal(t, 'Peperoni'), isTrue);
       // La venta a medio armar sigue ahí: la carta cambió en el lugar.
       expect(t.widget<TextField>(find.byKey(const Key('cliente-nombre'))).controller!.text, 'Ana Prueba');
-      expect(t.widget<IconButton>(find.byKey(Key('bebida-${de('Soda 2 L').id}-mas'))).onPressed, isNull);
     });
 
     testWidgets('cocina la repone: vuelve a ofrecerse, y el aviso lo dice', (t) async {
       await abrir(t);
-      canal.disponibles.add(aviso('Soda 2 L', disponible: false));
+      canal.disponibles.add(aviso('Peperoni', disponible: false));
       await t.pumpAndSettle();
-      canal.disponibles.add(aviso('Soda 2 L', disponible: true));
+      canal.disponibles.add(aviso('Peperoni', disponible: true));
       await t.pumpAndSettle();
-      expect(agotadaEnLaFila('Soda 2 L'), findsNothing);
       // Los avisos van en fila: el de la reposición llega cuando se cierra el anterior.
       await t.pump(const Duration(seconds: 7));
       await t.pumpAndSettle();
-      expect(find.text('Cocina volvió a ofrecer: Soda 2 L'), findsOneWidget);
+      expect(find.text('Cocina volvió a ofrecer: Peperoni'), findsOneWidget);
+      expect(await agotadaEnElModal(t, 'Peperoni'), isFalse);
     });
 
-    testWidgets('si lo marcó recepción, se apaga igual, sin aviso', (t) async {
+    testWidgets('una bebida que agota otra pantalla de recepción se apaga igual, sin aviso', (t) async {
       await abrir(t);
       canal.disponibles.add(aviso('Soda 2 L', disponible: false, por: 'recepcion'));
       await t.pumpAndSettle();
       expect(agotadaEnLaFila('Soda 2 L'), findsOneWidget);
+      expect(t.widget<IconButton>(find.byKey(Key('bebida-${de('Soda 2 L').id}-mas'))).onPressed, isNull);
       expect(find.byKey(const Key('aviso-disponibilidad')), findsNothing);
     });
 
@@ -1004,7 +1016,7 @@ void main() {
       await agregarPizza(t, 'Salame');
       final gaseosa = 'bebida-${de('Soda 2 L').id}';
       await tocarClave(t, '$gaseosa-mas');
-      canal.disponibles.add(aviso('Soda 2 L', disponible: false));
+      canal.disponibles.add(aviso('Soda 2 L', disponible: false, por: 'recepcion'));
       await t.pumpAndSettle();
       expect(agotadaEnLaFila('Soda 2 L'), findsOneWidget);
       await tocarClave(t, 'confirmar-venta');
@@ -1048,6 +1060,11 @@ void main() {
       await abrir(t);
       await tocarClave(t, 'boton-carta');
       expect(find.byKey(const Key('panel-carta')), findsOneWidget);
+      // Solo las bebidas: las pizzas y los extras los agota y repone cocina (D-76).
+      expect(find.text('Bebidas'), findsOneWidget);
+      expect(find.text('Pizzas'), findsNothing);
+      expect(find.text('Extras'), findsNothing);
+      expect(find.byKey(Key('disponible-${de('Peperoni').id}')), findsNothing);
       final id = de('Soda 2 L').id;
       expect(texto(t, 'estado-$id'), 'Disponible');
       await t.tap(find.byKey(Key('disponible-$id')));
@@ -1131,6 +1148,8 @@ void main() {
       expect(find.text('Cocina marcó agotadas todas las pizzas'), findsOneWidget);
       expect(find.byKey(const Key('aviso-disponibilidad')), findsNothing, reason: 'no uno por pizza');
       expect(find.byKey(const Key('sin-pizzas')), findsOneWidget);
+      // La banda dice quién las repone (D-76): recepción no puede.
+      expect(find.text('No quedan pizzas: las repone cocina. Solo se venden bebidas, con «Vender bebidas».'), findsOneWidget);
       expect(t.widget<OutlinedButton>(find.byKey(const Key('agregar-pizza'))).onPressed, isNull);
       // Las bebidas se siguen vendiendo.
       expect(t.widget<OutlinedButton>(find.byKey(const Key('vender-bebidas'))).onPressed, isNotNull);
@@ -1146,19 +1165,31 @@ void main() {
       expect(t.widget<OutlinedButton>(find.byKey(const Key('agregar-pizza'))).onPressed, isNotNull);
     });
 
-    testWidgets('desde el panel de recepción también se agotan todas, con confirmación', (t) async {
+    testWidgets('el panel de recepción agota todas las bebidas, con confirmación, y no ofrece las pizzas (D-76)', (t) async {
       await abrir(t);
       await tocarClave(t, 'boton-carta');
-      await t.tap(find.byKey(const Key('categoria-pizza')));
+      expect(find.byKey(const Key('categoria-pizza')), findsNothing, reason: 'las pizzas las repone cocina');
+      expect(find.byKey(const Key('categoria-extra')), findsNothing);
+      await t.tap(find.byKey(const Key('categoria-bebida')));
       await t.pumpAndSettle();
+      expect(find.text('¿Agotar todas las bebidas?'), findsOneWidget);
       await t.tap(find.byKey(const Key('confirmar-categoria-si')));
       await t.pumpAndSettle();
-      expect(marcadas, [(Categoria.pizza, false)]);
+      expect(marcadas, [(Categoria.bebida, false)]);
       await t.tap(find.byTooltip('Cerrar'));
       await t.pumpAndSettle();
-      expect(find.byKey(const Key('sin-pizzas')), findsOneWidget);
+      // Las bebidas se apagan en la venta; las pizzas siguen.
+      expect(t.widget<IconButton>(find.byKey(Key('bebida-${de('Soda 2 L').id}-mas'))).onPressed, isNull);
+      expect(find.byKey(const Key('sin-pizzas')), findsNothing);
+      expect(t.widget<OutlinedButton>(find.byKey(const Key('agregar-pizza'))).onPressed, isNotNull);
       // El aviso de esta misma marca, que llega después, no repite nada.
-      canal.categorias.add(aviso(disponible: false, por: 'recepcion'));
+      canal.categorias.add({
+        'categoria': 'bebida',
+        'disponible': false,
+        'ids': [for (final p in carta.bebidas) p.id],
+        'por': 'recepcion',
+        'fechaHora': '2026-10-04T20:00:00.000Z',
+      });
       await t.pumpAndSettle();
       expect(find.byKey(const Key('aviso-categoria')), findsNothing);
     });

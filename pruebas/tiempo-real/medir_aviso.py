@@ -4,8 +4,8 @@
 Obtiene los tokens de recepcion.demo y cocina.demo en Keycloak y lanza medir-aviso.js, que
 crea pedidos, mide del envio de la venta al aviso en cocina (el "menos de 2 segundos" del
 E2), del cambio de estado al aviso en recepcion, de lo agregado al aviso en cocina y de la
-marca de una bebida agotada o disponible al aviso en recepcion (CA-13.1, tarjeta 08), y al
-final cierra lo que creo y deja la bebida como estaba. El reporte queda en docs/pruebas/reportes/tiempo-real.txt, con la
+marca de un extra agotado o disponible, que hace cocina, al aviso en recepcion (CA-13.1,
+tarjeta 08, D-76), y al final cierra lo que creo y deja el extra como estaba. El reporte queda en docs/pruebas/reportes/tiempo-real.txt, con la
 fecha y el entorno al principio (tarjeta 10, D-57).
 
 Uso, con el entorno levantado (necesita Node y el backend con sus dependencias instaladas):

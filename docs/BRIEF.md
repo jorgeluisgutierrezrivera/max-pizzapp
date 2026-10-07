@@ -44,8 +44,8 @@ Regla del módulo: **máximo 2 roles diferenciados**. Decisión:
 
 | Rol | MoSCoW | Funciones | Dispositivo |
 |---|---|---|---|
-| **Recepción** | **Must** | Crea pedidos desde la carta, ve el estado en vivo, cancela mientras está pendiente, marca entregado, marca un producto agotado o disponible (RF-13) | Tablet / PC |
-| **Cocina** | **Must** | Ve los pedidos entrantes en vivo (orden de llegada), avanza estado, marca "listo", marca un producto agotado o disponible (RF-13) | Tablet / monitor |
+| **Recepción** | **Must** | Crea pedidos desde la carta, ve el estado en vivo, cancela mientras está pendiente, marca entregado, marca una bebida agotada o disponible (RF-13) | Tablet / PC |
+| **Cocina** | **Must** | Ve los pedidos entrantes en vivo (orden de llegada), avanza estado, marca "listo", marca una pizza o un extra agotado o disponible (RF-13) | Tablet / monitor |
 
 El sistema tiene **exactamente dos roles**: Recepción y Cocina. El rol de administrador
 —gestión de la carta e historial del día— queda **declarado fuera de alcance** y pasa a
@@ -192,7 +192,7 @@ Resumen operativo (los Must son exactamente el flujo que se demuestra en la defe
 | RF-10 | Could | Ver el tiempo de espera de cada pedido en la cola de cocina |
 | RF-11 | Should | Agregar observación al pedido |
 | RF-12 | Could | Ver comprobante del pedido |
-| RF-13 | Should | Marcar un producto como agotado (recepción o cocina) |
+| RF-13 | Should | Marcar un producto como agotado: cada rol lo que maneja, cocina las pizzas y los extras, recepción las bebidas (D-76) |
 | RF-14 | Should | Agregar productos a un pedido ya enviado (recepción) |
 
 Must have = 7/14 (50 %, ≤ 60 %); el reparto completo es 7 Must · 5 Should · 2 Could. Los
@@ -211,8 +211,10 @@ día exigirían un tercer rol diferenciado, por encima del máximo admitido; se 
 capacidades fuera de alcance y quedan como trabajo futuro. La necesidad concreta que
 justificaba la gestión de la carta —que un producto agotado deje de ofrecerse— se resuelve
 con **RF-13**, que ejecutan los dos roles existentes desde su propia pantalla: el panel
-*Carta* de la barra, con la ruta de la disponibilidad y el aviso en vivo (tarjeta 08). Solo
-cambia la disponibilidad; precios, nombres y altas siguen fuera de alcance.
+*Carta* de la barra, con la ruta de la disponibilidad y el aviso en vivo (tarjeta 08). Cada
+rol marca lo que maneja (D-76): cocina, las pizzas y los extras; recepción, las bebidas, que
+tiene en el mostrador. El servidor rechaza lo del otro rol. Solo cambia la disponibilidad;
+precios, nombres y altas siguen fuera de alcance.
 
 ---
 
@@ -235,12 +237,16 @@ GET    /api/v1/pedidos/:id                    Pedido con sus líneas
 POST   /api/v1/pedidos/:id/lineas             Agrega productos a un pedido que no se entregó
 PATCH  /api/v1/pedidos/:id/estado             Avanza estado según rol autorizado
 POST   /api/v1/pedidos/:id/cancelacion        Cancela con motivo (solo si está pendiente)
-PATCH  /api/v1/productos/:id/disponibilidad   Marca un producto agotado o disponible
-                                              (recepción y cocina, RF-13)
+PATCH  /api/v1/productos/:id/disponibilidad   Marca un producto agotado o disponible (RF-13):
+                                              cada rol lo suyo, cocina las pizzas y los extras,
+                                              recepción las bebidas (D-76)
+PATCH  /api/v1/productos/disponibilidad       Agota o repone una categoría entera (D-70),
+                                              con la misma regla
 GET    /api/v1/salud                          Estado del servicio
 ```
 Además, canal en tiempo real por **Socket.IO** sobre el mismo origen: eventos
-`pedido:nuevo`, `pedido:estado`, `pedido:actualizado` y `producto:disponibilidad` (RF-13).
+`pedido:nuevo`, `pedido:estado`, `pedido:actualizado`, `producto:disponibilidad` y
+`categoria:disponibilidad` (RF-13).
 Todas las rutas (salvo salud)
 exigen token válido de Keycloak: el servidor valida la firma del token y **los permisos que
 exige cada ruta**, que no son los mismos en todas. Cuando la operación **cambia el estado de

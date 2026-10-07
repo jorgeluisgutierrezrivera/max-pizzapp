@@ -50,14 +50,16 @@ class BotonCarta extends StatelessWidget {
 
 /// Abre el panel *Carta* (RF-13, D-68): una ventana en pantallas anchas y una hoja desde
 /// abajo en el celular. Recibe la carta que la pantalla ya tiene, la MISMA: así lo que se
-/// marca aquí se ve en la venta sin esperar el aviso.
+/// marca aquí se ve en la venta sin esperar el aviso. [categorias] son las del rol (D-76).
 Future<void> mostrarPanelDeCarta(
   BuildContext context, {
   required Future<Carta> carta,
+  required Set<Categoria> categorias,
   required MarcarDisponibilidad marcar,
   MarcarCategoria? marcarCategoria,
 }) {
   final tamano = MediaQuery.sizeOf(context);
+  final panel = PanelDeCarta(carta: carta, categorias: categorias, marcar: marcar, marcarCategoria: marcarCategoria);
   if (tamano.width >= anchoPanelEnVentana) {
     return showDialog<void>(
       context: context,
@@ -65,7 +67,7 @@ Future<void> mostrarPanelDeCarta(
         insetPadding: const EdgeInsets.all(24),
         child: ConstrainedBox(
           constraints: BoxConstraints(maxWidth: 520, maxHeight: tamano.height * 0.85),
-          child: PanelDeCarta(carta: carta, marcar: marcar, marcarCategoria: marcarCategoria),
+          child: panel,
         ),
       ),
     );
@@ -74,10 +76,7 @@ Future<void> mostrarPanelDeCarta(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
-    builder: (context) => FractionallySizedBox(
-      heightFactor: 0.9,
-      child: PanelDeCarta(carta: carta, marcar: marcar, marcarCategoria: marcarCategoria),
-    ),
+    builder: (context) => FractionallySizedBox(heightFactor: 0.9, child: panel),
   );
 }
 
@@ -89,10 +88,21 @@ Future<void> mostrarPanelDeCarta(
 ///
 /// Al lado del título de cada categoría, *Agotar todas* o *Reponer todas* (D-71): por ejemplo,
 /// cuando se acaba la masa. Ese sí pide confirmación, porque cambia toda una parte de la carta.
+///
+/// Solo muestra las [categorias] del rol (D-76): cocina, las pizzas y los extras; recepción,
+/// las bebidas. Lo ajeno no se ve, porque ese rol no lo maneja; el servidor tampoco lo
+/// dejaría cambiar.
 class PanelDeCarta extends StatefulWidget {
-  const PanelDeCarta({super.key, required this.carta, required this.marcar, this.marcarCategoria});
+  const PanelDeCarta({
+    super.key,
+    required this.carta,
+    required this.categorias,
+    required this.marcar,
+    this.marcarCategoria,
+  });
 
   final Future<Carta> carta;
+  final Set<Categoria> categorias;
   final MarcarDisponibilidad marcar;
 
   /// Sin ella, el panel no ofrece agotar una categoría entera.
@@ -242,7 +252,7 @@ class _PanelDeCartaState extends State<PanelDeCarta> {
                         ('Bebidas', Categoria.bebida, carta.bebidas),
                         ('Extras', Categoria.extra, carta.extras),
                       ])
-                        if (productos.isNotEmpty) ...[
+                        if (widget.categorias.contains(categoria) && productos.isNotEmpty) ...[
                           Padding(
                             padding: const EdgeInsets.fromLTRB(20, 12, 12, 0),
                             child: Row(

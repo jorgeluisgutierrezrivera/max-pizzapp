@@ -7,10 +7,10 @@
 //   3. Lo agregado: desde que recepcion le agrega una pizza al pedido que cocina ya esta
 //      preparando hasta que cocina recibe el pedido con la pizza nueva (D-37, RF-14). Las
 //      pruebas del backend avisaban directo al canal y no vieron que este aviso no salia.
-//   4. La disponibilidad: desde que cocina marca una bebida agotada (o la repone) hasta que
-//      la venta de recepcion recibe el aviso (RF-13, CA-13.1, tarjeta 08). Alterna agotada y
-//      disponible, y al terminar la deja como estaba. Usa una bebida, que no toca la cola de
-//      cocina ("Soda 2 L"; otra con PRODUCTO=...).
+//   4. La disponibilidad: desde que cocina marca un extra agotado (o lo repone) hasta que
+//      la venta de recepcion recibe el aviso (RF-13, CA-13.1, tarjeta 08). Alterna agotado y
+//      disponible, y al terminar lo deja como estaba. Usa un extra, que es de cocina (D-76) y
+//      ficticio, y no toca la cola ("Extra queso"; otro con PRODUCTO=...).
 //
 // No se corre solo: lo lanza medir_aviso.py, que obtiene los tokens reales de Keycloak y
 // los pasa por el entorno (TOKEN_RECEPCION, TOKEN_COCINA). Nunca se imprimen.
@@ -30,7 +30,7 @@ const ORIGEN = new URL(API).origin;
 // 30 repeticiones, las que pide el RNF-01 (tarjeta 10).
 const VECES = Number(process.env.VECES || 30);
 const LIMITE_MS = 2000;
-const BEBIDA = process.env.PRODUCTO || 'Soda 2 L';
+const EXTRA = process.env.PRODUCTO || 'Extra queso';
 
 async function llamar(metodo, ruta, token, cuerpo) {
   const r = await fetch(API + ruta, {
@@ -78,8 +78,8 @@ async function main() {
 
   const { cuerpo: carta } = await llamar('GET', '/productos', recepcion);
   const peperoni = carta.productos.find((p) => p.nombre === 'Peperoni');
-  const bebida = carta.productos.find((p) => p.nombre === BEBIDA && p.categoria === 'bebida');
-  if (!bebida) throw new Error(`no hay una bebida que se llame ${BEBIDA}`);
+  const extra = carta.productos.find((p) => p.nombre === EXTRA && p.categoria === 'extra');
+  if (!extra) throw new Error(`no hay un extra que se llame ${EXTRA}`);
 
   const enCocina = conectar(cocina, 'pedido:nuevo', (p) => p.id);
   const enRecepcion = conectar(recepcion, 'pedido:estado', (a) => `${a.id}:${a.nuevo}`);
@@ -93,8 +93,8 @@ async function main() {
   const agregados = [];
   const disponibilidades = [];
   const creados = [];
-  // Se empieza con la bebida disponible, para que cada marca cambie algo y se avise.
-  if (!bebida.disponible) await llamar('PATCH', `/productos/${bebida.id}/disponibilidad`, cocina, { disponible: true });
+  // Se empieza con el extra disponible, para que cada marca cambie algo y se avise.
+  if (!extra.disponible) await llamar('PATCH', `/productos/${extra.id}/disponibilidad`, cocina, { disponible: true });
   try {
     for (let i = 0; i < VECES; i += 1) {
       const inicio = performance.now();
@@ -131,18 +131,18 @@ async function main() {
 
       // Alterna: agotada en las vueltas pares, disponible en las impares.
       const disponible = i % 2 === 1;
-      const clave = `${bebida.id}:${disponible}`;
+      const clave = `${extra.id}:${disponible}`;
       cartaEnRecepcion.llegadas.delete(clave);
       const inicioDisponibilidad = performance.now();
-      const marca = await llamar('PATCH', `/productos/${bebida.id}/disponibilidad`, cocina, { disponible });
-      if (marca.estado !== 200) throw new Error(`marcar la bebida respondio ${marca.estado}: ${JSON.stringify(marca.cuerpo)}`);
+      const marca = await llamar('PATCH', `/productos/${extra.id}/disponibilidad`, cocina, { disponible });
+      if (marca.estado !== 200) throw new Error(`marcar el extra respondio ${marca.estado}: ${JSON.stringify(marca.cuerpo)}`);
       const llegadaDisponibilidad = await llegadaDe(cartaEnRecepcion.llegadas, clave);
-      if (llegadaDisponibilidad === null) throw new Error(`recepcion no recibio la disponibilidad de ${BEBIDA}`);
+      if (llegadaDisponibilidad === null) throw new Error(`recepcion no recibio la disponibilidad de ${EXTRA}`);
       disponibilidades.push(llegadaDisponibilidad - inicioDisponibilidad);
     }
   } finally {
-    // La bebida, como estaba al empezar.
-    await llamar('PATCH', `/productos/${bebida.id}/disponibilidad`, cocina, { disponible: bebida.disponible });
+    // El extra, como estaba al empezar.
+    await llamar('PATCH', `/productos/${extra.id}/disponibilidad`, cocina, { disponible: extra.disponible });
     for (const id of creados) {
       const { estado } = await llamar('POST', `/pedidos/${id}/cancelacion`, recepcion, { motivo: 'Medicion del aviso' });
       if (estado !== 200) {
@@ -162,7 +162,7 @@ async function main() {
   const peorCambio = resumen('cambio de estado -> recepcion', cambios);
   const peorAgregado = resumen('lo agregado -> cocina', agregados);
   const peorDisponibilidad = resumen('disponibilidad -> recepcion', disponibilidades);
-  console.log(`Pedidos de la medicion cerrados: ${creados.length} · ${BEBIDA}, como estaba al empezar`);
+  console.log(`Pedidos de la medicion cerrados: ${creados.length} · ${EXTRA}, como estaba al empezar`);
   const bien = [peorNuevo, peorCambio, peorAgregado, peorDisponibilidad].every((ms) => ms < LIMITE_MS);
   console.log(bien ? `TODO BAJO ${LIMITE_MS} ms` : `HAY MEDICIONES DE ${LIMITE_MS} ms O MAS`);
   process.exit(bien ? 0 : 1);

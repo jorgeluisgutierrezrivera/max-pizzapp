@@ -173,7 +173,7 @@ class Escena {
 
   /// La carta del panel (RF-13), lo que se marcó y cuántas veces se leyó.
   final productos = [
-    for (final (id, nombre, categoria) in [(1, 'Peperoni', 'pizza'), (2, 'Gaseosa 2 L', 'bebida'), (3, 'Extra queso', 'extra')])
+    for (final (id, nombre, categoria) in [(1, 'Peperoni', 'pizza'), (2, 'Soda 2 L', 'bebida'), (3, 'Extra queso', 'extra')])
       Producto.desdeJson({
         'id': id,
         'nombre': nombre,
@@ -725,12 +725,15 @@ void main() {
 
     String estado(WidgetTester t, int id) => t.widget<Text>(find.byKey(Key('estado-$id'))).data!;
 
-    testWidgets('abre la carta por categoría, y cocina marca una pizza agotada', (t) async {
+    testWidgets('abre lo de cocina por categoría, sin las bebidas, y marca una pizza agotada', (t) async {
       final e = await abrirCarta(t);
       expect(e.lecturasDeCarta, 1);
       expect(find.text('Pizzas'), findsOneWidget);
-      expect(find.text('Bebidas'), findsOneWidget);
       expect(find.text('Extras'), findsOneWidget);
+      // Las bebidas las agota y repone recepción (D-76): cocina no las ve en su panel.
+      expect(find.text('Bebidas'), findsNothing);
+      expect(find.byKey(const Key('disponible-2')), findsNothing);
+      expect(find.byKey(const Key('categoria-bebida')), findsNothing);
       expect(estado(t, 1), 'Disponible');
       await t.tap(find.byKey(const Key('disponible-1')));
       await t.pumpAndSettle();
@@ -840,7 +843,7 @@ void main() {
       expect(e.categoriasMarcadas, [(Categoria.pizza, false)]);
       expect(e.marcados, isEmpty, reason: 'una sola llamada, no una por pizza');
       expect(estado(t, 1), 'Agotado');
-      expect(estado(t, 2), 'Disponible', reason: 'las bebidas siguen');
+      expect(estado(t, 3), 'Disponible', reason: 'los extras siguen');
       expect(boton(t, 'pizza'), 'Reponer todas');
       // Y se reponen igual.
       await t.tap(find.byKey(const Key('categoria-pizza')));

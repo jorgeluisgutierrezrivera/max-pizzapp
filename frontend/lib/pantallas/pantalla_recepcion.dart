@@ -257,6 +257,7 @@ class _PantallaRecepcionState extends State<PantallaRecepcion> with SingleTicker
   void _abrirCarta() => mostrarPanelDeCarta(
     context,
     carta: _carta,
+    categorias: categoriasDeRecepcion,
     marcar: widget.marcarDisponibilidad,
     marcarCategoria: widget.marcarCategoria,
   );

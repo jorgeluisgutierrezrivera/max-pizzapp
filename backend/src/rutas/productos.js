@@ -7,7 +7,7 @@ const { avisar } = require('../tiempo-real');
 //
 //   GET   /api/v1/productos?categoria=pizza&disponible=true   leerla (los dos roles)
 //   PATCH /api/v1/productos/:id/disponibilidad                marcarlo agotado o disponible
-//                                                             (los dos roles, RF-13, D-66)
+//                                                             (RF-13, D-66; cada rol lo suyo, D-76)
 //   PATCH /api/v1/productos/disponibilidad                    agotar o reponer una categoria
 //                                                             entera: se acabo la masa (D-70)
 //
@@ -17,11 +17,34 @@ const { avisar } = require('../tiempo-real');
 //
 // La ruta de la disponibilidad cambia SOLO eso: precios, nombres y altas son del rol
 // administrador, fuera de alcance (D-13).
+//
+// Cada rol agota y repone solo lo que maneja (D-76): las pizzas, los extras y lo que sale de
+// la cocina, cocina; las bebidas, recepcion, que las tiene en el mostrador. Lo ajeno responde
+// 403 sin cambiar nada. Leer la carta es para los dos: recepcion vende lo que cocina tiene.
 
 // Los mismos valores que el tipo categoria_producto de la base. «extra» es un agregado que
 // se vende colgado de una pizza (D-28).
 const CATEGORIAS = ['pizza', 'entrada', 'bebida', 'postre', 'extra'];
 const FILTROS = ['categoria', 'disponible'];
+
+// Que agota y repone cada rol (D-76). Entradas y postres hoy no tienen productos: salen de la
+// cocina, asi que son de cocina.
+const CATEGORIAS_DEL_ROL = {
+  cocina: ['pizza', 'extra', 'entrada', 'postre'],
+  recepcion: ['bebida'],
+};
+
+// Las categorias que puede marcar quien llama, segun sus roles.
+function categoriasDe(roles) {
+  return CATEGORIAS.filter((c) => roles.some((rol) => (CATEGORIAS_DEL_ROL[rol] || []).includes(c)));
+}
+
+function deOtroRol(categoria) {
+  const mensaje = categoria === 'bebida'
+    ? 'Las bebidas las agota y repone recepcion.'
+    : 'Las pizzas y los extras los agota y repone cocina.';
+  return new ErrorApi(403, 'ROL_SIN_PERMISO', mensaje, { categoria });
+}
 
 // Una sola consulta, siempre con el mismo texto. Los filtros viajan como parametros y un
 // filtro ausente llega como NULL, que desactiva su condicion: no se arma SQL concatenando
@@ -38,16 +61,24 @@ const SQL_CARTA = `
 // Marca el producto y devuelve tambien como estaba, en una sola consulta: la fila se bloquea
 // al leerla (FOR UPDATE), asi dos marcas a la vez no se pisan y la segunda ve la primera.
 // Sin el valor anterior no se sabria si hay algo que avisar.
+//
+// Solo cambia si la categoria es de quien llama ($3, D-76). Las tres respuestas posibles:
+// ninguna fila (no existe: 404), una fila sin "id" (es de otro rol: 403, no cambio nada) o
+// la fila actualizada.
 const SQL_DISPONIBILIDAD = `
   WITH anterior AS (
-    SELECT id, disponible FROM producto WHERE id = $1 FOR UPDATE
+    SELECT id, disponible, categoria FROM producto WHERE id = $1 FOR UPDATE
+  ), cambio AS (
+    UPDATE producto AS p
+       SET disponible = $2
+      FROM anterior
+     WHERE p.id = anterior.id
+       AND anterior.categoria = ANY($3::categoria_producto[])
+    RETURNING p.id, p.nombre, p.categoria, p.precio, p.descripcion, p.imagen, p.disponible,
+              p.solo_entera
   )
-  UPDATE producto AS p
-     SET disponible = $2
-    FROM anterior
-   WHERE p.id = anterior.id
-  RETURNING p.id, p.nombre, p.categoria, p.precio, p.descripcion, p.imagen, p.disponible,
-            p.solo_entera, anterior.disponible AS disponible_antes`;
+  SELECT anterior.categoria AS categoria_actual, anterior.disponible AS disponible_antes, cambio.*
+    FROM anterior LEFT JOIN cambio ON true`;
 
 // Agota o repone una categoria entera (D-70): una sola consulta, que cambia solo lo que hacia
 // falta y devuelve que cambio. Sin cambios, no hay nada que avisar.
@@ -144,6 +175,8 @@ function rutasProductos({ pool, autenticar, avisos }) {
   // porque esta tiene un tramo menos. Un solo aviso, con todos los que cambiaron.
   rutas.patch('/productos/disponibilidad', autenticar, exigirRol(...ROLES_DEL_SISTEMA), async (req, res) => {
     const { categoria, disponible } = leerCambioDeCategoria(req.body);
+    // Lo ajeno se rechaza antes de tocar la base (D-76).
+    if (!categoriasDe(req.usuario.roles).includes(categoria)) throw deOtroRol(categoria);
     const { rows } = await pool.query(SQL_DISPONIBILIDAD_DE_CATEGORIA, [categoria, disponible]);
     const ids = rows.map((fila) => fila.id).sort((a, b) => a - b);
     res.json({ categoria, disponible, cambiados: ids });
@@ -159,10 +192,12 @@ function rutasProductos({ pool, autenticar, avisos }) {
   rutas.patch('/productos/:id/disponibilidad', autenticar, exigirRol(...ROLES_DEL_SISTEMA), async (req, res) => {
     const id = leerId(req.params.id);
     const disponible = leerDisponibilidad(req.body);
-    const { rows } = await pool.query(SQL_DISPONIBILIDAD, [id, disponible]);
+    const { rows } = await pool.query(SQL_DISPONIBILIDAD, [id, disponible, categoriasDe(req.usuario.roles)]);
     if (rows.length === 0) {
       throw new ErrorApi(404, 'PRODUCTO_NO_ENCONTRADO', 'Ese producto no esta en la carta.');
     }
+    // El producto existe pero es de otro rol: la consulta no lo cambio (D-76).
+    if (rows[0].id === null) throw deOtroRol(rows[0].categoria_actual);
     const producto = aProducto(rows[0]);
     res.json({ producto });
     if (rows[0].disponible_antes !== disponible) {
@@ -175,4 +210,4 @@ function rutasProductos({ pool, autenticar, avisos }) {
   return rutas;
 }
 
-module.exports = { rutasProductos, CATEGORIAS };
+module.exports = { rutasProductos, CATEGORIAS, CATEGORIAS_DEL_ROL };

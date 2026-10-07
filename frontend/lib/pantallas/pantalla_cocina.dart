@@ -252,6 +252,7 @@ class _PantallaCocinaState extends State<PantallaCocina> {
     mostrarPanelDeCarta(
       context,
       carta: carta,
+      categorias: categoriasDeCocina,
       marcar: widget.marcarDisponibilidad,
       marcarCategoria: widget.marcarCategoria,
     );

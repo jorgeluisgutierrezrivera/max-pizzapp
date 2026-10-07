@@ -17,6 +17,12 @@ String todosLos(Categoria categoria) => switch (categoria) {
 /// Si la palabra de la categoría es femenina: "agotadas" o "agotados".
 bool esFemenina(Categoria categoria) => categoria != Categoria.postre && categoria != Categoria.extra;
 
+/// Lo que agota y repone cada rol en el panel *Carta* (D-76), lo mismo que comprueba el
+/// servidor: lo que sale de la cocina, cocina; las bebidas, recepción, que las tiene en el
+/// mostrador.
+const categoriasDeCocina = {Categoria.pizza, Categoria.extra, Categoria.entrada, Categoria.postre};
+const categoriasDeRecepcion = {Categoria.bebida};
+
 /// Los precios se guardan en CENTAVOS, como enteros: sumar decimales en coma flotante
 /// termina, tarde o temprano, en un total de 79,99999. La API los manda como números con
 /// dos decimales; aquí se convierten una sola vez.

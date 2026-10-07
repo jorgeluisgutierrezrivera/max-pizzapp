@@ -43,17 +43,19 @@ A un pedido ya enviado se le agrega según su estado:
 | Listo | sí | no |
 | Entregado o cancelado | no | no |
 
-**Un producto agotado** (RF-13) se marca desde el botón *Carta* de la barra, en recepción y
-en cocina (también en el APK): un interruptor por producto. En menos de 2 segundos deja de
-ofrecerse en la venta de recepción, sin recargar, y si lo marcó cocina, recepción ve un aviso.
-Los pedidos que ya lo llevaban no cambian, y el servidor rechaza vender un agotado (409).
-Se repone con otro toque.
+**Un producto agotado** (RF-13) se marca desde el botón *Carta* de la barra: un interruptor
+por producto. **Cada rol marca lo que maneja:** cocina, las pizzas y los extras (también en
+el APK); recepción, las bebidas, que tiene en el mostrador. El panel muestra solo eso, y el
+servidor rechaza lo del otro rol (403). En menos de 2 segundos el producto deja de ofrecerse
+en la venta de recepción, sin recargar, y si lo marcó cocina, recepción ve un aviso. Los
+pedidos que ya lo llevaban no cambian, y el servidor rechaza vender un agotado (409). Se
+repone con otro toque.
 
-**Si se acaba la masa**, *Agotar todas*, al lado de *Pizzas* en el mismo panel, las marca de
-una vez, con confirmación: una sola consulta y un solo aviso. La venta de recepción muestra
-*"No quedan pizzas"* y deja de ofrecer *Agregar pizza*; las bebidas se siguen vendiendo. *Reponer
-todas* las vuelve a ofrecer. El sistema no cuenta existencias: eso es control de inventario,
-fuera de alcance.
+**Si se acaba la masa**, cocina toca *Agotar todas*, al lado de *Pizzas* en el mismo panel, y
+las marca de una vez, con confirmación: una sola consulta y un solo aviso. La venta de
+recepción muestra *"No quedan pizzas: las repone cocina"* y deja de ofrecer *Agregar pizza*;
+las bebidas se siguen vendiendo. *Reponer todas* las vuelve a ofrecer. El sistema no cuenta
+existencias: eso es control de inventario, fuera de alcance.
 
 El sistema tiene **dos roles**. La administración de la carta y el historial quedan fuera
 de alcance y se recogen como trabajo futuro.

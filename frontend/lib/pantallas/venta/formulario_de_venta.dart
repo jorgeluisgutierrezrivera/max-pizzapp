@@ -481,7 +481,7 @@ class _SeccionPizzas extends StatelessWidget {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              'No quedan pizzas. Solo se venden bebidas, con «Vender bebidas».',
+              'No quedan pizzas: las repone cocina. Solo se venden bebidas, con «Vender bebidas».',
               style: TextStyle(color: rojoLadrillo, fontWeight: FontWeight.w700),
             ),
           ),

@@ -125,9 +125,11 @@ paths:
       tags: [Carta]
       summary: Agotar o reponer una categoría entera
       description: |
-        Roles: recepcion o cocina (RF-13, D-70). Por ejemplo, cuando se acaba la masa: todas las
-        pizzas a la vez, en una sola consulta. Cambia solo los productos que hacían falta y, si
-        cambió alguno, el canal en vivo avisa `categoria:disponibilidad` una sola vez.
+        Roles: recepcion o cocina (RF-13, D-70), cada uno con lo suyo (D-76): cocina agota y
+        repone `pizza`, `extra`, `entrada` y `postre`; recepcion, `bebida`. Una categoría del
+        otro rol responde 403 sin tocar la base. Por ejemplo, cuando se acaba la masa: todas
+        las pizzas a la vez, en una sola consulta. Cambia solo los productos que hacían falta
+        y, si cambió alguno, el canal en vivo avisa `categoria:disponibilidad` una sola vez.
       requestBody:
         required: true
         content:
@@ -150,7 +152,7 @@ paths:
                     items: { type: integer }
         '400': { $ref: '#/components/responses/PeticionInvalida' }
         '401': { $ref: '#/components/responses/NoAutenticado' }
-        '403': { $ref: '#/components/responses/SinPermiso' }
+        '403': { $ref: '#/components/responses/DeOtroRol' }
         '503': { $ref: '#/components/responses/BaseNoDisponible' }
 
   /productos/{id}/disponibilidad:
@@ -158,7 +160,9 @@ paths:
       tags: [Carta]
       summary: Marcar un producto agotado o disponible
       description: |
-        Roles: recepcion o cocina (RF-13). Cambia solo la disponibilidad: precios, nombres y
+        Roles: recepcion o cocina (RF-13), cada uno con lo suyo (D-76): cocina marca las
+        pizzas, los extras, las entradas y los postres; recepcion, las bebidas. Un producto del
+        otro rol responde 403 y no cambia. Cambia solo la disponibilidad: precios, nombres y
         altas no se tocan desde aquí. Los pedidos que ya llevan el producto no cambian. Si el
         valor cambia, el canal en vivo avisa `producto:disponibilidad` a los dos roles; si ya
         estaba así, responde 200 y no avisa.
@@ -182,7 +186,7 @@ paths:
                   producto: { $ref: '#/components/schemas/Producto' }
         '400': { $ref: '#/components/responses/PeticionInvalida' }
         '401': { $ref: '#/components/responses/NoAutenticado' }
-        '403': { $ref: '#/components/responses/SinPermiso' }
+        '403': { $ref: '#/components/responses/DeOtroRol' }
         '404':
           description: '`PRODUCTO_NO_ENCONTRADO`.'
           content:
@@ -463,6 +467,18 @@ components:
           schema: { $ref: '#/components/schemas/Error' }
           example:
             error: { codigo: ROL_SIN_PERMISO, mensaje: Tu rol no permite esta operacion. }
+    DeOtroRol:
+      description: |
+        `ROL_SIN_PERMISO`: el token no tiene un rol del sistema, o la categoría es del otro rol
+        (D-76). En el segundo caso trae la `categoria` y no se cambió nada.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+          example:
+            error:
+              codigo: ROL_SIN_PERMISO
+              mensaje: Las bebidas las agota y repone recepcion.
+              categoria: bebida
     DemasiadasPeticiones:
       description: |
         Se pasó el límite de peticiones por minuto de esta IP: `DEMASIADAS_PETICIONES`. Puede

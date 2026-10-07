@@ -18,6 +18,10 @@ Contra el despliegue publico, con la contrasena de alla en el entorno:
 Un solo intento con la contrasena equivocada, y despues de pedir los tokens buenos: dos
 fallos en menos de un segundo bloquearian la cuenta 60 s (tarjeta 09). La contrasena y los
 tokens nunca se imprimen.
+
+Los 403 de la disponibilidad (cada rol, lo suyo: D-76) piden REPONER, no agotar: si se corriera
+por error contra un servidor sin esa regla, a lo sumo volveria a ofrecer algo, y nunca dejaria
+al local sin pizzas.
 """
 import importlib.util
 import json
@@ -68,6 +72,9 @@ if __name__ == '__main__':
     venta = {'paraLlevar': True, 'cliente': {'nombre': 'Ana Prueba', 'celular': '70000001'},
              'lineas': [{'productoId': 1, 'cantidad': 1}], 'totalEsperado': 1}
     grande = json.dumps({'relleno': 'x' * (150 * 1024)}).encode('utf-8')
+    productos = pedir('GET', '/productos', recepcion)[1]['productos']
+    una_pizza = next(p['id'] for p in productos if p['categoria'] == 'pizza')
+    una_bebida = next(p['id'] for p in productos if p['categoria'] == 'bebida')
     casos = [
         # (esperado, codigo esperado, caso, metodo, ruta, token, cuerpo, crudo, cabeceras)
         (401, 'TOKEN_AUSENTE', 'Sin token', 'GET', '/pedidos', None, None, None, None),
@@ -108,6 +115,15 @@ if __name__ == '__main__':
          '/productos/2147483647/disponibilidad', recepcion, {'disponible': False}, None, None),
         (400, 'DISPONIBILIDAD_INVALIDA', 'Agotar una categoria que no existe', 'PATCH',
          '/productos/disponibilidad', cocina, {'categoria': 'pasta', 'disponible': False}, None, None),
+        # Cada rol, lo suyo (D-76): lo del otro rol se rechaza sin tocar la carta.
+        (403, 'ROL_SIN_PERMISO', 'Recepcion intenta reponer una pizza', 'PATCH',
+         '/productos/%d/disponibilidad' % una_pizza, recepcion, {'disponible': True}, None, None),
+        (403, 'ROL_SIN_PERMISO', 'Cocina intenta reponer una bebida', 'PATCH',
+         '/productos/%d/disponibilidad' % una_bebida, cocina, {'disponible': True}, None, None),
+        (403, 'ROL_SIN_PERMISO', 'Recepcion intenta reponer todas las pizzas', 'PATCH',
+         '/productos/disponibilidad', recepcion, {'categoria': 'pizza', 'disponible': True}, None, None),
+        (403, 'ROL_SIN_PERMISO', 'Cocina intenta reponer todas las bebidas', 'PATCH',
+         '/productos/disponibilidad', cocina, {'categoria': 'bebida', 'disponible': True}, None, None),
     ]
 
     print('\n| Esperado | Caso | Peticion | Obtenido | Resultado |')
