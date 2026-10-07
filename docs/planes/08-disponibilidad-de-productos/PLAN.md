@@ -5,7 +5,8 @@
 
 - **Tarjeta:** 08 — Disponibilidad de productos (RF-13)
 - **Incremento:** tiempo real completo (cierra el incremento 3)
-- **Estado:** 🔨 **En curso** — aprobado el 2026-10-04, sin cambios
+- **Estado:** 🔨 **En curso** — aprobado el 2026-10-04. **Revisión del 7-oct (D-76) aprobada**
+  ese mismo día: cada rol agota y repone solo lo que maneja
 - **Entrada al tablero:** 2026-09-22, como la 08 del índice; la cancelación (RF-09) se adelantó
   a la 06 (D-33)
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
@@ -167,6 +168,48 @@ Falta **cómo se marca** y **cómo llega en vivo**.
   quedan pizzas. Solo se venden bebidas, con «Vender bebidas»."*, y *Agregar pizza* apagado.
   La vendedora no tiene que descubrirlo tocando.
 
+### D-76 · Cada rol agota y repone solo lo que maneja (revisión del 7-oct)
+
+- **El caso.** Lo aclaró el autor el 7-oct, con las bebidas reales (tarjeta 14):
+  - **las pizzas y sus ingredientes los maneja cocina.** Si hay, recepción vende; si no hay, no
+    vende, y no puede reponerlas, porque no sabe si se acabó la masa;
+  - **las bebidas las maneja recepción**, que las tiene en el mostrador y las entrega al
+    instante. Cocina no las toca.
+
+  Hasta hoy, con D-66, cualquiera de los dos roles agotaba o reponía cualquier producto.
+- **Quién maneja qué:**
+
+  | Categoría | Agota y repone | El otro rol |
+  |---|---|---|
+  | Pizzas y extras | Cocina | No puede |
+  | Entradas y postres (hoy no hay ninguno en la carta) | Cocina, porque salen de la cocina | No puede |
+  | Bebidas | Recepción | No puede |
+
+- **La regla está en el servidor**, en las dos rutas de disponibilidad (la de un producto y la
+  de una categoría entera). Si el producto o la categoría son del otro rol, responde **403
+  `ROL_SIN_PERMISO`**, con un mensaje que dice de quién es (*"Las bebidas las agota y repone
+  recepción"*), **sin tocar la base**. Si el producto no existe, sigue el 404. Sigue siendo una
+  sola consulta parametrizada por ruta.
+- **Leer la carta no cambia:** los dos roles la leen entera. Recepción necesita saber qué pizzas
+  quedan para vender, y el aviso en vivo sigue yendo a las dos pantallas.
+- **El panel *Carta* muestra solo lo de cada rol:** cocina, pizzas y extras; recepción, bebidas.
+  Lo ajeno no se ve: recepción ya ve las pizzas agotadas en la venta, apagadas y con la banda,
+  y a cocina no le sirve ver las bebidas.
+- **La banda de la venta sin pizzas** suma quién las repone: *"No quedan pizzas: las repone
+  cocina. Solo se venden bebidas, con «Vender bebidas»."*
+- **La comanda no cambia:** cocina sigue viendo las bebidas de un pedido en la línea gris,
+  porque son parte de lo vendido.
+- **El APK pasa a 0.4.0**, para que el panel de cocina deje de mostrar las bebidas. Con el
+  0.3.0, el servidor ya rechazaría tocarlas, y el interruptor volvería a su lugar con el
+  mensaje.
+- **Para la defensa:** es **autorización por categoría**, un paso más que la autorización por
+  rol, y se comprueba en el servidor como todo lo demás.
+- **Se descartó:**
+  - **ocultarlo solo en la pantalla:** una petición armada a mano lo saltaría;
+  - **mostrar lo ajeno sin poder tocarlo:** es información que ese rol no usa.
+
+---
+
 ## 4. Fases y checklist
 
 Cada fase se prueba y se sube por separado.
@@ -225,6 +268,29 @@ Cada fase se prueba y se sube por separado.
 - [x] El APK 0.3.0, firmado; el autor crea el *Release* `apk-cocina-0.3.0`.
 - [x] Las sondas contra producción.
 
+### Fase B3 — Cada rol, lo suyo (revisión del 7-oct, D-76)
+- [ ] **La API:**
+  - las dos rutas comprueban que la categoría sea del rol: 403 `ROL_SIN_PERMISO` sin tocar la
+    base, y el 404 se mantiene;
+  - las pruebas (`npm test`): cada rol con lo suyo, 200; con lo ajeno, 403, en las dos rutas;
+  - el contrato OpenAPI.
+- [ ] **La app:**
+  - el panel *Carta* con solo las categorías del rol;
+  - la banda con *"las repone cocina"*;
+  - las pruebas (`flutter test`), también el panel a 1366 × 768 y a 768 × 1024.
+- [ ] **Las sondas:**
+  - `probar_disponibilidad.py`: recepción agota y repone la *Soda 2 L* y cocina los extras;
+    cada uno recibe 403 con lo del otro;
+  - la cuarta medición de `medir-aviso.js`: cocina agota un extra hasta el aviso en recepción;
+  - `probar_errores.py`, con los 403 nuevos.
+
+  Todo contra la API local.
+
+### Fase C3 — En producción otra vez
+- [ ] Fuera del horario (antes de las 18:00): el autor actualiza la API; yo publico la web.
+- [ ] El APK 0.4.0, firmado; el autor crea el *Release* `apk-cocina-0.4.0`.
+- [ ] Las sondas contra producción.
+
 ### Fase D — La prueba del autor y el cierre
 - [ ] El autor, con recepción en la computadora y cocina en el APK:
   - cocina marca una pizza agotada y recepción la ve apagada al instante, con el aviso;
@@ -233,9 +299,14 @@ Cada fase se prueba y se sube por separado.
   - recepción no puede venderla;
   - un pedido que ya la llevaba sigue igual;
   - cocina la repone y vuelve a ofrecerse;
-  - recepción también puede marcar y reponer.
+  - **recepción agota y repone las bebidas, y su panel no muestra pizzas ni extras**;
+  - **el panel del APK 0.4.0 no muestra bebidas**.
+
+  La primera parte ya se probó el 7-oct, con las reglas de antes, en el APK 0.3.0 y la PC:
+  `apk-10` a `12` y `pc-07` a `10`.
 - [ ] Capturas con datos ficticios.
-- [ ] Las dos filas nuevas en la tabla de casos (`docs/pruebas/README.md`).
+- [ ] Las filas de RF-13 en la tabla de casos (`docs/pruebas/README.md`), con el 403 de lo
+      ajeno.
 - [ ] Evidencia en la sección 9 y cierre.
 
 ---
@@ -282,7 +353,9 @@ Cada fase se prueba y se sube por separado.
 
 ## 7. Criterios de aceptación
 
-- Cocina y recepción marcan un producto agotado desde su pantalla, y lo reponen.
+- Cocina y recepción marcan un producto agotado desde su pantalla, y lo reponen. **Desde la
+  revisión del 7-oct (D-76), cada uno solo lo que maneja:** cocina, las pizzas y los extras;
+  recepción, las bebidas. Con lo ajeno, el servidor responde 403 y el panel no lo muestra.
 - En menos de 2 s, la venta de recepción lo muestra apagado y no deja elegirlo, sin recargar.
   Si lo marcó cocina, recepción ve el aviso.
 - Un pedido que ya lo llevaba no cambia. Una venta sin confirmar que lo tiene avisa qué
@@ -330,6 +403,8 @@ Cada fase se prueba y se sube por separado.
 | 2026-10-04 | Fase B: la `Carta` avisa sus cambios y se actualiza en el lugar; las pestañas de recepción suben a la barra desde 1200 px (antes, 1100); el botón *Carta* lleva texto desde 1700 px en recepción y desde 600 px en cocina | La venta en curso está atada a la carta, y reemplazarla la reiniciaba. Con el botón nuevo, a 1100 y a 1400 px las pestañas de recepción no entraban en la barra (lo encontraron las pruebas de anchos) |
 | 2026-10-04 | Fase C: en producción el **4-oct desde las 18:40**, dentro del horario del local, y el APK sube a **0.2.0+2** | El autor confirmó que ese día el local no atendía. Es el mismo criterio que D-61: la regla protege el servicio, no el reloj, y la hora real queda en los reportes |
 | 2026-10-04 | **Revisión aprobada por el autor:** agotar o reponer una categoría entera (D-70) y la venta sin pizzas (D-71), en las fases B2 y C2, antes de su prueba. Límite: unas 4 horas; si no alcanza, queda como recomendación | El autor preguntó qué pasa si se acaba la masa: con lo de la fase B eran quince interruptores y quince avisos. Lo aprobó con "lo comencemos ahorita" y fijó tener todo listo el jueves 8, con la defensa el lunes 12 |
+| 2026-10-07 | **Revisión propuesta:** cada rol agota y repone solo lo que maneja (D-76), en las fases B3 y C3: cocina, las pizzas y los extras; recepción, las bebidas. El panel oculta lo ajeno, el servidor lo rechaza con 403 y el APK pasa a 0.4.0. Unas 3 horas | Al cerrar la tarjeta 14, el autor aclaró que las bebidas las maneja recepción y las pizzas, cocina: *"recepción no podría reponer las pizzas porque de ello se encarga cocina"*, y cocina no toca las bebidas. Eligió los extras para cocina y ocultar lo ajeno |
+| 2026-10-07 | **Revisión D-76 aprobada** por el autor, sin cambios | Decisión D-76 registrada en la bitácora |
 
 ---
 
