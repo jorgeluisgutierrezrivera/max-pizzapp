@@ -89,7 +89,7 @@ if __name__ == '__main__':
     _, cuerpo = pedir('/productos', recepcion)
     id_de = {p['nombre']: p['id'] for p in cuerpo['productos']}
     for nombre in ('Salame', 'Peperoni', 'Carnívora', 'Cuatro quesos', 'Criolla española', 'Hawaiana', 'Choclo',
-                   'Dos estaciones', 'Tres estaciones', 'Gaseosa 2 L', 'Extra queso', 'Extra choclo'):
+                   'Dos estaciones', 'Tres estaciones', 'Soda 2 L', 'Extra queso', 'Extra choclo'):
         if nombre not in id_de:
             print('Falta en la carta:', nombre)
             sys.exit(1)
@@ -142,11 +142,11 @@ if __name__ == '__main__':
     estado, cuerpo = enviar('/pedidos', recepcion, venta([
         {'productoId': id_de['Salame'], 'mitadId': id_de['Peperoni'], 'cantidad': 2},
         {'productoId': id_de['Hawaiana'], 'cantidad': 1, 'extras': [id_de['Extra queso']]},
-        {'productoId': id_de['Gaseosa 2 L'], 'cantidad': 2},
-    ], 189, observacion='sin cebolla'))
+        {'productoId': id_de['Soda 2 L'], 'cantidad': 2},
+    ], 193, observacion='sin cebolla'))
     pedido = cuerpo.get('pedido', {})
     creados.append(pedido.get('id'))
-    comprobar('venta mixta de Bs 189', (estado, pedido.get('total')), (201, 189), '#%s' % pedido.get('id'))
+    comprobar('venta mixta de Bs 193', (estado, pedido.get('total')), (201, 193), '#%s' % pedido.get('id'))
     comprobar('  el cliente, con su celular (recepcion lo ve)', pedido.get('cliente'),
               {'nombre': 'Ana Prueba', 'celular': '70000001'})
     comprobar('  para llevar y la observacion', (pedido.get('paraLlevar'), pedido.get('observacion')),
@@ -182,12 +182,12 @@ if __name__ == '__main__':
               (201, '50000001'), codigo(cuerpo) if estado != 201 else '')
 
     print('\n--- la venta directa de bebidas (D-38) ---')
-    directa = {'ventaDirecta': True, 'lineas': [{'productoId': id_de['Gaseosa 2 L'], 'cantidad': 2}],
-               'totalEsperado': 36}
+    directa = {'ventaDirecta': True, 'lineas': [{'productoId': id_de['Soda 2 L'], 'cantidad': 2}],
+               'totalEsperado': 40}
     estado, cuerpo = enviar('/pedidos', recepcion, directa)
     vendida = cuerpo.get('pedido', {})
-    comprobar('2 gaseosas, sin nombre: nace entregada',
-              (estado, vendida.get('estado'), vendida.get('total')), (201, 'entregado', 36), '#%s' % vendida.get('id'))
+    comprobar('2 sodas, sin nombre: nace entregada',
+              (estado, vendida.get('estado'), vendida.get('total')), (201, 'entregado', 40), '#%s' % vendida.get('id'))
     comprobar('  sin cliente, sin para llevar y sin numero del dia',
               (vendida.get('cliente'), vendida.get('paraLlevar'), vendida.get('numero')), (None, None, None))
     estado, cuerpo = llamar('GET', '/pedidos/%s' % vendida.get('id'), recepcion)
@@ -197,7 +197,7 @@ if __name__ == '__main__':
     _, cuerpo = llamar('GET', '/pedidos', recepcion)
     comprobar('  y no aparece entre los activos',
               vendida.get('id') in [p['id'] for p in cuerpo.get('pedidos', [])], False)
-    estado, cuerpo = enviar('/pedidos', recepcion, venta([{'productoId': id_de['Gaseosa 2 L'], 'cantidad': 2}], 36))
+    estado, cuerpo = enviar('/pedidos', recepcion, venta([{'productoId': id_de['Soda 2 L'], 'cantidad': 2}], 40))
     comprobar('solo bebidas a nombre de un cliente: se rechaza', (estado, codigo(cuerpo)), (400, 'VENTA_INVALIDA'),
               cuerpo.get('error', {}).get('mensaje'))
     estado, cuerpo = enviar('/pedidos', recepcion,
@@ -216,8 +216,8 @@ if __name__ == '__main__':
         ('celular que no es boliviano', venta([{'productoId': id_de['Peperoni'], 'cantidad': 1}], 50,
                                                cliente={'nombre': 'Ana Prueba', 'celular': '12345678'})),
         ('sin decir si es para llevar', venta([{'productoId': id_de['Peperoni'], 'cantidad': 1}], 50, paraLlevar=None)),
-        ('la otra mitad es una bebida', venta([{'productoId': id_de['Salame'], 'mitadId': id_de['Gaseosa 2 L'],
-                                                'cantidad': 1}], 31.5)),
+        ('la otra mitad es una bebida', venta([{'productoId': id_de['Salame'], 'mitadId': id_de['Soda 2 L'],
+                                                'cantidad': 1}], 32.5)),
         ('un extra vendido solo', venta([{'productoId': id_de['Extra queso'], 'cantidad': 1}], 8)),
         ('un producto que no existe', venta([{'productoId': 999999, 'cantidad': 1}], 10)),
         ('Dos estaciones como mitad: se vende solo entera (D-39)',
@@ -247,7 +247,7 @@ if __name__ == '__main__':
     def agregar(pedido_id, token, lineas, total):
         return llamar('POST', '/pedidos/%s/lineas' % pedido_id, token, {'lineas': lineas, 'totalEsperado': total})
 
-    SODA = [{'productoId': id_de['Gaseosa 2 L'], 'cantidad': 1}]
+    SODA = [{'productoId': id_de['Soda 2 L'], 'cantidad': 1}]
     PIZZA = [{'productoId': id_de['Salame'], 'mitadId': id_de['Peperoni'], 'cantidad': 1,
               'extras': [id_de['Extra queso']]}]
 
@@ -313,17 +313,17 @@ if __name__ == '__main__':
 
     print('\n--- agregar a un pedido ya enviado (D-37) ---')
     pid = nuevo_pedido()
-    estado, cuerpo = agregar(pid, recepcion, SODA, 18)
+    estado, cuerpo = agregar(pid, recepcion, SODA, 20)
     pedido = cuerpo.get('pedido', {})
     comprobar('una soda a un pedido pendiente', (estado, pedido.get('total'), pedido.get('version')),
-              (200, 68, 2), '#%s' % pid)
+              (200, 70, 2), '#%s' % pid)
     comprobar('  la soda queda marcada como agregada; la pizza del principio, no',
               [l['agregadoEn'] is not None for l in pedido.get('lineas', [])], [False, True])
     _, cuerpo = llamar('GET', '/pedidos/%s' % pid, cocina)
     comprobar('  cocina ve lo agregado, sin el celular',
               (len(cuerpo.get('pedido', {}).get('lineas', [])), 'celular' in cuerpo.get('pedido', {}).get('cliente', {})),
               (2, False))
-    estado, cuerpo = agregar(pid, cocina, SODA, 18)
+    estado, cuerpo = agregar(pid, cocina, SODA, 20)
     comprobar('cocina no agrega', (estado, codigo(cuerpo)), (403, 'ROL_SIN_PERMISO'))
     estado, cuerpo = agregar(pid, recepcion, SODA, 15)
     comprobar('lo agregado con otro total', (estado, codigo(cuerpo)), (409, 'PRECIO_CAMBIADO'))
@@ -332,7 +332,7 @@ if __name__ == '__main__':
     estado, cuerpo = agregar(pid, recepcion, PIZZA, 55.5)
     pedido = cuerpo.get('pedido', {})
     comprobar('una pizza mitad y mitad con extra, mientras cocina la prepara',
-              (estado, pedido.get('total'), pedido.get('version')), (200, 123.5, 4))
+              (estado, pedido.get('total'), pedido.get('version')), (200, 125.5, 4))
     comprobar('  el extra, dentro de la pizza agregada',
               [e['producto']['nombre'] for e in pedido.get('lineas', [{}])[-1].get('extras', [])], ['Extra queso'])
     estado, cuerpo = cambiar(pid, cocina, 'listo', version=2)
@@ -343,10 +343,10 @@ if __name__ == '__main__':
     estado, cuerpo = agregar(pid, recepcion, PIZZA, 55.5)
     comprobar('una pizza a un pedido listo: va en otro pedido', (estado, codigo(cuerpo)),
               (409, 'AGREGADO_NO_PERMITIDO'))
-    estado, cuerpo = agregar(pid, recepcion, SODA, 18)
-    comprobar('una soda a un pedido listo: si', (estado, cuerpo.get('pedido', {}).get('total')), (200, 141.5))
+    estado, cuerpo = agregar(pid, recepcion, SODA, 20)
+    comprobar('una soda a un pedido listo: si', (estado, cuerpo.get('pedido', {}).get('total')), (200, 145.5))
     cambiar(pid, recepcion, 'entregado')
-    estado, cuerpo = agregar(pid, recepcion, SODA, 18)
+    estado, cuerpo = agregar(pid, recepcion, SODA, 20)
     comprobar('nada a un pedido entregado', (estado, codigo(cuerpo)), (409, 'AGREGADO_NO_PERMITIDO'))
 
     print('\n--- la carrera: muchas ventas a la vez y el numero del dia (D-35) ---')

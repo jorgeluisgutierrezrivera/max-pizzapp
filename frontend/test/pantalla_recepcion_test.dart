@@ -79,8 +79,13 @@ final _productosDeLaCarta = <Producto>[
   }),
   producto('Extra choclo', 'extra', 5),
   producto('Extra queso', 'extra', 8),
-  producto('Gaseosa 2 L', 'bebida', 18),
-  producto('Agua mineral 600 ml', 'bebida', 6),
+  // Las bebidas reales (plan 14, D-72): agua, jugo y la soda en cuatro tamaños.
+  producto('Agua 500 ml', 'bebida', 6),
+  producto('Jugo 1 L', 'bebida', 15),
+  producto('Soda personal (mini)', 'bebida', 3),
+  producto('Soda 1 L', 'bebida', 10),
+  producto('Soda 1,5 L', 'bebida', 15),
+  producto('Soda 2 L', 'bebida', 20),
 ];
 
 /// Una carta nueva en cada uso: la carta cambia en el lugar cuando un producto se agota
@@ -283,7 +288,7 @@ void main() {
       );
     });
 
-    for (final (ancho, alto) in [(1366.0, 630.0), (1536.0, 730.0), (1920.0, 950.0), (1024.0, 640.0)]) {
+    for (final (ancho, alto) in [(1366.0, 630.0), (1536.0, 730.0), (1920.0, 950.0), (1280.0, 640.0)]) {
       testWidgets(
         'en la computadora (${ancho.round()} × ${alto.round()}), el formulario ocupa la pantalla sin desplazarse',
         (t) async {
@@ -300,6 +305,17 @@ void main() {
         },
       );
     }
+
+    testWidgets(
+      'a 1024 × 640 las seis bebidas no entran en dos filas: el formulario se desplaza, con el pedido al lado',
+      (t) async {
+        await empezar(t, ancho: 1024, alto: 640);
+        // Llenando la pantalla, las pizzas se quedarían sin alto (plan 14).
+        expect(t.widget(find.byKey(const Key('formulario-venta'))), isA<ListView>());
+        expect(find.byType(PanelPedido), findsOneWidget);
+        sinDesplazamientoHorizontal(t, 'el formulario a 1024 × 640');
+      },
+    );
 
     testWidgets('en una ventana muy baja, el formulario se desplaza en vez de apretarse', (t) async {
       await empezar(t, ancho: 1024, alto: 560);
@@ -385,10 +401,10 @@ void main() {
       );
       await escribirCliente(t, celular: '70000001');
       await agregarPizza(t, 'Salame', mitad: 'Peperoni', extras: ['Extra queso'], cantidad: 2);
-      await tocarClave(t, 'bebida-${de('Gaseosa 2 L').id}-mas');
+      await tocarClave(t, 'bebida-${de('Soda 2 L').id}-mas');
       await t.enterText(find.byKey(const Key('observacion')), 'sin cebolla');
       await t.pump();
-      expect(texto(t, 'total-venta'), 'Bs 129');
+      expect(texto(t, 'total-venta'), 'Bs 131');
       // En el pedido: el nombre con su celular al lado y, debajo, si es para llevar.
       expect(texto(t, 'cliente-resumen'), 'Ana Prueba · 70000001');
       expect(texto(t, 'llevar-resumen'), '– Para llevar');
@@ -405,12 +421,12 @@ void main() {
             'cantidad': 2,
             'extras': [de('Extra queso').id],
           },
-          {'productoId': de('Gaseosa 2 L').id, 'cantidad': 1},
+          {'productoId': de('Soda 2 L').id, 'cantidad': 1},
         ],
-        'totalEsperado': 129.0,
+        'totalEsperado': 131.0,
       });
       expect(texto(t, 'pedido-enviado'), 'Pedido 12 de Ana Prueba enviado a cocina');
-      expect(find.text('Para llevar · Bs 129'), findsOneWidget);
+      expect(find.text('Para llevar · Bs 131'), findsOneWidget);
       // Listo para el siguiente cliente.
       expect(t.widget<TextField>(find.byKey(const Key('cliente-nombre'))).controller!.text, '');
       expect(t.widget<TextField>(find.byKey(const Key('observacion'))).controller!.text, '');
@@ -469,7 +485,7 @@ void main() {
     testWidgets('solo bebidas no es un pedido: sugiere "Vender bebidas" (D-38)', (t) async {
       await empezar(t, enviar: (p) async => pedidoGuardado(p));
       await escribirCliente(t);
-      await tocarClave(t, 'bebida-${de('Gaseosa 2 L').id}-mas');
+      await tocarClave(t, 'bebida-${de('Soda 2 L').id}-mas');
       await tocarClave(t, 'confirmar-venta');
       expect(
         find.text('• Agrega al menos una pizza. Las bebidas solas se venden con «Vender bebidas».'),
@@ -720,19 +736,19 @@ void main() {
       await tocarClave(t, 'vender-bebidas');
       expect(texto(t, 'cobrar-bebidas'), 'Elige al menos una bebida');
       expect(t.widget<FilledButton>(find.byKey(const Key('cobrar-bebidas'))).onPressed, isNull);
-      await tocarClave(t, 'directa-${de('Gaseosa 2 L').id}-mas');
-      await tocarClave(t, 'directa-${de('Gaseosa 2 L').id}-mas');
-      expect(texto(t, 'cobrar-bebidas'), 'Cobrar · Bs 36');
+      await tocarClave(t, 'directa-${de('Soda 2 L').id}-mas');
+      await tocarClave(t, 'directa-${de('Soda 2 L').id}-mas');
+      expect(texto(t, 'cobrar-bebidas'), 'Cobrar · Bs 40');
       await tocarClave(t, 'cobrar-bebidas');
       expect(enviado, {
         'ventaDirecta': true,
         'lineas': [
-          {'productoId': de('Gaseosa 2 L').id, 'cantidad': 2},
+          {'productoId': de('Soda 2 L').id, 'cantidad': 2},
         ],
-        'totalEsperado': 36.0,
+        'totalEsperado': 40.0,
       });
       expect(find.byKey(const Key('modal-bebidas')), findsNothing);
-      expect(texto(t, 'pedido-enviado'), 'Venta de bebidas registrada · Bs 36');
+      expect(texto(t, 'pedido-enviado'), 'Venta de bebidas registrada · Bs 40');
     });
 
     testWidgets('no toca la venta que se estaba armando', (t) async {
@@ -740,7 +756,7 @@ void main() {
       await escribirCliente(t);
       await agregarPizza(t, 'Peperoni');
       await tocarClave(t, 'vender-bebidas');
-      await tocarClave(t, 'directa-${de('Agua mineral 600 ml').id}-mas');
+      await tocarClave(t, 'directa-${de('Agua 500 ml').id}-mas');
       await tocarClave(t, 'cobrar-bebidas');
       expect(texto(t, 'total-venta'), 'Bs 50');
       expect(t.widget<TextField>(find.byKey(const Key('cliente-nombre'))).controller!.text, 'Ana Prueba');
@@ -752,11 +768,11 @@ void main() {
         enviar: (p) async => throw const ErrorApi(0, 'SIN_CONEXION', 'No hay conexión con el servidor.'),
       );
       await tocarClave(t, 'vender-bebidas');
-      await tocarClave(t, 'directa-${de('Gaseosa 2 L').id}-mas');
+      await tocarClave(t, 'directa-${de('Soda 2 L').id}-mas');
       await tocarClave(t, 'cobrar-bebidas');
       expect(find.byKey(const Key('modal-bebidas')), findsOneWidget);
       expect(texto(t, 'error-bebidas'), startsWith('No se pudo enviar'));
-      expect(texto(t, 'cobrar-bebidas'), 'Cobrar · Bs 18');
+      expect(texto(t, 'cobrar-bebidas'), 'Cobrar · Bs 20');
     });
 
     testWidgets('cerrarla no vende nada', (t) async {
@@ -769,7 +785,7 @@ void main() {
         },
       );
       await tocarClave(t, 'vender-bebidas');
-      await tocarClave(t, 'directa-${de('Gaseosa 2 L').id}-mas');
+      await tocarClave(t, 'directa-${de('Soda 2 L').id}-mas');
       await tocarClave(t, 'cerrar-bebidas');
       expect(envios, 0);
       expect(find.byKey(const Key('aviso-enviado')), findsNothing);
@@ -837,12 +853,12 @@ void main() {
 
       // Paso 2, los productos: la pizza se arma en su modal, que se abre desde su sección y
       // vuelve a ella; la bebida se suma con un toque.
-      final gaseosa = 'bebida-${de('Gaseosa 2 L').id}-mas';
+      final gaseosa = 'bebida-${de('Soda 2 L').id}-mas';
       expect(en('2 · Pizzas', 'agregar-pizza'), findsOneWidget);
       expect(en('3 · Bebidas', gaseosa), findsOneWidget);
       await agregarPizza(t, 'Peperoni');
       await tocarClave(t, gaseosa);
-      expect(texto(t, 'total-venta'), 'Bs 68');
+      expect(texto(t, 'total-venta'), 'Bs 70');
 
       // Paso 3, confirmar: un solo botón, en el pedido.
       expect(
@@ -875,7 +891,7 @@ void main() {
         await tocarClave(t, 'extra-Extra queso');
         sinDesplazamientoHorizontal(t, 'el modal de la pizza');
         await tocarClave(t, 'listo-pizza');
-        await tocarClave(t, 'bebida-${de('Gaseosa 2 L').id}-mas');
+        await tocarClave(t, 'bebida-${de('Soda 2 L').id}-mas');
         await tocarClave(t, 'observacion');
         await t.enterText(find.byKey(const Key('observacion')), 'Sin cebolla y bien cocida, por favor');
         await t.pumpAndSettle();
@@ -917,7 +933,7 @@ void main() {
               lecturas++;
               return lecturas == 1
                   ? carta
-                  : Carta([for (final p in carta.todos) p.nombre == 'Gaseosa 2 L' ? p.conDisponible(false) : p]);
+                  : Carta([for (final p in carta.todos) p.nombre == 'Soda 2 L' ? p.conDisponible(false) : p]);
             },
             imagen: (ruta, respaldo, ajuste) => respaldo,
             enviarPedido:
@@ -952,33 +968,33 @@ void main() {
     testWidgets('cocina agota una bebida: la venta la apaga sin empezar de nuevo, y un aviso lo dice', (t) async {
       await abrir(t);
       await escribirCliente(t, nombre: 'Ana Prueba');
-      canal.disponibles.add(aviso('Gaseosa 2 L', disponible: false));
+      canal.disponibles.add(aviso('Soda 2 L', disponible: false));
       await t.pumpAndSettle();
-      expect(agotadaEnLaFila('Gaseosa 2 L'), findsOneWidget);
-      expect(find.text('Cocina marcó agotado: Gaseosa 2 L'), findsOneWidget);
+      expect(agotadaEnLaFila('Soda 2 L'), findsOneWidget);
+      expect(find.text('Cocina marcó agotado: Soda 2 L'), findsOneWidget);
       // La venta a medio armar sigue ahí: la carta cambió en el lugar.
       expect(t.widget<TextField>(find.byKey(const Key('cliente-nombre'))).controller!.text, 'Ana Prueba');
-      expect(t.widget<IconButton>(find.byKey(Key('bebida-${de('Gaseosa 2 L').id}-mas'))).onPressed, isNull);
+      expect(t.widget<IconButton>(find.byKey(Key('bebida-${de('Soda 2 L').id}-mas'))).onPressed, isNull);
     });
 
     testWidgets('cocina la repone: vuelve a ofrecerse, y el aviso lo dice', (t) async {
       await abrir(t);
-      canal.disponibles.add(aviso('Gaseosa 2 L', disponible: false));
+      canal.disponibles.add(aviso('Soda 2 L', disponible: false));
       await t.pumpAndSettle();
-      canal.disponibles.add(aviso('Gaseosa 2 L', disponible: true));
+      canal.disponibles.add(aviso('Soda 2 L', disponible: true));
       await t.pumpAndSettle();
-      expect(agotadaEnLaFila('Gaseosa 2 L'), findsNothing);
+      expect(agotadaEnLaFila('Soda 2 L'), findsNothing);
       // Los avisos van en fila: el de la reposición llega cuando se cierra el anterior.
       await t.pump(const Duration(seconds: 7));
       await t.pumpAndSettle();
-      expect(find.text('Cocina volvió a ofrecer: Gaseosa 2 L'), findsOneWidget);
+      expect(find.text('Cocina volvió a ofrecer: Soda 2 L'), findsOneWidget);
     });
 
     testWidgets('si lo marcó recepción, se apaga igual, sin aviso', (t) async {
       await abrir(t);
-      canal.disponibles.add(aviso('Gaseosa 2 L', disponible: false, por: 'recepcion'));
+      canal.disponibles.add(aviso('Soda 2 L', disponible: false, por: 'recepcion'));
       await t.pumpAndSettle();
-      expect(agotadaEnLaFila('Gaseosa 2 L'), findsOneWidget);
+      expect(agotadaEnLaFila('Soda 2 L'), findsOneWidget);
       expect(find.byKey(const Key('aviso-disponibilidad')), findsNothing);
     });
 
@@ -986,14 +1002,14 @@ void main() {
       await abrir(t);
       await escribirCliente(t);
       await agregarPizza(t, 'Salame');
-      final gaseosa = 'bebida-${de('Gaseosa 2 L').id}';
+      final gaseosa = 'bebida-${de('Soda 2 L').id}';
       await tocarClave(t, '$gaseosa-mas');
-      canal.disponibles.add(aviso('Gaseosa 2 L', disponible: false));
+      canal.disponibles.add(aviso('Soda 2 L', disponible: false));
       await t.pumpAndSettle();
-      expect(agotadaEnLaFila('Gaseosa 2 L'), findsOneWidget);
+      expect(agotadaEnLaFila('Soda 2 L'), findsOneWidget);
       await tocarClave(t, 'confirmar-venta');
       expect(enviados, isEmpty);
-      expect(find.textContaining('Gaseosa 2 L se agotó: quítalo de la venta.'), findsOneWidget);
+      expect(find.textContaining('Soda 2 L se agotó: quítalo de la venta.'), findsOneWidget);
       // Quitarla se puede (el − sigue), y entonces sí se envía.
       await tocarClave(t, '$gaseosa-menos');
       await tocarClave(t, 'confirmar-venta');
@@ -1025,14 +1041,14 @@ void main() {
       canal.estados.add(true);
       await t.pumpAndSettle();
       expect(lecturas, 2);
-      expect(agotadaEnLaFila('Gaseosa 2 L'), findsOneWidget);
+      expect(agotadaEnLaFila('Soda 2 L'), findsOneWidget);
     });
 
     testWidgets('el botón Carta abre el panel, y lo que se marca ahí se apaga en la venta', (t) async {
       await abrir(t);
       await tocarClave(t, 'boton-carta');
       expect(find.byKey(const Key('panel-carta')), findsOneWidget);
-      final id = de('Gaseosa 2 L').id;
+      final id = de('Soda 2 L').id;
       expect(texto(t, 'estado-$id'), 'Disponible');
       await t.tap(find.byKey(Key('disponible-$id')));
       await t.pumpAndSettle();
@@ -1040,9 +1056,9 @@ void main() {
       expect(texto(t, 'estado-$id'), 'Agotado');
       await t.tap(find.byTooltip('Cerrar'));
       await t.pumpAndSettle();
-      expect(agotadaEnLaFila('Gaseosa 2 L'), findsOneWidget);
+      expect(agotadaEnLaFila('Soda 2 L'), findsOneWidget);
       // El aviso de esta misma marca, que llega después, no repite nada ni avisa.
-      canal.disponibles.add(aviso('Gaseosa 2 L', disponible: false, por: 'recepcion'));
+      canal.disponibles.add(aviso('Soda 2 L', disponible: false, por: 'recepcion'));
       await t.pumpAndSettle();
       expect(find.byKey(const Key('aviso-disponibilidad')), findsNothing);
     });
@@ -1050,16 +1066,16 @@ void main() {
     testWidgets('si el servidor responde 409 PRODUCTO_NO_DISPONIBLE, la carta lo marca y la venta lo señala', (t) async {
       await abrir(
         t,
-        enviar: (pedido) async => throw ErrorApi(409, 'PRODUCTO_NO_DISPONIBLE', 'Gaseosa 2 L no esta disponible.', {
-          'producto': {'id': de('Gaseosa 2 L').id, 'nombre': 'Gaseosa 2 L'},
+        enviar: (pedido) async => throw ErrorApi(409, 'PRODUCTO_NO_DISPONIBLE', 'Soda 2 L no esta disponible.', {
+          'producto': {'id': de('Soda 2 L').id, 'nombre': 'Soda 2 L'},
         }),
       );
       await escribirCliente(t);
       await agregarPizza(t, 'Salame');
-      await tocarClave(t, 'bebida-${de('Gaseosa 2 L').id}-mas');
+      await tocarClave(t, 'bebida-${de('Soda 2 L').id}-mas');
       await tocarClave(t, 'confirmar-venta');
-      expect(texto(t, 'error-envio'), 'Gaseosa 2 L se agotó. Quítalo de la venta y vuelve a enviarla.');
-      expect(agotadaEnLaFila('Gaseosa 2 L'), findsOneWidget);
+      expect(texto(t, 'error-envio'), 'Soda 2 L se agotó. Quítalo de la venta y vuelve a enviarla.');
+      expect(agotadaEnLaFila('Soda 2 L'), findsOneWidget);
     });
 
     for (final (ancho, alto) in tamanosDelRnf04) {

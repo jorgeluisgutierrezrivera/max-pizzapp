@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -15,10 +17,19 @@ const anchoConPanelLateral = 900.0;
 /// En una pantalla muy ancha, la venta no se estira más que esto: el resto queda de margen.
 const anchoMaximoDeVenta = 1280.0;
 
+/// El pedido, a la derecha del formulario en la computadora, y el margen que separa los dos
+/// y los bordes de la pantalla.
+const anchoDelPanelDelPedido = 380.0;
+const _margenDeVenta = 24.0;
+
 /// Desde este alto, en la computadora, el formulario ocupa la pantalla entera sin
 /// desplazarse: el cliente arriba, las bebidas abajo y las pizzas en el medio, estirándose.
-/// Si se agregan tantas pizzas que no caben, se desplaza solo la lista de pizzas.
+/// Si se agregan tantas pizzas que no caben, se desplaza solo la lista de pizzas. Hace falta,
+/// además, que las bebidas entren en dos filas (plan 14).
 const altoParaLlenar = 520.0;
+
+/// Cuántas bebidas van por fila en la sección 3, según el ancho que tiene adentro.
+int columnasDeBebidas(double ancho) => ancho >= 720 ? 3 : (ancho >= 440 ? 2 : 1);
 
 /// Por debajo de este alto, los campos y las tarjetas se ajustan un poco para caber.
 const altoComodo = 640.0;
@@ -165,7 +176,14 @@ class _FormularioDeVentaState extends State<FormularioDeVenta> {
     return LayoutBuilder(
       builder: (context, lados) {
         final lateral = lados.maxWidth >= anchoConPanelLateral;
-        final llenar = lateral && lados.maxHeight >= altoParaLlenar;
+        // Llena la pantalla solo si las bebidas entran en dos filas (plan 14): con más, las
+        // pizzas se quedarían sin alto. Si no entran, el formulario se desplaza, con el pedido
+        // al lado, como en una ventana baja. El ancho es el de adentro de la sección 3: el de la
+        // venta, menos los márgenes, el pedido y el relleno de la tarjeta.
+        final anchoDeLasBebidas =
+            math.min(lados.maxWidth, anchoMaximoDeVenta) - 3 * _margenDeVenta - anchoDelPanelDelPedido - 36;
+        final filasDeBebidas = (_f.carta.bebidas.length / columnasDeBebidas(anchoDeLasBebidas)).ceil();
+        final llenar = lateral && lados.maxHeight >= altoParaLlenar && filasDeBebidas <= 2;
         final denso = lateral && lados.maxHeight < altoComodo;
         final problemas = _intentado ? _f.problemas : const <String>[];
         final observacion = _CampoObservacion(formulario: _f, controlador: _observacion, denso: denso);
@@ -250,14 +268,14 @@ class _FormularioDeVentaState extends State<FormularioDeVenta> {
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: anchoMaximoDeVenta),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.symmetric(horizontal: _margenDeVenta),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(child: secciones),
-                  const SizedBox(width: 24),
+                  const SizedBox(width: _margenDeVenta),
                   SizedBox(
-                    width: 380,
+                    width: anchoDelPanelDelPedido,
                     child: Padding(
                       padding: EdgeInsets.symmetric(vertical: llenar ? 16 : 12),
                       child: PanelPedido(
@@ -483,13 +501,20 @@ class _SeccionPizzas extends StatelessWidget {
         ],
       );
     }
+    // En la pantalla entera, la banda va donde irían las pizzas, que se encoge si falta alto.
+    // Fija arriba no entraba a 1366 × 768 con las seis bebidas en dos filas (plan 14).
     return Seccion(
       titulo: '2 · Pizzas',
       denso: denso,
       hijos: [
-        if (sinPizzas) banda,
         Expanded(
-          child: grupos.isEmpty
+          child: grupos.isEmpty && sinPizzas
+              ? Center(
+                  child: SingleChildScrollView(
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [banda, if (marcar) falta]),
+                  ),
+                )
+              : grupos.isEmpty
               ? Center(
                   child: SingleChildScrollView(
                     child: Column(
@@ -512,7 +537,7 @@ class _SeccionPizzas extends StatelessWidget {
                     ),
                   ),
                 )
-              : ListView(key: const Key('lista-pizzas'), children: lineas),
+              : ListView(key: const Key('lista-pizzas'), children: [if (sinPizzas) banda, ...lineas]),
         ),
         const SizedBox(height: 8),
         boton,
@@ -627,7 +652,7 @@ class _SeccionBebidas extends StatelessWidget {
         if (bebidas.isEmpty) const Text('La carta no tiene bebidas.', style: TextStyle(color: textoSecundario)),
         LayoutBuilder(
           builder: (context, lados) {
-            final columnas = lados.maxWidth >= 720 ? 3 : (lados.maxWidth >= 440 ? 2 : 1);
+            final columnas = columnasDeBebidas(lados.maxWidth);
             final ancho = (lados.maxWidth - (columnas - 1) * 12) / columnas;
             return Wrap(
               spacing: 12,

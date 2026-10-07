@@ -9,8 +9,8 @@
 //      pruebas del backend avisaban directo al canal y no vieron que este aviso no salia.
 //   4. La disponibilidad: desde que cocina marca una bebida agotada (o la repone) hasta que
 //      la venta de recepcion recibe el aviso (RF-13, CA-13.1, tarjeta 08). Alterna agotada y
-//      disponible, y al terminar la deja como estaba. Usa una bebida porque son ficticias
-//      ("Gaseosa 2 L"; otra con PRODUCTO=...).
+//      disponible, y al terminar la deja como estaba. Usa una bebida, que no toca la cola de
+//      cocina ("Soda 2 L"; otra con PRODUCTO=...).
 //
 // No se corre solo: lo lanza medir_aviso.py, que obtiene los tokens reales de Keycloak y
 // los pasa por el entorno (TOKEN_RECEPCION, TOKEN_COCINA). Nunca se imprimen.
@@ -30,7 +30,7 @@ const ORIGEN = new URL(API).origin;
 // 30 repeticiones, las que pide el RNF-01 (tarjeta 10).
 const VECES = Number(process.env.VECES || 30);
 const LIMITE_MS = 2000;
-const BEBIDA = process.env.PRODUCTO || 'Gaseosa 2 L';
+const BEBIDA = process.env.PRODUCTO || 'Soda 2 L';
 
 async function llamar(metodo, ruta, token, cuerpo) {
   const r = await fetch(API + ruta, {

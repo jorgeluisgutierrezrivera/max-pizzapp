@@ -313,8 +313,10 @@ nunca la imagen ni una dirección:
   python scripts/preparar-fotos.py "ruta/a/la/carpeta/de/fotos"
   ```
 
-- **Las bebidas, ficticias, tienen un dibujo** hecho por `scripts/dibujar-carta.py` con
-  formas simples, sin imágenes de terceros.
+- **Las bebidas tienen un dibujo genérico por tipo** (agua, jugo y soda), hecho por
+  `scripts/dibujar-carta.py` con formas simples, sin marcas ni imágenes de terceros. Las
+  bebidas son genéricas: la marca de la soda y el sabor del jugo se preguntan al entregar y no
+  se registran (D-72).
 
 ## Identidad visual
 
@@ -692,6 +694,8 @@ solo enteras. Y van **antes** del `up -d --build`:
 la API nueva ya consulta las columnas que ellas agregan. No hay `03`: era una carta
 ficticia que la real reemplazó. Volver a cargar la carta actualiza los productos por su
 nombre sin duplicarlos, y no vuelve disponible uno que la base tenga marcado como agotado.
+Antes de cargarla, la `05` les pone su nombre real a las tres bebidas ficticias que ya
+aparecen en pedidos (D-73); en una base nueva o ya renombrada no hace nada.
 
 La `06` exige que todo pedido tenga cliente. Si encontrara uno sin cliente, se detiene
 **sin cambiar nada**: corre en una sola transacción. La `07` numera los pedidos que ya
@@ -699,7 +703,9 @@ existían, día por día y en orden de llegada, y a partir de ahí solo la venta
 quedar sin cliente.
 
 Las migraciones están escritas para que aplicarlas dos veces no cambie nada ni falle. No se
-edita nunca una migración que ya se aplicó: el cambio siguiente va en un archivo nuevo.
+edita nunca una migración que ya se aplicó: el cambio siguiente va en un archivo nuevo. La
+carta (`05`) no es una migración del esquema sino los datos de la carta: está hecha para
+cambiarse y volver a cargarse, como cuando llegaron los precios y las bebidas reales.
 
 Compose solo recrea los servicios cuya configuración cambió. Hay una excepción:
 `--import-realm` **no sobrescribe** un realm que ya existe, así que un cambio en el archivo

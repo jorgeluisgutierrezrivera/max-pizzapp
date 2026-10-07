@@ -159,25 +159,25 @@ Las otras tres sodas (*personal*, *1 L* y *1,5 L*) son productos nuevos.
 Cada fase se prueba y se sube por separado.
 
 ### Fase A — La carta y el orden, en local
-- [ ] `05_carta.sql`: el encabezado, los tres cambios de nombre y las seis bebidas con sus
+- [x] `05_carta.sql`: el encabezado, los tres cambios de nombre y las seis bebidas con sus
       precios.
-- [ ] Contra la base de desarrollo, que **ya tiene pedidos con las ficticias**:
+- [x] Contra la base de desarrollo, que **ya tiene pedidos con las ficticias**:
   - se ejecuta dos veces, y la segunda no cambia nada;
   - los pedidos viejos conservan su precio (la *Soda 2 L* a Bs 18);
   - la carta tiene seis bebidas y ninguna ficticia.
-- [ ] Una base nueva con los scripts de inicialización, la parte de base de una instalación
+- [x] Una base nueva con los scripts de inicialización, la parte de base de una instalación
       desde cero: las mismas seis bebidas. La instalación completa la prueba el flujo
       *Instalacion* de la integración continua al subir el código.
-- [ ] La app: el orden de las bebidas (D-74) y el formulario que llena la pantalla solo si
+- [x] La app: el orden de las bebidas (D-74) y el formulario que llena la pantalla solo si
       entran (D-75).
-- [ ] Pruebas (`flutter test` y `flutter analyze`):
+- [x] Pruebas (`flutter test` y `flutter analyze`):
   - el orden;
   - la carta de prueba de la venta, con las seis bebidas reales y sus precios;
   - el formulario sin desplazarse a 1366 × 630, 1280 × 640, 1536 × 730 y 1920 × 950, y
     desplazándose a 1024 × 640;
   - RNF-04 a 1366 × 768 y 768 × 1024, también con la banda *No quedan pizzas*.
-- [ ] La suite de la API (`npm test`) sigue en verde. No cambia código del servidor.
-- [ ] Las sondas, con las bebidas reales:
+- [x] La suite de la API (`npm test`) sigue en verde. No cambia código del servidor.
+- [x] Las sondas, con las bebidas reales:
   - `probar_pedidos.py`: la *Soda 2 L* a Bs 20;
   - `probar_disponibilidad.py` y `medir-aviso.js`, con la *Soda 2 L* por omisión.
 
@@ -257,4 +257,30 @@ Cada fase se prueba y se sube por separado.
 
 ## 8. Evidencia
 
-*(se completa al probar cada fase)*
+| Fase | Resultado | Estado |
+|---|---|---|
+| A — local | Ver el detalle debajo | ✅ 7-oct |
+| B — producción | | ⏳ |
+| C — prueba del autor | | ⏳ |
+
+**Fase A, 7-oct, en local.**
+
+- **Base de desarrollo**, con pedidos que ya llevaban las ficticias. Antes había 67 líneas de
+  *Gaseosa 2 L* a Bs 18, 3 de *Agua mineral 600 ml* y 2 de *Jugo natural 1 L*. Después de
+  `05_carta.sql`:
+  - las tres son *Soda 2 L*, *Agua 500 ml* y *Jugo 1 L*, con el mismo número de producto;
+  - la *Soda 2 L* vale Bs 20 en la carta;
+  - **las 67 líneas siguen cobradas a Bs 18**;
+  - se agregaron *Soda personal (mini)* (Bs 3), *Soda 1 L* (Bs 10) y *Soda 1,5 L* (Bs 15).
+- **La segunda ejecución no cambió nada:** la huella de la tabla `producto`, un md5 de todas
+  sus filas, fue la misma antes y después (`a98bcb2a…`, 25 productos).
+- **Base nueva**, `postgres:17-alpine` con `docker/postgres/init`: se inicializó sin errores,
+  con las seis bebidas y ninguna ficticia.
+- **La app:** `flutter test` 338 de 338 (antes 336, más el orden de las bebidas y el formulario
+  a 1024 × 640), y `flutter analyze` sin avisos.
+- **La API:** `npm test` 327 de 327, sin cambios en el servidor.
+- **Las sondas contra la API local:** `probar_pedidos.py` *TODO CORRECTO*, con la venta mixta
+  de Bs 193 y la venta directa de 2 sodas de Bs 40. `probar_disponibilidad.py` también *TODO
+  CORRECTO*, con la *Soda 2 L*.
+
+  Los reportes versionados no se tocaron: salen de producción, en la fase B.

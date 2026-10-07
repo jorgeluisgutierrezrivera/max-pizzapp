@@ -6,11 +6,27 @@
 --             sus ingredientes. Los PRECIOS son los del catálogo, CONFIRMADOS por
 --             la dueña el 25-sep-2026. Todas llevan masa casera y salsa de la
 --             casa; la descripción dice solo lo que cambia.
---   BEBIDAS y EXTRAS: FICTICIOS. El catálogo no los muestra; se reemplazan cuando
---             lleguen los reales.
+--   BEBIDAS:  las REALES, con sus precios, dadas por el autor el 7-oct-2026 (D-72).
+--             Son genéricas: agua, jugo y soda, y la soda por tamaño. La marca de la
+--             soda (Coca-Cola, Fanta o Sprite) y el sabor del jugo NO se registran: la
+--             vendedora los pregunta al entregar, que es en el momento de la venta. La
+--             soda personal es la «mini», de menos de 200 ml.
+--   EXTRAS:   FICTICIOS. El catálogo no los muestra; se reemplazan cuando lleguen los
+--             reales.
 --   IMÁGENES: las pizzas usan las fotos del local, preparadas con
---             scripts/preparar-fotos.py (.webp); las bebidas, dibujos del proyecto
---             (scripts/dibujar-carta.py). La base guarda solo el nombre del archivo.
+--             scripts/preparar-fotos.py (.webp); las bebidas, un dibujo genérico por
+--             tipo (scripts/dibujar-carta.py). La base guarda solo el nombre del archivo.
+--
+-- LAS BEBIDAS FICTICIAS TOMARON SU NOMBRE REAL (D-73)
+--   Hasta el 7-oct la carta tenía tres bebidas ficticias, que ya aparecen en pedidos.
+--   Eran el mismo producto con un nombre provisional, así que se renombran en lugar de
+--   crear otras:
+--     Agua mineral 600 ml  ->  Agua 500 ml
+--     Jugo natural 1 L     ->  Jugo 1 L
+--     Gaseosa 2 L          ->  Soda 2 L   (de Bs 18 a Bs 20)
+--   Los pedidos que ya las llevan no cambian lo que se cobró: cada línea guarda su
+--   precio (D-27). Cada cambio se hace solo si el nombre viejo existe y el nuevo todavía
+--   no, así que en una base nueva o ya renombrada no hace nada.
 --
 -- LAS REGLAS QUE SIGUE (D-27, D-28)
 --   Solo pizzas enteras, de un sabor o de dos mitades. Una pizza de dos mitades
@@ -35,6 +51,16 @@
 
 BEGIN;
 
+-- Las ficticias, con su nombre real (D-73). Antes de cargar la carta: si no, la carga las
+-- crearía como productos nuevos y quedarían dos para la misma bebida.
+UPDATE producto AS p
+   SET nombre = r.nuevo
+  FROM (VALUES ('Agua mineral 600 ml', 'Agua 500 ml'),
+               ('Jugo natural 1 L',    'Jugo 1 L'),
+               ('Gaseosa 2 L',         'Soda 2 L')) AS r (viejo, nuevo)
+ WHERE p.nombre = r.viejo
+   AND NOT EXISTS (SELECT 1 FROM producto WHERE nombre = r.nuevo);
+
 INSERT INTO producto (nombre, categoria, precio, descripcion, imagen) VALUES
     -- Pizzas: las del catálogo del local, con los precios confirmados por la dueña
     ('Carnívora',          'pizza', 60.00, 'Doble queso, peperoni y carne',                                             'carnivora.webp'),
@@ -52,10 +78,13 @@ INSERT INTO producto (nombre, categoria, precio, descripcion, imagen) VALUES
     ('Salame',             'pizza', 45.00, 'Doble queso y salame',                                                      'salame.webp'),
     ('Tres estaciones',    'pizza', 50.00, 'Doble queso, peperoni, salame y choclo',                                    'tres-estaciones.webp'),
     ('Vegetariana',        'pizza', 45.00, 'Doble queso, choclo y aceituna',                                            'vegetariana.webp'),
-    -- Bebidas: ficticias
-    ('Agua mineral 600 ml', 'bebida',  6.00, NULL, 'agua-mineral.png'),
-    ('Gaseosa 2 L',         'bebida', 18.00, NULL, 'gaseosa.png'),
-    ('Jugo natural 1 L',    'bebida', 15.00, NULL, 'jugo-natural.png'),
+    -- Bebidas: las reales (D-72). La app las ordena por tipo y, dentro, por precio (D-74)
+    ('Agua 500 ml',          'bebida',  6.00, NULL, 'agua-mineral.png'),
+    ('Jugo 1 L',             'bebida', 15.00, NULL, 'jugo-natural.png'),
+    ('Soda personal (mini)', 'bebida',  3.00, NULL, 'gaseosa.png'),
+    ('Soda 1 L',             'bebida', 10.00, NULL, 'gaseosa.png'),
+    ('Soda 1,5 L',           'bebida', 15.00, NULL, 'gaseosa.png'),
+    ('Soda 2 L',             'bebida', 20.00, NULL, 'gaseosa.png'),
     -- Extras: ficticios, un solo precio para cualquier pizza
     ('Extra choclo',   'extra',  5.00, NULL, NULL),
     ('Extra jamón',    'extra',  8.00, NULL, NULL),

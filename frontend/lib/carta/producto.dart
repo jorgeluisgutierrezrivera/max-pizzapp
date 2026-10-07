@@ -100,8 +100,9 @@ class Producto {
 /// enteros, el resultado siempre es exacto: 45 y 50 dan 47,50.
 int precioDeDosMitades(Producto a, Producto b) => (a.precio + b.precio + 1) ~/ 2;
 
-/// La carta, separada como la recorre la venta: pizzas, extras y bebidas, cada grupo en
-/// orden alfabético (D-30).
+/// La carta, separada como la recorre la venta: pizzas, extras y bebidas. Las pizzas y los
+/// extras van en orden alfabético, que es como se buscan (D-30); las bebidas, en el orden en
+/// que se piden (D-74).
 ///
 /// Avisa cuando un producto se agota o se repone (RF-13, D-67). El aviso en vivo cambia el
 /// producto DENTRO de esta misma carta, sin reemplazarla: la venta que se está armando está
@@ -110,7 +111,7 @@ class Carta extends ChangeNotifier {
   Carta(Iterable<Producto> productos)
     : _pizzas = _ordenados(productos.where((p) => p.esPizza)),
       _extras = _ordenados(productos.where((p) => p.esExtra)),
-      _bebidas = _ordenados(productos.where((p) => p.esBebida));
+      _bebidas = _comoSePiden(productos.where((p) => p.esBebida));
 
   List<Producto> _pizzas;
   List<Producto> _extras;
@@ -181,6 +182,21 @@ class Carta extends ChangeNotifier {
 
   static List<Producto> _ordenados(Iterable<Producto> productos) =>
       List.unmodifiable(productos.toList()..sort((a, b) => _clave(a.nombre).compareTo(_clave(b.nombre))));
+
+  /// Las bebidas, como se piden en el mostrador (D-74): por tipo, que es la primera palabra
+  /// del nombre (Agua, Jugo, Soda), y dentro de cada tipo por precio, que en las sodas es el
+  /// tamaño. Por nombre, la soda personal quedaría detrás de la de 2 litros.
+  static List<Producto> _comoSePiden(Iterable<Producto> bebidas) {
+    String tipo(Producto p) => _clave(p.nombre.trim().split(' ').first);
+    return List.unmodifiable(
+      bebidas.toList()..sort((a, b) {
+        final porTipo = tipo(a).compareTo(tipo(b));
+        if (porTipo != 0) return porTipo;
+        final porPrecio = a.precio.compareTo(b.precio);
+        return porPrecio != 0 ? porPrecio : _clave(a.nombre).compareTo(_clave(b.nombre));
+      }),
+    );
+  }
 
   /// Orden alfabético sin mirar tildes ni mayúsculas, como lo ordena la base.
   static String _clave(String texto) {

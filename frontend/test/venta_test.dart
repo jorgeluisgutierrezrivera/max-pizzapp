@@ -461,7 +461,7 @@ void main() {
   });
 
   group('la carta', () {
-    test('separa pizzas, extras y bebidas, en orden alfabético sin mirar tildes', () {
+    test('separa pizzas, extras y bebidas; las pizzas y los extras, en orden alfabético sin mirar tildes', () {
       expect(carta.pizzas.map((p) => p.nombre), [
         'Carnívora',
         'Choclo',
@@ -473,6 +473,27 @@ void main() {
       ]);
       expect(carta.extras.map((p) => p.nombre), ['Extra choclo', 'Extra jamón', 'Extra queso']);
       expect(carta.bebidas.map((p) => p.nombre), ['Agua mineral 600 ml', 'Gaseosa 2 L', 'Jugo natural 1 L']);
+    });
+
+    test('las bebidas, como se piden: por tipo y, dentro, de la más chica a la más grande (D-74)', () {
+      final bebidas = Carta([
+        producto('Soda 2 L', 'bebida', 20),
+        producto('Jugo 1 L', 'bebida', 15),
+        producto('Soda personal (mini)', 'bebida', 3),
+        producto('Soda 1,5 L', 'bebida', 15),
+        producto('Agua 500 ml', 'bebida', 6),
+        producto('Soda 1 L', 'bebida', 10),
+        producto('Salame', 'pizza', 45),
+      ]).bebidas;
+      // Por nombre, la soda personal quedaría al final, detrás de la de 2 litros.
+      expect(bebidas.map((p) => p.nombre), [
+        'Agua 500 ml',
+        'Jugo 1 L',
+        'Soda personal (mini)',
+        'Soda 1 L',
+        'Soda 1,5 L',
+        'Soda 2 L',
+      ]);
     });
 
     test('una categoría desconocida se rechaza al leer la carta', () {

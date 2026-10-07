@@ -17,8 +17,8 @@ Contra el despliegue publico (fuera del horario de atencion, de 18:00 a 23:30):
     API_URL=https://maxpizzapp.tech/api/v1 KEYCLOAK_URL=https://auth.maxpizzapp.tech \\
         python3 pruebas/api/probar_disponibilidad.py
 
-Usa UNA BEBIDA, que en la carta son ficticias (por omision, "Gaseosa 2 L"; otra con
-PRODUCTO="..."), y una pizza para el pedido de prueba, que nunca se marca. La categoria entera
+Usa UNA BEBIDA (por omision, "Soda 2 L"; otra con PRODUCTO="..."), que en produccion se
+agota unos segundos, fuera del horario, y una pizza para el pedido de prueba, que nunca se marca. La categoria entera
 (D-70) se prueba con los EXTRAS, tambien ficticios. Al terminar deja la bebida y cada extra como
 estaban y cancela el pedido que creo ("Prueba Disponibilidad", 70000009). La contrasena se lee
 del .env y nunca se imprime; los tokens tampoco.
@@ -39,7 +39,7 @@ identidad, pedir, comprobar, resultados = (
     base_api.identidad, base_api.pedir, base_api.comprobar, base_api.resultados)
 API = base_api.API
 
-BEBIDA = os.environ.get('PRODUCTO', 'Gaseosa 2 L')
+BEBIDA = os.environ.get('PRODUCTO', 'Soda 2 L')
 PIZZA = 'Peperoni'
 
 
