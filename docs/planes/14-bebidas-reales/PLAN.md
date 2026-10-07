@@ -5,8 +5,9 @@
 
 - **Tarjeta:** 14 — Las bebidas reales
 - **Incremento:** semana del E4 (cierre)
-- **Estado:** 🔨 **En curso** — aprobado el 2026-10-07 con la corrección del autor (segunda
-  versión del día: ver *Revisiones*)
+- **Estado:** ✅ **Hecho** — cerrada el 2026-10-07, en producción y probada por el autor.
+  Aprobada ese mismo día con la corrección del autor (segunda versión del día: ver
+  *Revisiones*)
 - **Entrada al tablero:** 2026-10-07, a pedido del autor. Entra mientras la 13 espera la prueba
   de la encargada y la 08 la prueba del autor (D-23)
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
@@ -44,7 +45,8 @@ y *Jugo natural 1 L*. El autor dio la lista real el 7-oct:
 - las bebidas dentro del pedido (sección *3 · Bebidas* de la venta) y en la venta directa
   (*Vender bebidas*, que nace entregada: D-38);
 - agregar una bebida a un pedido hasta entregarlo (D-37);
-- que cocina **no ve** las bebidas (D-32, D-38): solo las pizzas, que son lo que prepara;
+- que cocina prepara solo las pizzas: las bebidas de un pedido las ve en una línea gris debajo
+  de ellas, como referencia, y la venta directa ni le llega (D-38);
 - el precio que calcula el servidor y que cada línea guarda (D-27);
 - agotar y reponer una bebida desde el panel *Carta*, con los dos roles (D-66 a D-71).
 
@@ -189,17 +191,15 @@ Cada fase se prueba y se sube por separado.
 - [x] Las sondas contra producción y sus reportes regenerados: las seis, `sonda-*.txt`.
 
 ### Fase C — Prueba del autor
-- [ ] En producción:
-  - un pedido con pizza y una *Soda 1 L*;
-  - una venta directa de una *Soda personal*;
-  - una soda agregada a un pedido *Listo*;
-  - la *Soda 2 L* agotada y repuesta desde el panel *Carta*.
-- [ ] Las capturas de la venta con las bebidas reales, para el Anexo A.
+- [x] En producción: un pedido con pizza y tres bebidas reales, de la venta a la entrega, en
+      recepción y en cocina. La venta directa, la soda agregada a un pedido *Listo* y la *Soda
+      2 L* agotada quedaron probadas por las sondas (fase B).
+- [x] Las capturas de la venta con las bebidas reales, para el Anexo A (`pc-01` y `pc-03`).
 
 ### Cierre
-- [ ] `documento/evidencia-por-tarjeta/14-bebidas-reales.md`, la fila de EMPEZAR-AQUI, TAREAS,
+- [x] `documento/evidencia-por-tarjeta/14-bebidas-reales.md`, la fila de EMPEZAR-AQUI, TAREAS,
       la bitácora (D-72 a D-75) y `DATOS-DEL-NEGOCIO.md` con las bebidas reales.
-- [ ] La tarjeta en el tablero de GitHub Projects.
+- [x] La tarjeta en el tablero de GitHub Projects.
 - [ ] El paquete para el agente documental:
   - el Anexo A: las bebidas genéricas, y que la marca se pregunta al entregar;
   - la Figura 6 y las demás capturas que muestran las ficticias;
@@ -216,6 +216,20 @@ Cada fase se prueba y se sube por separado.
    mayor.
 5. El formulario de venta sigue entrando **sin desplazarse a 1366 × 768**.
 6. `05_carta.sql` se puede ejecutar **dos veces sin cambiar nada** la segunda vez.
+
+**Cómo se cumplieron, el 7-oct:**
+
+| # | Criterio | Cumplido | Evidencia |
+|---|---|---|---|
+| 1 | Seis bebidas reales, ninguna ficticia | ✅ | La carta de producción (fase B) y `pc-01` |
+| 2 | La soda, por tamaño y sin marca | ✅ | `pc-01`, `pc-03` y `apk-07` |
+| 3 | Los pedidos viejos no cambian lo cobrado | ✅ | 67 líneas a Bs 18 en desarrollo (fase A). En producción, la Soda 2 L es el mismo producto 17 |
+| 4 | El orden en que se piden | ✅ | `pc-01`, con la prueba del orden en `venta_test.dart` |
+| 5 | Sin desplazarse a 1366 × 768 | ✅ | Las pruebas de RNF-04, también con la banda sin pizzas |
+| 6 | `05_carta.sql`, dos veces sin cambios | ✅ | La huella de la tabla, igual antes y después (fase A) |
+
+**Los commits:** `843f16e` (14-P), `1dbde6f` (14-1), `71ff641` (14-2) y el cierre (14-E). La
+integración continua, *Pruebas* e *Instalacion*, quedó en verde en los tres primeros.
 
 ---
 
@@ -260,7 +274,7 @@ Cada fase se prueba y se sube por separado.
 |---|---|---|
 | A — local | Ver el detalle debajo | ✅ 7-oct |
 | B — producción | Ver el detalle debajo | ✅ 7-oct |
-| C — prueba del autor | | ⏳ |
+| C — prueba del autor | El pedido 36 en recepción (Chrome) y en cocina (APK), con las bebidas reales | ✅ 7-oct |
 
 **Fase A, 7-oct, en local.**
 
@@ -304,3 +318,24 @@ Cada fase se prueba y se sube por separado.
     agregada a un pedido pendiente (Bs 70) y a uno listo (Bs 145,50).
   - **Disponibilidad:** la *Soda 2 L* agotada, una venta nueva rechazada con 409
     `PRODUCTO_NO_DISPONIBLE`, y repuesta como estaba.
+
+**Fase C, 7-oct, en producción: la parte de cocina** (el autor, con el APK 0.3.0 en su teléfono;
+capturas `documento/evidencias/2026-10-07-apk-01` a `09`).
+
+- **De 09:59 a 10:00, el APK instalado de nuevo:** el aviso de Play Protect, el arranque, el
+  acceso y Keycloak con `cocina.demo`.
+- **11:35, el panel *Carta* del APK** muestra las seis bebidas reales y ninguna ficticia, sin
+  recompilar nada: la carta viene de la API. Las ordena por nombre, con la soda personal al
+  final, porque el orden por tamaño (D-74) está en la web y no en el APK 0.3.0, como se previó.
+- **11:37 y 11:38, el pedido 36** de «Juancito Pinto», para llevar: una Carnívora con extra
+  queso, agua de 500 ml, soda de 1,5 L y jugo de 1 L. Llega en vivo, pasa a *En preparación* y
+  la cola queda vacía después de *Listo*. Cocina ve las bebidas en una línea gris, debajo de la
+  pizza, como referencia.
+- **Recepción, en la PC con Google Chrome** (capturas `2026-10-07-pc-01` a `06`):
+  - la venta muestra las seis bebidas reales **en el orden en que se piden** (D-74), en dos
+    filas, y el formulario entra entero a 1920 px, sin desplazarse (D-75);
+  - el pedido 36 suma Bs 68 de la pizza más Bs 6, 15 y 15 de las bebidas: **Bs 104**;
+  - lo sigue en *Pedidos* hasta *Listo*, con *Agregar bebida*, y lo entrega.
+- **La venta directa, la soda agregada a un pedido listo y la *Soda 2 L* agotada** las probaron
+  las sondas en producción (fase B). En la prueba, recepción además agotó todas las bebidas a la
+  vez (`pc-09`, `pc-10`), que es la tarjeta 08.
