@@ -184,10 +184,9 @@ Cada fase se prueba y se sube por separado.
   Contra la API local, en verde.
 
 ### Fase B — Producción
-- [ ] Fuera del horario del local (18:00 a 23:30): respaldo de la base, `05_carta.sql`
+- [x] Fuera del horario del local (18:00 a 23:30): respaldo de la base, `05_carta.sql`
       ejecutado y la app publicada. La API no se reconstruye.
-- [ ] Las sondas contra producción y sus reportes regenerados (`sonda-pedidos.txt` y
-      `sonda-disponibilidad.txt`).
+- [x] Las sondas contra producción y sus reportes regenerados: las seis, `sonda-*.txt`.
 
 ### Fase C — Prueba del autor
 - [ ] En producción:
@@ -260,7 +259,7 @@ Cada fase se prueba y se sube por separado.
 | Fase | Resultado | Estado |
 |---|---|---|
 | A — local | Ver el detalle debajo | ✅ 7-oct |
-| B — producción | | ⏳ |
+| B — producción | Ver el detalle debajo | ✅ 7-oct |
 | C — prueba del autor | | ⏳ |
 
 **Fase A, 7-oct, en local.**
@@ -284,3 +283,24 @@ Cada fase se prueba y se sube por separado.
   CORRECTO*, con la *Soda 2 L*.
 
   Los reportes versionados no se tocaron: salen de producción, en la fase B.
+
+**Fase B, 7-oct, en producción** (antes de las 18:00, con el local sin atender).
+
+- **10:56, el respaldo:** `/opt/respaldos/maxpizzapp-2026-10-07-1456.dump`, de 63 KB. El nombre
+  lleva la hora del servidor, en UTC.
+- **La carta.** El servidor ya estaba en `1dbde6f`. La carga respondió `UPDATE 3` (las tres
+  ficticias renombradas) e `INSERT 0 25` (la carta completa), y la consulta mostró las seis
+  bebidas, de *Soda personal (mini)* a Bs 3 hasta *Soda 2 L* a Bs 20.
+- **La *Soda 2 L* de producción es el producto 17**, el mismo número que tenía la *Gaseosa 2 L*
+  en el reporte del 4-oct: es el mismo producto con su nombre real (D-73).
+- **11:08, la app**, publicada con `publicar-web.sh` (versión `20261007-110701`). Comprobado
+  desde afuera:
+  - el `main.dart.js` que sirve `maxpizzapp.tech` tiene la misma hora que la compilación local;
+  - `/api/v1/salud` responde `ok`;
+  - la app carga sin errores en la consola.
+- **11:11 a 11:13, las sondas** (`correr_sondas.py`, corridas por el autor): las seis *TODO
+  CORRECTO*, con la contraseña leída del `.env` del servidor y ningún secreto en los reportes.
+  - **Pedidos:** la venta mixta de Bs 193; la venta directa de 2 sodas, de Bs 40; una soda
+    agregada a un pedido pendiente (Bs 70) y a uno listo (Bs 145,50).
+  - **Disponibilidad:** la *Soda 2 L* agotada, una venta nueva rechazada con 409
+    `PRODUCTO_NO_DISPONIBLE`, y repuesta como estaba.

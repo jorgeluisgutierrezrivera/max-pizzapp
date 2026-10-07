@@ -1,5 +1,5 @@
 Max Pizzapp - reporte de la sonda carta
-Fecha:    2026-10-05T02:12:59+00:00 (duro 7.6 s)
+Fecha:    2026-10-07T15:11:42+00:00 (duro 6.7 s)
 API:      https://maxpizzapp.tech/api/v1
 Keycloak: https://auth.maxpizzapp.tech
 Comando:  python pruebas/api/probar_carta.py   (todas: python pruebas/correr_sondas.py)
@@ -19,7 +19,7 @@ Keycloak: https://auth.maxpizzapp.tech
   OK  GET /productos                                             200
 
 --- la carta que devuelve la base ---
-  OK  hay carta cargada                                          True  22 productos
+  OK  hay carta cargada                                          True  25 productos
   OK  ordenada: primero las pizzas, cada categoria por nombre    True
   OK  sin gama ni precio de media: solo pizzas enteras (D-27)    True
   OK  toda pizza trae sus ingredientes en la descripcion         True
