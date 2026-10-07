@@ -1,5 +1,5 @@
 Max Pizzapp - reporte de la sonda disponibilidad
-Fecha:    2026-10-07T15:13:18+00:00 (duro 16.1 s)
+Fecha:    2026-10-07T21:26:06+00:00 (duro 22.5 s)
 API:      https://maxpizzapp.tech/api/v1
 Keycloak: https://auth.maxpizzapp.tech
 Comando:  python pruebas/api/probar_disponibilidad.py   (todas: python pruebas/correr_sondas.py)
@@ -13,22 +13,29 @@ Producto de la prueba: Soda 2 L (id 17), disponible al empezar.
 --- CA-13.2: el pedido que ya la lleva ---
   OK  recepcion vende una pizza y la bebida                      201
 
---- marcar y reponer, con los dos roles ---
-  OK  cocina la marca agotada                                    (200, False)
+--- la bebida la marca y la repone recepcion (D-76) ---
+  OK  cocina no puede agotarla: 403, de otro rol                 (403, 'ROL_SIN_PERMISO', 'bebida')
+  OK    y la bebida sigue disponible                             True
+  OK  recepcion la marca agotada                                 (200, False)
   OK    la carta la muestra agotada                              False
   OK  marcarla otra vez igual: 200, sin cambios                  (200, False)
+  OK  cocina tampoco puede reponerla: 403                        (403, 'ROL_SIN_PERMISO')
   OK  CA-13.2: el pedido sigue con sus lineas, total y estado    True  2 lineas, Bs 70, pendiente
   OK  CA-13.1: una venta nueva con la bebida agotada: 409        (409, 'PRODUCTO_NO_DISPONIBLE', 17)
   OK  recepcion la repone                                        (200, True)
   OK    la carta la vuelve a ofrecer                             True
 
---- una categoria entera: los extras (D-70) ---
+--- una categoria entera: los extras, que maneja cocina (D-70, D-76) ---
+  OK  recepcion no puede agotarlos: 403, de otro rol             (403, 'ROL_SIN_PERMISO', 'extra')
+  OK    y ningun extra cambio                                    {19: True, 20: True, 21: True, 22: True}
   OK  cocina agota todos los extras: los que estaban disponibles (200, [19, 20, 21, 22])
   OK    la carta los muestra todos agotados                      True
   OK    las pizzas y las bebidas no se tocaron                   (True, True)
   OK  una venta con un extra agotado: 409                        (409, 'PRODUCTO_NO_DISPONIBLE')
   OK  agotarlos otra vez: 200, nada que cambiar                  (200, [])
-  OK  recepcion los repone todos                                 (200, 4)
+  OK  recepcion no puede reponer un extra: 403                   (403, 'ROL_SIN_PERMISO')
+  OK    y sigue agotado                                          False
+  OK  cocina los repone todos                                    (200, 4)
   OK  una categoria que no existe: 400                           (400, 'DISPONIBILIDAD_INVALIDA')
   OK  sin token: 401                                             (401, 'TOKEN_AUSENTE')
 
@@ -40,6 +47,6 @@ Producto de la prueba: Soda 2 L (id 17), disponible al empezar.
   OK    y la bebida sigue disponible, con su precio              (True, 20)
 Los extras, como estaban: si.
 
-Al terminar: Soda 2 L quedo disponible, como estaba; el pedido de prueba 516, cancelado.
+Al terminar: Soda 2 L quedo disponible, como estaba; el pedido de prueba 553, cancelado.
 
 TODO CORRECTO

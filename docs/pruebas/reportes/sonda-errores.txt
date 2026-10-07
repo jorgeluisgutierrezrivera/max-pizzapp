@@ -1,5 +1,5 @@
 Max Pizzapp - reporte de la sonda errores
-Fecha:    2026-10-07T15:13:02+00:00 (duro 16.0 s)
+Fecha:    2026-10-07T21:25:46+00:00 (duro 19.7 s)
 API:      https://maxpizzapp.tech/api/v1
 Keycloak: https://auth.maxpizzapp.tech
 Comando:  python pruebas/api/probar_errores.py   (todas: python pruebas/correr_sondas.py)
@@ -31,7 +31,11 @@ Keycloak: https://auth.maxpizzapp.tech
 | 400 DISPONIBILIDAD_INVALIDA | Marcar con un campo de mas (el precio) | `PATCH /productos/1/disponibilidad` | 400 DISPONIBILIDAD_INVALIDA | OK |
 | 404 PRODUCTO_NO_ENCONTRADO | Marcar un producto que no existe | `PATCH /productos/2147483647/disponibilidad` | 404 PRODUCTO_NO_ENCONTRADO | OK |
 | 400 DISPONIBILIDAD_INVALIDA | Agotar una categoria que no existe | `PATCH /productos/disponibilidad` | 400 DISPONIBILIDAD_INVALIDA | OK |
+| 403 ROL_SIN_PERMISO | Recepcion intenta reponer una pizza | `PATCH /productos/1/disponibilidad` | 403 ROL_SIN_PERMISO | OK |
+| 403 ROL_SIN_PERMISO | Cocina intenta reponer una bebida | `PATCH /productos/16/disponibilidad` | 403 ROL_SIN_PERMISO | OK |
+| 403 ROL_SIN_PERMISO | Recepcion intenta reponer todas las pizzas | `PATCH /productos/disponibilidad` | 403 ROL_SIN_PERMISO | OK |
+| 403 ROL_SIN_PERMISO | Cocina intenta reponer todas las bebidas | `PATCH /productos/disponibilidad` | 403 ROL_SIN_PERMISO | OK |
 | sin token | Acceso con la contrasena equivocada (CA-01.2) | Keycloak, recepcion.demo | el acceso no se completo: credenciales rechazadas | OK |
 
-21 de 21 como se esperaba
+25 de 25 como se esperaba
 TODO CORRECTO

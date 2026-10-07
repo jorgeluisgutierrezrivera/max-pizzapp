@@ -1,5 +1,5 @@
 Max Pizzapp - reporte de la sonda acceso
-Fecha:    2026-10-07T15:11:30+00:00 (duro 4.0 s)
+Fecha:    2026-10-07T21:23:45+00:00 (duro 6.4 s)
 API:      https://maxpizzapp.tech/api/v1
 Keycloak: https://auth.maxpizzapp.tech
 Comando:  python pruebas/identidad/probar_acceso_pkce.py   (todas: python pruebas/correr_sondas.py)
