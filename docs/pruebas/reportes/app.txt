@@ -1,5 +1,5 @@
 Max Pizzapp - reporte de la suite de la app
-Fecha:   2026-10-07T22:48:28Z
+Fecha:   2026-10-08T15:07:52Z
 Version: Flutter 3.44.8 • channel stable • https://github.com/flutter/flutter.git
 Comando: cd frontend && flutter test   (este reporte: bash scripts/correr-pruebas.sh)
 Sin servidor: la API, Keycloak y el canal en vivo son simulados.
@@ -13,339 +13,353 @@ Resultado: TODO EN VERDE
 00:00 +3: test/autorizador_android_test.dart: si la persona se vuelve atrás, no es un error: sin mensaje
 00:00 +4: test/autorizador_android_test.dart: si AppAuth falla (sin red, por ejemplo), lo dice
 00:00 +5: test/autorizador_android_test.dart: una respuesta sin código no se canjea
-00:00 +6: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:00 +7: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:00 +8: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:00 +9: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:00 +10: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:01 +11: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:01 +12: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:01 +13: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:01 +14: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:01 +15: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:01 +16: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:01 +17: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:01 +18: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:01 +19: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:01 +20: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:01 +21: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:01 +22: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:01 +23: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:01 +24: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:01 +25: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:01 +26: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:01 +27: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
-00:01 +28: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) si conecta antes de los 5 s, no avisa nunca
-00:01 +29: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) si ya estaba conectado al abrir, no espera ni avisa
-00:01 +30: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) un corte en vivo se avisa al segundo, y el aviso se va cuando vuelve
-00:01 +31: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) el corte por vencimiento del token vuelve en milisegundos: no parpadea (D-47)
-00:01 +32: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) sin red del dispositivo avisa en el acto, aunque el canal figure conectado
-00:01 +33: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) con la red de vuelta pero el canal todavía caído, el aviso sigue
-00:01 +34: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
-00:02 +35: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
-00:02 +36: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
-00:02 +37: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
-00:02 +38: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
-00:02 +39: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
-00:02 +40: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
-00:02 +41: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
-00:02 +42: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
-00:02 +43: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
-00:02 +44: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
-00:02 +45: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
-00:02 +46: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
-00:02 +47: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
-00:02 +48: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
-00:02 +49: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
-00:02 +50: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
-00:02 +51: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) Recargar lee de nuevo, dice "Recargando…" y no se puede tocar dos veces
-00:03 +52: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) si la lectura falla, el botón vuelve a estar disponible
-00:03 +53: test/configuracion_test.dart: en produccion la direccion de Keycloak se deduce del dominio origen sin ruta ni parametros
-00:03 +54: test/configuracion_test.dart: en produccion la direccion de Keycloak se deduce del dominio Keycloak en el subdominio auth.
-00:03 +55: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 320.0 px no se desborda y el botón queda a la vista
-00:03 +56: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 320.0 px no se desborda y el botón queda a la vista
-00:03 +57: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 320.0 px no se desborda y el botón queda a la vista
-00:03 +58: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 320.0 px no se desborda y el botón queda a la vista
-00:03 +59: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 320.0 px no se desborda y el botón queda a la vista
-00:03 +60: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 320.0 px no se desborda y el botón queda a la vista
-00:03 +61: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 320.0 px no se desborda y el botón queda a la vista
-00:03 +62: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 320.0 px no se desborda y el botón queda a la vista
-00:03 +63: test/configuracion_test.dart: en el APK de cocina la direccion llega al compilar (D-48) con ORIGEN, todo se deduce como en la web
-00:03 +64: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 360.0 px no se desborda y el botón queda a la vista
-00:03 +65: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 360.0 px no se desborda y el botón queda a la vista
-00:03 +66: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 360.0 px no se desborda y el botón queda a la vista
-00:03 +67: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 360.0 px no se desborda y el botón queda a la vista
-00:03 +68: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 768.0 px no se desborda y el botón queda a la vista
-00:03 +69: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 1366.0 px no se desborda y el botón queda a la vista
-00:04 +70: test/disponibilidad_test.dart: la carta cambia en el lugar (D-67) agotar un producto lo cambia en su lista, avisa una vez y dice que cambió
-00:04 +71: test/disponibilidad_test.dart: la carta cambia en el lugar (D-67) un aviso repetido, o de un producto que no está, no cambia nada ni avisa
-00:04 +72: test/disponibilidad_test.dart: la carta cambia en el lugar (D-67) reponer lo vuelve a ofrecer
-00:04 +73: test/disponibilidad_test.dart: la carta cambia en el lugar (D-67) la disponibilidad de una carta recién leída se aplica toda junta, con un solo aviso
-00:04 +74: test/disponibilidad_test.dart: la carta cambia en el lugar (D-67) el producto cambia solo en su disponibilidad
-00:04 +75: test/disponibilidad_test.dart: la venta en curso con un producto que se agota (D-69) la venta se vuelve a dibujar cuando la carta cambia, sin perder lo que tiene
-00:04 +76: test/disponibilidad_test.dart: la venta en curso con un producto que se agota (D-69) lo agotado se lista, se señala y no deja confirmar, con lo que hay que quitar
-00:04 +77: test/disponibilidad_test.dart: la venta en curso con un producto que se agota (D-69) un extra que se agota también cuenta
-00:04 +78: test/disponibilidad_test.dart: la venta en curso con un producto que se agota (D-69) quitado lo agotado, la venta se confirma
-00:04 +79: test/disponibilidad_test.dart: la venta en curso con un producto que se agota (D-69) si se repone antes de confirmar, la venta vuelve a estar lista
-00:04 +80: test/disponibilidad_test.dart: la venta en curso con un producto que se agota (D-69) la venta deja de escuchar a la carta al cerrarse
-00:04 +81: test/disponibilidad_test.dart: las ventanas abiertas también se enteran la pizza a medio armar: un sabor elegido que se agota no deja agregarla
-00:04 +82: test/disponibilidad_test.dart: las ventanas abiertas también se enteran un extra elegido que se agota pide quitarlo
-00:04 +83: test/disponibilidad_test.dart: las ventanas abiertas también se enteran la venta directa de bebidas no cobra una bebida que se agotó
-00:04 +84: test/disponibilidad_test.dart: las ventanas abiertas también se enteran lo que se agrega a un pedido tampoco
-00:04 +85: test/disponibilidad_test.dart: una categoría entera (D-70) agotar todas las pizzas las cambia de una vez, avisa una sola vez y dice cuántas
-00:04 +86: test/disponibilidad_test.dart: una categoría entera (D-70) si ya estaban así, no cambia nada ni avisa
-00:04 +87: test/disponibilidad_test.dart: una categoría entera (D-70) reponer las vuelve a ofrecer a todas
-00:04 +88: test/disponibilidad_test.dart: una categoría entera (D-70) los textos: todas las pizzas, todos los extras
-00:05 +89: test/identidad_test.dart: el tema es claro, con el rojo ladrillo y el amarillo suave; los colores puros, solo en el logo
-00:05 +90: test/identidad_test.dart: el tema el texto sobre el crema y sobre las tarjetas blancas se lee de sobra (al menos 7 a 1)
-00:05 +91: test/identidad_test.dart: el tema la letra blanca sobre el rojo de los botones cumple el mínimo para texto normal
-00:05 +92: test/identidad_test.dart: el tema los precios, con letra oscura sobre el amarillo suave, se leen de sobra
-00:05 +93: test/identidad_test.dart: el tema la barra superior roja: el título, el nombre y "Cerrar sesión", en blanco
-00:05 +94: test/identidad_test.dart: el tema el rojo de los botones de contorno y de los enlaces se lee sobre el crema
-00:05 +95: test/identidad_test.dart: el tema las franjas de aviso se leen: canal caído sobre amarillo, sonido apagado sobre rojo suave
-00:05 +96: test/identidad_test.dart: el tema el texto secundario y los errores cumplen el mínimo para texto normal
-00:05 +97: test/identidad_test.dart: el tema el botón de Terminar venta lleva texto blanco grande, que así cumple el mínimo
-00:05 +98: test/identidad_test.dart: el logo en la pantalla de acceso, con el nombre del local
-00:06 +99: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
-00:07 +100: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
-00:07 +101: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
-00:07 +102: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
-00:07 +103: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
-00:07 +104: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
-00:07 +105: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
-00:07 +106: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
-00:07 +107: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
-00:07 +108: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
-00:07 +109: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
-00:07 +110: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
-00:07 +111: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
-00:07 +112: test/pantalla_recepcion_test.dart: los cuatro estados cargando
-00:08 +113: test/pantalla_recepcion_test.dart: los cuatro estados cargando
-00:08 +114: test/pantalla_recepcion_test.dart: los cuatro estados cargando
-00:08 +115: test/pantalla_recepcion_test.dart: los cuatro estados cargando
-00:09 +116: test/pantalla_recepcion_test.dart: los cuatro estados cargando
-00:09 +117: test/pantalla_recepcion_test.dart: los cuatro estados cargando
-00:09 +118: test/pantalla_recepcion_test.dart: los cuatro estados cargando
-00:09 +119: test/pantalla_recepcion_test.dart: los cuatro estados cargando
-00:09 +120: test/pantalla_recepcion_test.dart: los cuatro estados cargando
-00:09 +121: test/pantalla_recepcion_test.dart: los cuatro estados cargando
-00:09 +122: test/pantalla_recepcion_test.dart: los cuatro estados cargando
-00:09 +123: test/pantalla_recepcion_test.dart: los cuatro estados cargando
-00:09 +124: test/pantalla_recepcion_test.dart: los cuatro estados cargando
-00:09 +125: test/pantalla_recepcion_test.dart: los cuatro estados cargando
-00:09 +126: test/pantalla_recepcion_test.dart: los cuatro estados cargando
-00:09 +127: test/pantalla_recepcion_test.dart: los cuatro estados cargando
-00:09 +128: test/pantalla_recepcion_test.dart: los cuatro estados cargando
-00:09 +129: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:09 +130: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:09 +131: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:09 +132: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:09 +133: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:09 +134: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:09 +135: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:09 +136: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:09 +137: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:09 +138: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:10 +139: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:10 +140: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:10 +141: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:10 +142: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:10 +143: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:10 +144: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:10 +145: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:10 +146: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:10 +147: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:10 +148: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:10 +149: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:10 +150: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
-00:10 +151: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
-00:10 +152: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
-00:10 +153: test/pantalla_cocina_test.dart: en vivo un pedido nuevo aparece solo, al final, marcado "Nuevo", y suena el timbre
-00:11 +154: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
-00:11 +155: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
-00:11 +156: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
-00:11 +157: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
-00:11 +158: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
-00:11 +159: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
-00:11 +160: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
-00:11 +161: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
-00:11 +162: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
-00:11 +163: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
-00:12 +164: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
-00:12 +165: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
-00:12 +166: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
-00:12 +167: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
-00:12 +168: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
-00:12 +169: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
-00:12 +170: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
-00:12 +171: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en la computadora (1536 × 730), el formulario ocupa la pantalla sin desplazarse
-00:12 +172: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en la computadora (1536 × 730), el formulario ocupa la pantalla sin desplazarse
-00:12 +173: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en la computadora (1536 × 730), el formulario ocupa la pantalla sin desplazarse
-00:12 +174: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:13 +175: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:13 +176: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:13 +177: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:13 +178: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:13 +179: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:13 +180: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:13 +181: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:13 +182: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:13 +182: test/timbre_android_test.dart: si el teléfono no puede sonar, no se cae nada: la cola sigue
+00:00 +6: test/autorizador_android_test.dart: cerrar sesión cierra la de Keycloak y vuelve a la app
+00:00 +7: test/autorizador_android_test.dart: si Keycloak no llega a cerrar, avisa que puede no pedir la contraseña
+00:00 +8: test/autorizador_android_test.dart: http solo se permite en desarrollo, contra el Keycloak local
+00:00 +9: test/autorizador_android_test.dart: los errores de la plataforma se capturan como PlatformException
+00:00 +10: loading test/aviso_sin_conexion_test.dart
+00:01 +10: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) al abrir espera 5 s a la primera conexión; si no llega, avisa
+00:02 +11: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) si conecta antes de los 5 s, no avisa nunca
+00:02 +12: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) si ya estaba conectado al abrir, no espera ni avisa
+00:02 +13: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) un corte en vivo se avisa al segundo, y el aviso se va cuando vuelve
+00:02 +14: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) el corte por vencimiento del token vuelve en milisegundos: no parpadea (D-47)
+00:02 +15: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) sin red del dispositivo avisa en el acto, aunque el canal figure conectado
+00:02 +16: test/aviso_sin_conexion_test.dart: cuándo avisar (VigiaDelCanal) con la red de vuelta pero el canal todavía caído, el aviso sigue
+00:02 +17: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) dice qué pasa y ofrece Recargar
+00:03 +18: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) Recargar lee de nuevo, dice "Recargando…" y no se puede tocar dos veces
+00:03 +19: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) si la lectura falla, el botón vuelve a estar disponible
+00:03 +20: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 320.0 px no se desborda y el botón queda a la vista
+00:03 +21: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 360.0 px no se desborda y el botón queda a la vista
+00:03 +22: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 768.0 px no se desborda y el botón queda a la vista
+00:03 +23: test/aviso_sin_conexion_test.dart: la banda (AvisoSinConexion) a 1366.0 px no se desborda y el botón queda a la vista
+00:03 +24: loading test/canal_en_vivo_test.dart
+00:05 +24: test/canal_en_vivo_test.dart: conecta una sola vez, al origen de la app, y avisa cuando entra
+00:05 +25: test/canal_en_vivo_test.dart: cuando se corta (D-47) si lo corta el servidor, al vencer el token, se reconecta en el acto y sin renovar
+00:05 +26: test/canal_en_vivo_test.dart: cuando se corta (D-47) si se cae la red o el servidor ("transport close"), deja que el cliente reintente solo
+00:05 +27: test/canal_en_vivo_test.dart: cuando se corta (D-47) si se cae la red o el servidor ("ping timeout"), deja que el cliente reintente solo
+00:05 +28: test/canal_en_vivo_test.dart: cuando se corta (D-47) si se cae la red o el servidor ("transport error"), deja que el cliente reintente solo
+00:05 +29: test/canal_en_vivo_test.dart: cuando el servidor lo rechaza (D-46) por el token (TOKEN_EXPIRADO): lo renueva una vez y reconecta
+00:05 +30: test/canal_en_vivo_test.dart: cuando el servidor lo rechaza (D-46) por el token (TOKEN_INVALIDO): lo renueva una vez y reconecta
+00:05 +31: test/canal_en_vivo_test.dart: cuando el servidor lo rechaza (D-46) por el token (TOKEN_AUSENTE): lo renueva una vez y reconecta
+00:05 +32: test/canal_en_vivo_test.dart: cuando el servidor lo rechaza (D-46) si lo rechaza otra vez con el token renovado, la sesión termina
+00:05 +33: test/canal_en_vivo_test.dart: cuando el servidor lo rechaza (D-46) después de reconectar, un rechazo futuro vuelve a tener su renovación
+00:05 +34: test/canal_en_vivo_test.dart: cuando el servidor lo rechaza (D-46) si la cuenta no tiene rol, la sesión termina sin intentar renovar
+00:05 +35: test/canal_en_vivo_test.dart: cuando el servidor lo rechaza (D-46) si no se pudo renovar, no reconecta: la sesión ya volvió al acceso
+00:05 +36: test/canal_en_vivo_test.dart: cuando el servidor lo rechaza (D-46) un error sin código (la red o el servidor no responden) no renueva ni termina nada
+00:05 +37: test/canal_en_vivo_test.dart: cuando el servidor lo rechaza (D-46) si la pantalla cerró el canal mientras renovaba, no lo vuelve a abrir
+00:05 +38: test/canal_en_vivo_test.dart: los avisos siguen llegando como JSON corriente
+00:05 +39: test/canal_en_vivo_test.dart: un producto que se agota o se repone llega por disponibilidades (RF-13)
+00:05 +40: test/canal_en_vivo_test.dart: una categoría entera llega por disponibilidadesDeCategoria (D-70)
+00:05 +41: loading test/cliente_api_test.dart
+00:07 +41: test/cliente_api_test.dart: pide la ruta bajo /api/v1 y manda el token como Bearer
+00:07 +42: test/cliente_api_test.dart: los parametros de consulta van en la direccion, codificados
+00:07 +43: test/cliente_api_test.dart: enviar hace un POST con el cuerpo en JSON; cambiar, un PATCH
+00:07 +44: test/cliente_api_test.dart: un POST rechazado por token vencido se reintenta una vez, con el mismo cuerpo
+00:07 +45: test/cliente_api_test.dart: los datos extra de un error llegan en el ErrorApi: el total correcto, el producto agotado
+00:07 +46: test/cliente_api_test.dart: el formato unico de error se convierte en ErrorApi con el mensaje del servidor
+00:07 +47: test/cliente_api_test.dart: ante un 401 renueva el token una vez y reintenta con el nuevo
+00:07 +48: test/cliente_api_test.dart: si el token renovado tambien recibe 401, la sesion termina (D-46)
+00:07 +49: test/cliente_api_test.dart: si el reintento con el token renovado pasa, la sesion sigue
+00:07 +50: test/cliente_api_test.dart: un 403 no termina la sesion: el token es valido, el rol no alcanza
+00:07 +51: test/cliente_api_test.dart: si la renovacion falla no reintenta, y el 401 llega como error
+00:07 +52: test/cliente_api_test.dart: sin red: un mensaje para la persona, no una excepcion tecnica
+00:07 +53: test/cliente_api_test.dart: una respuesta que no es el JSON esperado no rompe la app
+00:07 +54: test/cliente_api_test.dart: Usuario se lee de la respuesta de /sesion
+00:07 +55: test/cliente_api_test.dart: Usuario sin nombre completo se muestra el de la cuenta
+00:07 +56: test/cliente_api_test.dart: Usuario roles ajenos al sistema se ignoran
+00:07 +57: loading test/configuracion_test.dart
+00:08 +57: test/configuracion_test.dart: en produccion la direccion de Keycloak se deduce del dominio origen sin ruta ni parametros
+00:08 +58: test/configuracion_test.dart: en produccion la direccion de Keycloak se deduce del dominio Keycloak en el subdominio auth.
+00:08 +59: test/configuracion_test.dart: en produccion la direccion de Keycloak se deduce del dominio los tres endpoints de OpenID Connect
+00:08 +60: test/configuracion_test.dart: en produccion la direccion de Keycloak se deduce del dominio Keycloak devuelve a la raiz de la app
+00:08 +61: test/configuracion_test.dart: otro dominio da otro Keycloak: nada esta escrito a mano
+00:08 +62: test/configuracion_test.dart: en desarrollo se usa la direccion definida al compilar, conservando el puerto
+00:08 +63: test/configuracion_test.dart: en localhost sin direccion definida, error claro en vez de adivinar
+00:08 +64: test/configuracion_test.dart: una direccion definida que no es http ni https se rechaza
+00:08 +65: test/configuracion_test.dart: la API se llama por ruta relativa, en el mismo origen
+00:08 +66: test/configuracion_test.dart: en el APK de cocina la direccion llega al compilar (D-48) con ORIGEN, todo se deduce como en la web
+00:08 +67: test/configuracion_test.dart: en el APK de cocina la direccion llega al compilar (D-48) sin ORIGEN, error claro en vez de adivinar
+00:08 +68: test/configuracion_test.dart: en el APK de cocina la direccion llega al compilar (D-48) un ORIGEN que no es http ni https se rechaza
+00:08 +69: test/configuracion_test.dart: en el APK de cocina la direccion llega al compilar (D-48) en desarrollo, contra el entorno local, Keycloak tambien se define
+00:08 +70: loading test/disponibilidad_test.dart
+00:10 +70: test/disponibilidad_test.dart: la carta cambia en el lugar (D-67) agotar un producto lo cambia en su lista, avisa una vez y dice que cambió
+00:10 +71: test/disponibilidad_test.dart: la carta cambia en el lugar (D-67) un aviso repetido, o de un producto que no está, no cambia nada ni avisa
+00:10 +72: test/disponibilidad_test.dart: la carta cambia en el lugar (D-67) reponer lo vuelve a ofrecer
+00:10 +73: test/disponibilidad_test.dart: la carta cambia en el lugar (D-67) la disponibilidad de una carta recién leída se aplica toda junta, con un solo aviso
+00:10 +74: test/disponibilidad_test.dart: la carta cambia en el lugar (D-67) el producto cambia solo en su disponibilidad
+00:10 +75: test/disponibilidad_test.dart: la venta en curso con un producto que se agota (D-69) la venta se vuelve a dibujar cuando la carta cambia, sin perder lo que tiene
+00:10 +76: test/disponibilidad_test.dart: la venta en curso con un producto que se agota (D-69) lo agotado se lista, se señala y no deja confirmar, con lo que hay que quitar
+00:10 +77: test/disponibilidad_test.dart: la venta en curso con un producto que se agota (D-69) un extra que se agota también cuenta
+00:10 +78: test/disponibilidad_test.dart: la venta en curso con un producto que se agota (D-69) quitado lo agotado, la venta se confirma
+00:10 +79: test/disponibilidad_test.dart: la venta en curso con un producto que se agota (D-69) si se repone antes de confirmar, la venta vuelve a estar lista
+00:10 +80: test/disponibilidad_test.dart: la venta en curso con un producto que se agota (D-69) la venta deja de escuchar a la carta al cerrarse
+00:10 +81: test/disponibilidad_test.dart: las ventanas abiertas también se enteran la pizza a medio armar: un sabor elegido que se agota no deja agregarla
+00:10 +82: test/disponibilidad_test.dart: las ventanas abiertas también se enteran un extra elegido que se agota pide quitarlo
+00:10 +83: test/disponibilidad_test.dart: las ventanas abiertas también se enteran la venta directa de bebidas no cobra una bebida que se agotó
+00:10 +84: test/disponibilidad_test.dart: las ventanas abiertas también se enteran lo que se agrega a un pedido tampoco
+00:10 +85: test/disponibilidad_test.dart: una categoría entera (D-70) agotar todas las pizzas las cambia de una vez, avisa una sola vez y dice cuántas
+00:10 +86: test/disponibilidad_test.dart: una categoría entera (D-70) si ya estaban así, no cambia nada ni avisa
+00:10 +87: test/disponibilidad_test.dart: una categoría entera (D-70) reponer las vuelve a ofrecer a todas
+00:10 +88: test/disponibilidad_test.dart: una categoría entera (D-70) los textos: todas las pizzas, todos los extras
+00:10 +89: loading test/identidad_test.dart
+00:12 +89: test/identidad_test.dart: el tema es claro, con el rojo ladrillo y el amarillo suave; los colores puros, solo en el logo
+00:12 +90: test/identidad_test.dart: el tema el texto sobre el crema y sobre las tarjetas blancas se lee de sobra (al menos 7 a 1)
+00:12 +91: test/identidad_test.dart: el tema la letra blanca sobre el rojo de los botones cumple el mínimo para texto normal
+00:12 +92: test/identidad_test.dart: el tema los precios, con letra oscura sobre el amarillo suave, se leen de sobra
+00:12 +93: test/identidad_test.dart: el tema la barra superior roja: el título, el nombre y "Cerrar sesión", en blanco
+00:12 +94: test/identidad_test.dart: el tema el rojo de los botones de contorno y de los enlaces se lee sobre el crema
+00:12 +95: test/identidad_test.dart: el tema las franjas de aviso se leen: canal caído sobre amarillo, sonido apagado sobre rojo suave
+00:12 +96: test/identidad_test.dart: el tema el texto secundario y los errores cumplen el mínimo para texto normal
+00:12 +97: test/identidad_test.dart: el tema el botón de Terminar venta lleva texto blanco grande, que así cumple el mínimo
+00:12 +98: test/identidad_test.dart: el logo en la pantalla de acceso, con el nombre del local
+00:14 +99: test/identidad_test.dart: el logo en la barra de cada rol
+00:14 +100: test/identidad_test.dart: el logo la pantalla de acceso cabe en un celular angosto
+00:14 +101: test/identidad_test.dart: el logo la portada nombra solo el local piloto (D-03)
+00:15 +102: loading test/pantalla_cocina_test.dart
+00:16 +102: test/pantalla_cocina_test.dart: los estados de la pantalla cargando, y luego la cola
+00:18 +103: test/pantalla_cocina_test.dart: los estados de la pantalla sin pedidos lo dice, en vez de una pantalla en blanco
+00:18 +104: test/pantalla_cocina_test.dart: los estados de la pantalla si la API falla, el mensaje y Reintentar
+00:19 +105: test/pantalla_cocina_test.dart: los estados de la pantalla se conecta al canal al abrir y lo cierra al salir
+00:19 +106: test/pantalla_cocina_test.dart: lo que muestra cada pedido número, cliente, para llevar, las pizzas con mitades y extras, las bebidas aparte y la observación
+00:19 +107: test/pantalla_cocina_test.dart: lo que muestra cada pedido en orden de llegada: el que más espera va primero
+00:19 +108: test/pantalla_cocina_test.dart: lo que muestra cada pedido en la computadora van varias columnas; en el celular, una, sin desbordes
+00:20 +109: test/pantalla_cocina_test.dart: empezar y marcar listo Empezar lo pasa a en preparación; Listo lo saca de la cola
+00:20 +110: test/pantalla_cocina_test.dart: empezar y marcar listo mientras el cambio viaja, el botón espera: dos toques no son dos cambios
+00:20 +111: test/pantalla_cocina_test.dart: empezar y marcar listo si otro lo cambió antes (409), avisa y relee la cola
+00:20 +112: test/pantalla_cocina_test.dart: en vivo un pedido nuevo aparece solo, al final, marcado "Nuevo", y suena el timbre
+00:20 +113: test/pantalla_cocina_test.dart: en vivo el mismo aviso dos veces no duplica el pedido ni suena dos veces
+00:21 +114: test/pantalla_cocina_test.dart: en vivo un pedido que ya nace listo (solo bebidas) no entra a la cola
+00:21 +115: test/pantalla_cocina_test.dart: en vivo si otro dispositivo lo empieza, la tarjeta se actualiza sola
+00:21 +116: test/pantalla_cocina_test.dart: en vivo si recepción lo cancela, sale de la cola y cocina se entera
+00:21 +117: test/pantalla_cocina_test.dart: en vivo al reconectarse, relee la cola: pudo perderse algún aviso
+00:21 +118: test/pantalla_cocina_test.dart: el canal caído (CA-03.2, D-45) si el canal no entra en 5 s, la banda lo dice; al entrar, se va y la cola se relee
+00:21 +119: test/pantalla_cocina_test.dart: el canal caído (CA-03.2, D-45) un corte en vivo: la banda al segundo, y Recargar trae la cola sin recargar la página
+00:22 +120: test/pantalla_cocina_test.dart: el canal caído (CA-03.2, D-45) con el canal caído se sigue trabajando: Empezar va por la API
+00:22 +121: test/pantalla_cocina_test.dart: el canal caído (CA-03.2, D-45) sin red del dispositivo, la banda aparece en el acto
+00:22 +122: test/pantalla_cocina_test.dart: el canal caído (CA-03.2, D-45) en el celular, a 320 px, la banda no desborda nada
+00:22 +123: test/pantalla_cocina_test.dart: el sonido apagado al entrar (hallazgo de la prueba del autor, tarjeta 07) si el navegador todavía no deja sonar, una franja lo dice
+00:22 +124: test/pantalla_cocina_test.dart: el sonido apagado al entrar (hallazgo de la prueba del autor, tarjeta 07) en cuanto el sonido se activa, la franja se va
+00:22 +125: test/pantalla_cocina_test.dart: el sonido apagado al entrar (hallazgo de la prueba del autor, tarjeta 07) con el sonido activo, o donde no hay cómo sonar, no hay franja
+00:22 +126: test/pantalla_cocina_test.dart: el sonido apagado al entrar (hallazgo de la prueba del autor, tarjeta 07) en el celular, a 320 px, la franja no desborda nada
+00:22 +127: test/pantalla_cocina_test.dart: el número del día y lo agregado (D-35, D-37) un pedido anterior al número del día muestra su identificador
+00:23 +128: test/pantalla_cocina_test.dart: el número del día y lo agregado (D-35, D-37) Empezar y Listo mandan la versión del pedido que se ve
+00:23 +129: test/pantalla_cocina_test.dart: el número del día y lo agregado (D-35, D-37) si recepción le agregó algo que no se veía (409 PEDIDO_CAMBIADO), avisa y relee
+00:23 +130: test/pantalla_cocina_test.dart: el número del día y lo agregado (D-35, D-37) lo agregado llega en vivo: la tarjeta se actualiza, se marca y suena
+00:23 +131: test/pantalla_cocina_test.dart: el número del día y lo agregado (D-35, D-37) lo agregado a un pedido que no está en la cola no hace nada
+00:23 +132: test/pantalla_cocina_test.dart: el sonido en una tableta la barra no desborda: el sonido queda como ícono
+00:23 +133: test/pantalla_cocina_test.dart: el sonido viene activado: se enciende solo con el primer toque en la pantalla, y la barra lo muestra
+00:23 +134: test/pantalla_cocina_test.dart: el sonido "Activar sonido" lo habilita con un toque, y después queda el ícono
+00:23 +135: test/pantalla_cocina_test.dart: en el APK de cocina (D-50) la pantalla queda encendida mientras la cola está abierta y se suelta al cerrarla
+00:23 +136: test/pantalla_cocina_test.dart: en el APK de cocina (D-50) un pedido nuevo suena sin que nadie haya tocado la pantalla, y no hay franja
+00:24 +137: test/pantalla_cocina_test.dart: RNF-04: a 1366 × 768 y a 768 × 1024, sin desplazamiento horizontal la cola, a 1366 × 768, también con la banda y la franja
+00:24 +138: test/pantalla_cocina_test.dart: RNF-04: a 1366 × 768 y a 768 × 1024, sin desplazamiento horizontal la cola, a 768 × 1024, también con la banda y la franja
+00:24 +139: test/pantalla_cocina_test.dart: el panel Carta (RF-13, D-68) abre lo de cocina por categoría, sin las bebidas, y marca una pizza agotada
+00:25 +140: test/pantalla_cocina_test.dart: el panel Carta (RF-13, D-68) mientras guarda, ese interruptor espera
+00:25 +141: test/pantalla_cocina_test.dart: el panel Carta (RF-13, D-68) si falla, queda como estaba y dice por qué
+00:25 +142: test/pantalla_cocina_test.dart: el panel Carta (RF-13, D-68) lo que marca otra pantalla mueve el interruptor con el panel abierto
+00:25 +143: test/pantalla_cocina_test.dart: el panel Carta (RF-13, D-68) la carta se lee la primera vez; si falló, se vuelve a intentar al abrir de nuevo
+00:26 +144: test/pantalla_cocina_test.dart: el panel Carta (RF-13, D-68) a 360 × 780 (el APK y la tableta), sin desplazamiento horizontal
+00:26 +145: test/pantalla_cocina_test.dart: el panel Carta (RF-13, D-68) a 768 × 1024 (el APK y la tableta), sin desplazamiento horizontal
+00:26 +146: test/pantalla_cocina_test.dart: agotar una categoría entera (D-70, D-71) pide confirmación: si se cancela, no cambia nada
+00:26 +147: test/pantalla_cocina_test.dart: agotar una categoría entera (D-70, D-71) confirmado, agota todas las pizzas de una vez y el botón pasa a Reponer todas
+00:27 +148: test/pantalla_cocina_test.dart: agotar una categoría entera (D-70, D-71) si falla, nada cambia y el panel dice por qué
+00:27 +149: test/pantalla_cocina_test.dart: agotar una categoría entera (D-70, D-71) lo que otra pantalla agota entero mueve los interruptores
+00:27 +150: loading test/pantalla_recepcion_test.dart
+00:29 +150: test/pantalla_recepcion_test.dart: los cuatro estados cargando
+00:31 +151: test/pantalla_recepcion_test.dart: los cuatro estados error: el mensaje del servidor, y reintentar vuelve a pedir
+00:32 +152: test/pantalla_recepcion_test.dart: los cuatro estados carta vacía: lo dice, en vez de una pantalla en blanco
+00:32 +153: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla todo a la vista: el cliente, las pizzas, las bebidas y el pedido con la observación y el total
+00:32 +154: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en la computadora (1366 × 630), el formulario ocupa la pantalla sin desplazarse
+00:33 +155: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en la computadora (1536 × 730), el formulario ocupa la pantalla sin desplazarse
+00:33 +156: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en la computadora (1920 × 950), el formulario ocupa la pantalla sin desplazarse
+00:33 +157: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en la computadora (1280 × 640), el formulario ocupa la pantalla sin desplazarse
+00:34 +158: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla a 1024 × 640 las seis bebidas no entran en dos filas: el formulario se desplaza, con el pedido al lado
+00:34 +159: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en una ventana muy baja, el formulario se desplaza en vez de apretarse
+00:34 +160: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
+00:38 +161: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en el celular, al enviar, el formulario vuelve arriba
+00:40 +162: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en el modal, los extras están a la vista sin bajar hasta después de las pizzas
+00:41 +163: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla "comer aquí o para llevar" no trae una opción marcada; se marca una sola
+00:41 +164: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla para llevar sugiere pedir el celular
+00:42 +165: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla una venta completa: el cuerpo exacto que se envía, el aviso con el número y el formulario limpio
+00:43 +166: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla el aviso de la venta se cierra solo, o antes con la X
+00:45 +167: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla confirmar sin lo necesario dice qué falta y no envía nada
+00:45 +168: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla solo bebidas no es un pedido: sugiere "Vender bebidas" (D-38)
+00:46 +169: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla un celular que no es boliviano se marca en el campo y no se envía
+00:46 +170: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla cancelar la venta pregunta antes de borrar
+00:47 +171: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla sin el envío a cocina, Confirmar y Vender bebidas se ven deshabilitados
+00:48 +172: test/pantalla_recepcion_test.dart: las pizzas y su modal entera por defecto; el botón dice qué falta y después tiene un solo precio
+00:48 +173: test/pantalla_recepcion_test.dart: las pizzas y su modal mitad y mitad: cada sabor muestra la mitad de su precio y las mitades se marcan 1 y 2
+00:49 +174: test/pantalla_recepcion_test.dart: las pizzas y su modal en mitad y mitad, una pizza que se vende solo entera se ve pero no se elige (D-39)
+00:49 +175: test/pantalla_recepcion_test.dart: las pizzas y su modal una pizza agotada no responde
+00:50 +176: test/pantalla_recepcion_test.dart: las pizzas y su modal cerrar el modal no agrega nada
+00:50 +177: test/pantalla_recepcion_test.dart: las pizzas y su modal tocar una línea la abre para corregirla, y "Quitar esta pizza" la saca
+00:51 +178: test/pantalla_recepcion_test.dart: las pizzas y su modal − y + de una línea cambian su cantidad, y en cero la línea sale
+00:52 +179: test/pantalla_recepcion_test.dart: las pizzas y su modal la misma pizza agregada dos veces queda en una sola línea
+00:53 +180: test/pantalla_recepcion_test.dart: enviar la venta mientras viaja dice "Enviando" y no se puede tocar dos veces
+00:54 +181: test/pantalla_recepcion_test.dart: enviar la venta un producto agotado: la venta queda como estaba y el mensaje dice cuál
+00:54 +182: test/pantalla_recepcion_test.dart: enviar la venta sin conexión la venta sigue ahí, y al reintentar se envía
+00:55 +183: test/pantalla_recepcion_test.dart: enviar la venta si la carta cambió, dice el total correcto y que no se guardó nada
+00:56 +184: test/pantalla_recepcion_test.dart: la venta directa de bebidas (D-38) sin nombre ni preguntas: cobra, y el aviso dice que se registró
+00:56 +185: test/pantalla_recepcion_test.dart: la venta directa de bebidas (D-38) no toca la venta que se estaba armando
+00:58 +186: test/pantalla_recepcion_test.dart: la venta directa de bebidas (D-38) si falla, las bebidas quedan elegidas y dice por qué
+00:58 +187: test/pantalla_recepcion_test.dart: la venta directa de bebidas (D-38) cerrarla no vende nada
+00:58 +188: test/pantalla_recepcion_test.dart: según el ancho en la computadora, el pedido va a la derecha y la venta no pasa de 1280 px
+00:59 +189: test/pantalla_recepcion_test.dart: según el ancho en el celular: el total y Confirmar quedan abajo, y el modal ocupa toda la pantalla
+00:59 +190: test/pantalla_recepcion_test.dart: según el ancho en 320 px, el más angosto, nada se desborda
+01:00 +191: test/pantalla_recepcion_test.dart: RNF-03: un pedido en tres pasos (D-60) el cliente, los productos y confirmar, en la misma pantalla: cada toque cae en su sección
+01:01 +192: test/pantalla_recepcion_test.dart: RNF-04: a 1366 × 768 y a 768 × 1024, sin desplazamiento horizontal la venta de punta a punta, a 1366 × 768
+01:02 +193: test/pantalla_recepcion_test.dart: RNF-04: a 1366 × 768 y a 768 × 1024, sin desplazamiento horizontal la venta de punta a punta, a 768 × 1024
+01:04 +194: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) cocina agota una pizza: la venta la apaga sin empezar de nuevo, y un aviso lo dice
+01:04 +195: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) cocina la repone: vuelve a ofrecerse, y el aviso lo dice
+01:05 +196: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) una bebida que agota otra pantalla de recepción se apaga igual, sin aviso
+01:05 +197: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) una venta en curso con la bebida que se agota: la marca y no confirma hasta quitarla (D-69)
+01:06 +198: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) una pizza de la venta que se agota: su línea se marca y no confirma
+01:06 +199: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) al volver el canal después de un corte, relee la carta y aplica lo agotado
+01:07 +200: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) el botón Carta abre el panel, y lo que se marca ahí se apaga en la venta
+01:07 +201: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) si el servidor responde 409 PRODUCTO_NO_DISPONIBLE, la carta lo marca y la venta lo señala
+01:08 +202: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) RNF-04: el panel Carta a 1366 × 768, sin desplazamiento horizontal
+01:09 +203: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) RNF-04: el panel Carta a 768 × 1024, sin desplazamiento horizontal
+01:09 +204: test/pantalla_recepcion_test.dart: una categoría entera (D-70, D-71) cocina agota todas las pizzas: un solo aviso, la banda y Agregar pizza apagado
+01:09 +205: test/pantalla_recepcion_test.dart: una categoría entera (D-70, D-71) al reponerlas, la banda se va y Agregar pizza vuelve
+01:10 +206: test/pantalla_recepcion_test.dart: una categoría entera (D-70, D-71) el panel de recepción agota todas las bebidas, con confirmación, y no ofrece las pizzas (D-76)
+01:10 +207: test/pantalla_recepcion_test.dart: una categoría entera (D-70, D-71) RNF-04: la banda sin pizzas a 1366 × 768
+01:10 +208: test/pantalla_recepcion_test.dart: una categoría entera (D-70, D-71) RNF-04: la banda sin pizzas a 768 × 1024
+01:11 +209: loading test/pedidos_de_recepcion_test.dart
+01:12 +209: test/pedidos_de_recepcion_test.dart: la lógica en vivo (PedidosEnVivo) lee los activos: los listos primero, después los de cocina, cada grupo por llegada
+01:12 +210: test/pedidos_de_recepcion_test.dart: la lógica en vivo (PedidosEnVivo) un pedido nuevo entra; el mismo aviso dos veces no lo duplica; una venta directa no entra
+01:12 +211: test/pedidos_de_recepcion_test.dart: la lógica en vivo (PedidosEnVivo) cuando cocina lo marca listo, lo avisa una vez; entregado o cancelado, sale
+01:12 +212: test/pedidos_de_recepcion_test.dart: la lógica en vivo (PedidosEnVivo) lo agregado reemplaza al pedido, y al reconectarse relee la lista
+01:12 +213: test/pedidos_de_recepcion_test.dart: las dos pestañas Nueva venta y Pedidos, con cuántos hay y cuántos están listos
+01:15 +214: test/pedidos_de_recepcion_test.dart: las dos pestañas ir a Pedidos y volver no pierde la venta a medio armar
+01:16 +215: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
+01:18 +216: test/pedidos_de_recepcion_test.dart: las dos pestañas sin pedidos lo dice, en vez de una pantalla en blanco
+01:18 +217: test/pedidos_de_recepcion_test.dart: las dos pestañas cargando: lo dice mientras la lectura viaja, y después muestra los pedidos
+01:19 +218: test/pedidos_de_recepcion_test.dart: las dos pestañas error: el mensaje del servidor, y Reintentar vuelve a leer
+01:19 +219: test/pedidos_de_recepcion_test.dart: RNF-04: a 1366 × 768 y a 768 × 1024, sin desplazamiento horizontal los pedidos, a 1366 × 768
+01:20 +220: test/pedidos_de_recepcion_test.dart: RNF-04: a 1366 × 768 y a 768 × 1024, sin desplazamiento horizontal los pedidos, a 768 × 1024
+01:20 +221: test/pedidos_de_recepcion_test.dart: el canal caído (CA-03.2, D-45) la banda está sobre las dos pestañas: también en Nueva venta, donde no llegaría el aviso de listo
+01:21 +222: test/pedidos_de_recepcion_test.dart: el canal caído (CA-03.2, D-45) Recargar vuelve a leer los pedidos y no toca la venta que se estaba armando
+01:21 +223: test/pedidos_de_recepcion_test.dart: el canal caído (CA-03.2, D-45) cuando el canal vuelve, la banda se va sola
+01:22 +224: test/pedidos_de_recepcion_test.dart: el sonido apagado al entrar (tarjeta 07) la franja está sobre las dos pestañas hasta que el sonido se activa
+01:22 +225: test/pedidos_de_recepcion_test.dart: lo que muestra cada pedido número del día, cliente, para llevar, celular, líneas, lo agregado con su hora, total y estado
+01:23 +226: test/pedidos_de_recepcion_test.dart: lo que muestra cada pedido el listo ofrece Entregar, Llamar y Agregar bebida; el pendiente, Agregar y Cancelar; el que cocina ya empezó, solo Agregar (D-41)
+01:23 +227: test/pedidos_de_recepcion_test.dart: lo que muestra cada pedido en el celular, una columna y sin desbordes
+01:23 +228: test/pedidos_de_recepcion_test.dart: cuando cocina lo marca listo (RF-04) suena, avisa quién, cuenta en la pestaña y lo dice el título del navegador
+01:24 +229: test/pedidos_de_recepcion_test.dart: entregar (RF-05) manda la versión que se ve, sale de la lista y el título vuelve
+01:24 +230: test/pedidos_de_recepcion_test.dart: entregar (RF-05) si se le agregó algo que no se veía (409 PEDIDO_CAMBIADO), avisa y relee
+01:25 +231: test/pedidos_de_recepcion_test.dart: cancelar, con motivo (RF-09, D-33) con un motivo rápido
+01:25 +232: test/pedidos_de_recepcion_test.dart: cancelar, con motivo (RF-09, D-33) con otro motivo escrito; y "Volver" no cancela nada
+01:26 +233: test/pedidos_de_recepcion_test.dart: cancelar, con motivo (RF-09, D-33) si cocina lo empezó justo antes (409), lo dice, relee y ya no ofrece Cancelar (D-41)
+01:26 +234: test/pedidos_de_recepcion_test.dart: llamar (D-31) muestra el número grande, lo marca o lo copia
+01:27 +235: test/pedidos_de_recepcion_test.dart: agregar a un pedido ya enviado (RF-14, D-37) a uno en cocina: una pizza y una bebida, con el cuerpo exacto y el total nuevo
+01:28 +236: test/pedidos_de_recepcion_test.dart: agregar a un pedido ya enviado (RF-14, D-37) a uno listo: solo bebidas, y lo dice
+01:28 +237: test/pedidos_de_recepcion_test.dart: agregar a un pedido ya enviado (RF-14, D-37) si mientras tanto cocina lo marcó listo, lo explica y lo elegido queda
+01:29 +238: loading test/pkce_test.dart
+01:30 +238: test/pkce_test.dart: RFC 7636: los 32 bytes del apendice B dan su verificador
+01:30 +239: test/pkce_test.dart: RFC 7636: el verificador del apendice B da su desafio S256
+01:30 +240: test/pkce_test.dart: el verificador mide 43 caracteres y solo usa el alfabeto base64url
+01:30 +241: test/pkce_test.dart: dos verificadores seguidos nunca son iguales
+01:30 +242: test/pkce_test.dart: con el mismo generador se obtiene lo mismo: las pruebas son reproducibles
+01:31 +243: loading test/segun_rol_test.dart
+01:32 +243: test/segun_rol_test.dart: mientras el servidor responde, muestra que esta verificando
+01:34 +244: test/segun_rol_test.dart: recepcion va a la pantalla de recepcion, con su nombre
+01:34 +245: test/segun_rol_test.dart: cocina va a la pantalla de cocina
+01:34 +246: test/segun_rol_test.dart: el error de la API se muestra con su mensaje y se puede reintentar
+01:34 +247: test/segun_rol_test.dart: una cuenta sin rol del sistema no entra a ninguna pantalla
+01:34 +248: test/segun_rol_test.dart: cerrar sesion desde la pantalla del rol avisa a quien corresponde
+01:34 +249: test/segun_rol_test.dart: en el celular, salir queda como icono
+01:35 +250: test/segun_rol_test.dart: en el APK de cocina (D-48) una cuenta de recepcion ve que la app es para cocina y puede salir
+01:35 +251: test/segun_rol_test.dart: en el APK de cocina (D-48) cocina entra a su pantalla, igual que en la web
+01:35 +252: test/segun_rol_test.dart: en el APK de cocina (D-48) la pantalla encendida es de la cola de cocina: el aviso de recepcion no la pide
+01:35 +253: test/segun_rol_test.dart: en el APK de cocina (D-48) el aviso cabe en un celular angosto
+01:35 +254: loading test/servicio_sesion_test.dart
+01:36 +254: test/servicio_sesion_test.dart: ida a Keycloak al abrir la app sin codigo, pregunta en silencio (prompt=none)
+01:36 +255: test/servicio_sesion_test.dart: ida a Keycloak iniciar sesion manda todos los parametros de PKCE y no pide silencio
+01:36 +256: test/servicio_sesion_test.dart: ida a Keycloak el verificador nunca viaja en la direccion: solo su huella
+01:36 +257: test/servicio_sesion_test.dart: regreso desde Keycloak con codigo y state correctos: canjea el codigo y entra
+01:36 +258: test/servicio_sesion_test.dart: regreso desde Keycloak despues de entrar no queda nada en sessionStorage ni el codigo en la barra
+01:36 +259: test/servicio_sesion_test.dart: regreso desde Keycloak con un state distinto: no canjea nada y avisa
+01:36 +260: test/servicio_sesion_test.dart: regreso desde Keycloak un codigo sin state guardado (otra pestana, otro navegador) se descarta
+01:36 +261: test/servicio_sesion_test.dart: regreso desde Keycloak login_required no es un error: solo significa que no habia sesion
+01:36 +262: test/servicio_sesion_test.dart: regreso desde Keycloak otro error de Keycloak se muestra
+01:36 +263: test/servicio_sesion_test.dart: regreso desde Keycloak si Keycloak rechaza el canje: sin sesion y con mensaje
+01:36 +264: test/servicio_sesion_test.dart: regreso desde Keycloak sin conexion: mensaje de red, no un error sin explicar
+01:36 +265: test/servicio_sesion_test.dart: renovacion y cierre renovar pide un token nuevo con el de renovacion
+01:36 +266: test/servicio_sesion_test.dart: renovacion y cierre si la renovacion falla, vuelve al acceso avisando que la sesion expiro
+01:37 +267: test/servicio_sesion_test.dart: renovacion y cierre una sesion que el servidor rechaza vuelve al acceso, avisa y olvida los tokens (D-46)
+01:37 +268: test/servicio_sesion_test.dart: renovacion y cierre cerrar sesion cierra tambien la de Keycloak y olvida el token
+01:37 +269: test/servicio_sesion_test.dart: con el autorizador del APK (D-49) al abrir queda en el acceso, sin mensaje y sin pedir nada
+01:37 +270: test/servicio_sesion_test.dart: con el autorizador del APK (D-49) canjea el código con la dirección de la app y el verificador que trajo AppAuth
+01:37 +271: test/servicio_sesion_test.dart: con el autorizador del APK (D-49) si la persona se vuelve atrás, queda en el acceso sin mensaje de error
+01:37 +272: test/servicio_sesion_test.dart: con el autorizador del APK (D-49) si Keycloak rechaza el canje, avisa
+01:37 +273: test/servicio_sesion_test.dart: con el autorizador del APK (D-49) cerrar sesión cierra la de Keycloak con el token de identidad y vuelve al acceso
+01:37 +274: test/servicio_sesion_test.dart: con el autorizador del APK (D-49) si Keycloak no llega a cerrar, la app sale igual y lo avisa
+01:37 +275: loading test/sonido_del_timbre_test.dart
+01:38 +275: test/sonido_del_timbre_test.dart: el archivo WAV tiene la cabecera de un WAV PCM de 16 bits, un canal, a 44 100 Hz
+01:38 +276: test/sonido_del_timbre_test.dart: el archivo WAV dura 0,58 s, como en la web: la segunda nota a los 0,18 s y cada una de 0,4 s
+01:38 +277: test/sonido_del_timbre_test.dart: el archivo WAV pesa poco: se arma una sola vez y se guarda en memoria
+01:38 +278: test/sonido_del_timbre_test.dart: el sonido suena fuerte y no se recorta: el pico queda entre 0,6 y 0,8
+01:38 +279: test/sonido_del_timbre_test.dart: el sonido empieza y termina en silencio, sin chasquidos
+01:38 +280: test/sonido_del_timbre_test.dart: el sonido son las notas de la web: primero 880 Hz y después 1318,5 Hz
+01:38 +281: test/sonido_del_timbre_test.dart: el sonido cada nota sube rápido y se apaga: a los 0,15 s la primera ya bajó a menos de un octavo
+01:38 +282: loading test/timbre_android_test.dart
+01:39 +282: test/timbre_android_test.dart: suena desde el arranque: siempre habilitado y nunca pendiente de un toque
+01:39 +283: test/timbre_android_test.dart: cada aviso reproduce las dos notas de la web
+01:40 +284: test/timbre_android_test.dart: las dos notas se arman una sola vez: lo que se prepara al abrir es lo que suena
+01:40 +285: test/timbre_android_test.dart: si el teléfono no puede sonar, no se cae nada: la cola sigue
 El timbre no pudo sonar: Exception: sin audio
 El timbre no pudo sonar: Exception: sin audio
-00:13 +183: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:13 +184: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:13 +185: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:13 +186: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:13 +187: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +188: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +189: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +190: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +191: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +192: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +193: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +194: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +195: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +196: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +197: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +198: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +199: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +200: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +201: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +202: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +203: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +204: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +205: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +206: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +207: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +208: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +209: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +210: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +211: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +212: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +213: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +214: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +215: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +216: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +217: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +218: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +219: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +220: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +221: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +222: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +223: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +224: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +225: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +226: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +227: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +228: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +229: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +230: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +231: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +232: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +233: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +234: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +235: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +236: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +237: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +238: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +239: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +240: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +241: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +242: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +243: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +244: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:14 +245: test/pedidos_de_recepcion_test.dart: las dos pestañas la barra no desborda en ningún ancho, con las pestañas debajo o en la barra
-00:15 +246: test/timbre_android_test.dart: no hay franja de sonido apagado y la barra muestra que suena, sin botón
-00:15 +247: test/timbre_android_test.dart: no hay franja de sonido apagado y la barra muestra que suena, sin botón
-00:15 +248: test/timbre_android_test.dart: no hay franja de sonido apagado y la barra muestra que suena, sin botón
-00:15 +249: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:15 +250: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:15 +251: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:15 +252: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:15 +253: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:15 +254: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:16 +255: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:16 +256: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:16 +257: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:16 +258: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:16 +259: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:17 +260: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:17 +261: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:17 +262: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:17 +263: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:18 +264: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:18 +265: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:18 +266: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:18 +267: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:19 +268: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:19 +269: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:19 +270: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:19 +271: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:20 +272: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla con muchas pizzas se desplaza solo su lista; "Agregar otra pizza" y las bebidas siguen a la vista
-00:20 +273: test/pedidos_de_recepcion_test.dart: el canal caído (CA-03.2, D-45) cuando el canal vuelve, la banda se va sola
-00:20 +274: test/pantalla_cocina_test.dart: agotar una categoría entera (D-70, D-71) si falla, nada cambia y el panel dice por qué
-00:20 +275: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en el celular, al enviar, el formulario vuelve arriba
-00:20 +276: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en el celular, al enviar, el formulario vuelve arriba
-00:20 +277: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en el celular, al enviar, el formulario vuelve arriba
-00:21 +278: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en el celular, al enviar, el formulario vuelve arriba
-00:21 +279: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en el celular, al enviar, el formulario vuelve arriba
-00:22 +280: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en el celular, al enviar, el formulario vuelve arriba
-00:22 +281: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en el celular, al enviar, el formulario vuelve arriba
-00:22 +282: test/pedidos_de_recepcion_test.dart: entregar (RF-05) manda la versión que se ve, sale de la lista y el título vuelve
-00:23 +283: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en el modal, los extras están a la vista sin bajar hasta después de las pizzas
-00:23 +284: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla en el modal, los extras están a la vista sin bajar hasta después de las pizzas
-00:23 +285: test/pedidos_de_recepcion_test.dart: cancelar, con motivo (RF-09, D-33) con un motivo rápido
-00:24 +286: test/pedidos_de_recepcion_test.dart: cancelar, con motivo (RF-09, D-33) con un motivo rápido
-00:24 +287: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla para llevar sugiere pedir el celular
-00:24 +288: test/pedidos_de_recepcion_test.dart: cancelar, con motivo (RF-09, D-33) con otro motivo escrito; y "Volver" no cancela nada
-00:24 +289: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla una venta completa: el cuerpo exacto que se envía, el aviso con el número y el formulario limpio
-00:25 +290: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla una venta completa: el cuerpo exacto que se envía, el aviso con el número y el formulario limpio
-00:25 +291: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla una venta completa: el cuerpo exacto que se envía, el aviso con el número y el formulario limpio
-00:26 +292: test/pedidos_de_recepcion_test.dart: agregar a un pedido ya enviado (RF-14, D-37) a uno en cocina: una pizza y una bebida, con el cuerpo exacto y el total nuevo
-00:26 +293: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla el aviso de la venta se cierra solo, o antes con la X
-00:27 +294: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla el aviso de la venta se cierra solo, o antes con la X
-00:27 +295: test/pedidos_de_recepcion_test.dart: agregar a un pedido ya enviado (RF-14, D-37) si mientras tanto cocina lo marcó listo, lo explica y lo elegido queda
-00:28 +296: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla confirmar sin lo necesario dice qué falta y no envía nada
-00:28 +297: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla solo bebidas no es un pedido: sugiere "Vender bebidas" (D-38)
-00:28 +298: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla un celular que no es boliviano se marca en el campo y no se envía
-00:29 +299: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla cancelar la venta pregunta antes de borrar
-00:30 +300: test/pantalla_recepcion_test.dart: el formulario en una sola pantalla sin el envío a cocina, Confirmar y Vender bebidas se ven deshabilitados
-00:30 +301: test/pantalla_recepcion_test.dart: las pizzas y su modal entera por defecto; el botón dice qué falta y después tiene un solo precio
-00:31 +302: test/pantalla_recepcion_test.dart: las pizzas y su modal mitad y mitad: cada sabor muestra la mitad de su precio y las mitades se marcan 1 y 2
-00:32 +303: test/pantalla_recepcion_test.dart: las pizzas y su modal en mitad y mitad, una pizza que se vende solo entera se ve pero no se elige (D-39)
-00:32 +304: test/pantalla_recepcion_test.dart: las pizzas y su modal una pizza agotada no responde
-00:33 +305: test/pantalla_recepcion_test.dart: las pizzas y su modal cerrar el modal no agrega nada
-00:33 +306: test/pantalla_recepcion_test.dart: las pizzas y su modal tocar una línea la abre para corregirla, y "Quitar esta pizza" la saca
-00:34 +307: test/pantalla_recepcion_test.dart: las pizzas y su modal − y + de una línea cambian su cantidad, y en cero la línea sale
-00:35 +308: test/pantalla_recepcion_test.dart: las pizzas y su modal la misma pizza agregada dos veces queda en una sola línea
-00:36 +309: test/pantalla_recepcion_test.dart: enviar la venta mientras viaja dice "Enviando" y no se puede tocar dos veces
-00:36 +310: test/pantalla_recepcion_test.dart: enviar la venta un producto agotado: la venta queda como estaba y el mensaje dice cuál
-00:37 +311: test/pantalla_recepcion_test.dart: enviar la venta sin conexión la venta sigue ahí, y al reintentar se envía
-00:38 +312: test/pantalla_recepcion_test.dart: enviar la venta si la carta cambió, dice el total correcto y que no se guardó nada
-00:38 +313: test/pantalla_recepcion_test.dart: la venta directa de bebidas (D-38) sin nombre ni preguntas: cobra, y el aviso dice que se registró
-00:39 +314: test/pantalla_recepcion_test.dart: la venta directa de bebidas (D-38) no toca la venta que se estaba armando
-00:40 +315: test/pantalla_recepcion_test.dart: la venta directa de bebidas (D-38) si falla, las bebidas quedan elegidas y dice por qué
-00:40 +316: test/pantalla_recepcion_test.dart: la venta directa de bebidas (D-38) cerrarla no vende nada
-00:41 +317: test/pantalla_recepcion_test.dart: según el ancho en la computadora, el pedido va a la derecha y la venta no pasa de 1280 px
-00:41 +318: test/pantalla_recepcion_test.dart: según el ancho en el celular: el total y Confirmar quedan abajo, y el modal ocupa toda la pantalla
-00:42 +319: test/pantalla_recepcion_test.dart: según el ancho en 320 px, el más angosto, nada se desborda
-00:43 +320: test/pantalla_recepcion_test.dart: RNF-03: un pedido en tres pasos (D-60) el cliente, los productos y confirmar, en la misma pantalla: cada toque cae en su sección
-00:44 +321: test/pantalla_recepcion_test.dart: RNF-04: a 1366 × 768 y a 768 × 1024, sin desplazamiento horizontal la venta de punta a punta, a 1366 × 768
-00:45 +322: test/pantalla_recepcion_test.dart: RNF-04: a 1366 × 768 y a 768 × 1024, sin desplazamiento horizontal la venta de punta a punta, a 768 × 1024
-00:46 +323: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) cocina agota una pizza: la venta la apaga sin empezar de nuevo, y un aviso lo dice
-00:47 +324: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) cocina la repone: vuelve a ofrecerse, y el aviso lo dice
-00:47 +325: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) una bebida que agota otra pantalla de recepción se apaga igual, sin aviso
-00:47 +326: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) una venta en curso con la bebida que se agota: la marca y no confirma hasta quitarla (D-69)
-00:48 +327: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) una pizza de la venta que se agota: su línea se marca y no confirma
-00:49 +328: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) al volver el canal después de un corte, relee la carta y aplica lo agotado
-00:49 +329: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) el botón Carta abre el panel, y lo que se marca ahí se apaga en la venta
-00:50 +330: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) si el servidor responde 409 PRODUCTO_NO_DISPONIBLE, la carta lo marca y la venta lo señala
-00:50 +331: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) RNF-04: el panel Carta a 1366 × 768, sin desplazamiento horizontal
-00:51 +332: test/pantalla_recepcion_test.dart: la disponibilidad de los productos (RF-13) RNF-04: el panel Carta a 768 × 1024, sin desplazamiento horizontal
-00:51 +333: test/pantalla_recepcion_test.dart: una categoría entera (D-70, D-71) cocina agota todas las pizzas: un solo aviso, la banda y Agregar pizza apagado
-00:52 +334: test/pantalla_recepcion_test.dart: una categoría entera (D-70, D-71) al reponerlas, la banda se va y Agregar pizza vuelve
-00:52 +335: test/pantalla_recepcion_test.dart: una categoría entera (D-70, D-71) el panel de recepción agota todas las bebidas, con confirmación, y no ofrece las pizzas (D-76)
-00:52 +336: test/pantalla_recepcion_test.dart: una categoría entera (D-70, D-71) RNF-04: la banda sin pizzas a 1366 × 768
-00:53 +337: test/pantalla_recepcion_test.dart: una categoría entera (D-70, D-71) RNF-04: la banda sin pizzas a 768 × 1024
-00:53 +338: All tests passed!
+01:40 +286: test/timbre_android_test.dart: no hay franja de sonido apagado y la barra muestra que suena, sin botón
+01:41 +287: loading test/venta_test.dart
+01:42 +287: test/venta_test.dart: la tabla de la sección 6 1 Peperoni = 50
+01:42 +288: test/venta_test.dart: la tabla de la sección 6 1 mitad Salame, mitad Peperoni = (45 + 50) / 2 = 47,50
+01:42 +289: test/venta_test.dart: la tabla de la sección 6 1 mitad Salame, mitad Hawaiana = (45 + 50) / 2 = 47,50
+01:42 +290: test/venta_test.dart: la tabla de la sección 6 Criolla española se vende solo entera: ni como mitad ni con otra mitad (D-39)
+01:42 +291: test/venta_test.dart: la tabla de la sección 6 2 mitad Salame, mitad Peperoni = 95
+01:42 +292: test/venta_test.dart: la tabla de la sección 6 1 Hawaiana con extra queso = 50 + 8 = 58
+01:42 +293: test/venta_test.dart: la tabla de la sección 6 3 Choclo iguales con extra choclo = 3 × (45 + 5) = 150
+01:42 +294: test/venta_test.dart: la tabla de la sección 6 venta directa de 2 gaseosas = 36
+01:42 +295: test/venta_test.dart: la tabla de la sección 6 mitades del mismo sabor: rechazada
+01:42 +296: test/venta_test.dart: la tabla de la sección 6 la otra mitad no es una pizza: rechazada
+01:42 +297: test/venta_test.dart: la tabla de la sección 6 un extra que no es extra: rechazado
+01:42 +298: test/venta_test.dart: las pizzas son iguales si tienen los mismos sabores y extras mitad A / mitad B es la misma pizza que mitad B / mitad A
+01:42 +299: test/venta_test.dart: las pizzas son iguales si tienen los mismos sabores y extras con distintos extras, son pizzas distintas
+01:42 +300: test/venta_test.dart: las pizzas son iguales si tienen los mismos sabores y extras un extra repetido cuenta una vez
+01:42 +301: test/venta_test.dart: el formulario (D-36) empieza vacío y sin "para llevar" elegido: no hay una opción marcada de entrada
+01:42 +302: test/venta_test.dart: el formulario (D-36) la misma pizza agregada dos veces se junta en una línea, en cualquier orden de mitades
+01:42 +303: test/venta_test.dart: el formulario (D-36) 20 pizzas distintas en tres líneas: 8 Peperoni, 6 Hawaiana y 6 mitad y mitad
+01:42 +304: test/venta_test.dart: el formulario (D-36) − y + cambian la cantidad de una línea, y en cero la línea sale
+01:42 +305: test/venta_test.dart: el formulario (D-36) corregir una pizza la reemplaza en su lugar, y si quedó igual a otra, se juntan
+01:42 +306: test/venta_test.dart: el formulario (D-36) quitar una pizza
+01:42 +307: test/venta_test.dart: el formulario (D-36) una línea admite hasta 999 unidades, como la base
+01:42 +308: test/venta_test.dart: el formulario (D-36) las bebidas se suman con + y −, y en cero salen
+01:42 +309: test/venta_test.dart: el formulario (D-36) una bebida agotada no se suma, pero la que ya estaba se puede bajar
+01:42 +310: test/venta_test.dart: el formulario (D-36) el nombre admite hasta 120 caracteres y la observación hasta 240, como la base
+01:42 +311: test/venta_test.dart: el formulario (D-36) limpiar deja el formulario en blanco, sin "para llevar" elegido
+01:42 +312: test/venta_test.dart: el formulario (D-36) avisa a quien escucha en cada cambio
+01:42 +313: test/venta_test.dart: lo que falta para confirmar (las mismas reglas que el servidor) vacío: el nombre, para llevar o no, y una pizza, en el orden del formulario
+01:42 +314: test/venta_test.dart: lo que falta para confirmar (las mismas reglas que el servidor) completo: nada
+01:42 +315: test/venta_test.dart: lo que falta para confirmar (las mismas reglas que el servidor) un nombre de puros espacios no cuenta
+01:42 +316: test/venta_test.dart: lo que falta para confirmar (las mismas reglas que el servidor) el celular es opcional, pero si se escribe tiene que ser boliviano
+01:42 +317: test/venta_test.dart: lo que falta para confirmar (las mismas reglas que el servidor) solo bebidas no es un pedido: se venden con "Vender bebidas" (D-38)
+01:42 +318: test/venta_test.dart: el pedido que se envía (POST /api/v1/pedidos) las pizzas con su segunda mitad y sus extras, las bebidas y el total en bolivianos
+01:42 +319: test/venta_test.dart: el pedido que se envía (POST /api/v1/pedidos) sin celular ni observación viajan como nulos; el total conserva los centavos
+01:42 +320: test/venta_test.dart: la pizza del modal (ArmadoDePizza) empieza entera y sin sabor: falta elegirlo y no hay precio
+01:42 +321: test/venta_test.dart: la pizza del modal (ArmadoDePizza) entera: el sabor tocado es el sabor, y tocar otro lo cambia
+01:42 +322: test/venta_test.dart: la pizza del modal (ArmadoDePizza) mitad y mitad: el primero que se toca es la primera mitad y el segundo, la segunda
+01:42 +323: test/venta_test.dart: la pizza del modal (ArmadoDePizza) tocar una mitad elegida la quita; la segunda pasa a ser la primera
+01:42 +324: test/venta_test.dart: la pizza del modal (ArmadoDePizza) con las dos mitades elegidas, un tercer sabor reemplaza a la segunda
+01:42 +325: test/venta_test.dart: la pizza del modal (ArmadoDePizza) en mitad y mitad, una pizza solo entera no se elige; y al pasar a mitades se suelta (D-39)
+01:42 +326: test/venta_test.dart: la pizza del modal (ArmadoDePizza) pasar de mitad y mitad a entera se queda con el primer sabor
+01:42 +327: test/venta_test.dart: la pizza del modal (ArmadoDePizza) los extras se marcan y se desmarcan, y el precio es el de todas las que se agregan
+01:42 +328: test/venta_test.dart: la pizza del modal (ArmadoDePizza) una pizza o un extra agotados no se eligen
+01:42 +329: test/venta_test.dart: la pizza del modal (ArmadoDePizza) la cantidad va de 1 a 50: solo ataja un error de tipeo
+01:42 +330: test/venta_test.dart: la pizza del modal (ArmadoDePizza) para corregir, empieza con la pizza de la línea y su cantidad
+01:42 +331: test/venta_test.dart: la venta directa de bebidas (D-38) sin cliente, sin "para llevar" y sin observación
+01:42 +332: test/venta_test.dart: la venta directa de bebidas (D-38) vacía no se puede cobrar
+01:42 +333: test/venta_test.dart: la venta directa de bebidas (D-38) solo bebidas: ni pizzas ni agotadas
+01:42 +334: test/venta_test.dart: la carta separa pizzas, extras y bebidas; las pizzas y los extras, en orden alfabético sin mirar tildes
+01:42 +335: test/venta_test.dart: la carta las bebidas, como se piden: por tipo y, dentro, de la más chica a la más grande (D-74)
+01:42 +336: test/venta_test.dart: la carta una categoría desconocida se rechaza al leer la carta
+01:42 +337: test/venta_test.dart: la carta la imagen solo se busca con un nombre simple, junto a la app
+01:43 +338: All tests passed!

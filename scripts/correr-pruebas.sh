@@ -28,8 +28,12 @@ INICIO="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 # El reporte de Flutter se escribe primero dentro de build/ (fuera del repositorio) y despues
 # se le pone la cabecera. La ruta es relativa: flutter es un programa de Windows y no
 # entiende las rutas /tmp de Git Bash.
+# Un archivo de prueba a la vez (--concurrency=1): en paralelo, el reporte "expanded" repite
+# el nombre de la prueba en curso de un archivo mientras terminan las de otro, y solo una
+# parte de los nombres llegaba al reporte (119 de 338 el 7-oct). El total era correcto; los
+# nombres no. Tarda mas, pero cada linea dice que prueba paso.
 set +e
-(cd frontend && flutter test --file-reporter "expanded:build/reporte-de-la-app.txt")
+(cd frontend && flutter test --concurrency=1 --file-reporter "expanded:build/reporte-de-la-app.txt")
 ESTADO_APP=$?
 set -e
 [ "$ESTADO_APP" -eq 0 ] || FALLAS=1

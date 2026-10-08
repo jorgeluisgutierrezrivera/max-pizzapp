@@ -1,337 +1,337 @@
 <?xml version="1.0" encoding="utf-8"?>
 <testsuites>
-	<testcase name="salud: 200 con la base respondiendo" time="0.172844" classname="test" file="backend\test\acceso.test.js"/>
-	<testcase name="salud: 503 con la base caida, sin filtrar el detalle del error" time="0.016435" classname="test" file="backend\test\acceso.test.js"/>
-	<testcase name="sin token: 401 TOKEN_AUSENTE" time="0.009088" classname="test" file="backend\test\acceso.test.js"/>
-	<testcase name="token con la firma manipulada: 401 TOKEN_INVALIDO" time="0.066779" classname="test" file="backend\test\acceso.test.js"/>
-	<testcase name="token firmado con una clave ajena al realm: 401" time="0.016622" classname="test" file="backend\test\acceso.test.js"/>
-	<testcase name="token expirado: 401 TOKEN_EXPIRADO" time="0.009813" classname="test" file="backend\test\acceso.test.js"/>
-	<testcase name="token de otra audiencia: 401" time="0.009647" classname="test" file="backend\test\acceso.test.js"/>
-	<testcase name="token de otro emisor (el riesgo D-09): 401" time="0.011882" classname="test" file="backend\test\acceso.test.js"/>
-	<testcase name="token con algoritmo &amp;quot;none&amp;quot;: 401" time="0.014013" classname="test" file="backend\test\acceso.test.js"/>
-	<testcase name="token valido de recepcion en una ruta de cocina: 403 ROL_SIN_PERMISO" time="0.011984" classname="test" file="backend\test\acceso.test.js"/>
-	<testcase name="token valido sin ninguno de los dos roles del sistema: 403" time="0.007767" classname="test" file="backend\test\acceso.test.js"/>
-	<testcase name="token valido de cocina en su ruta: pasa" time="0.007030" classname="test" file="backend\test\acceso.test.js"/>
-	<testcase name="sesion: el servidor sabe quien llama y solo informa los roles del sistema" time="0.008012" classname="test" file="backend\test\acceso.test.js"/>
-	<testcase name="ruta inexistente: 404 con el formato unico de error" time="0.004026" classname="test" file="backend\test\acceso.test.js"/>
-	<testcase name="JSON mal formado: 400, no 500" time="0.179309" classname="test" file="backend\test\acceso.test.js"/>
-	<testcase name="las respuestas no anuncian el servidor" time="0.004890" classname="test" file="backend\test\acceso.test.js"/>
-	<testcase name="agregar sin token: 401; con un token sin rol: 403; y la base ni se toca" time="0.482679" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="cocina no puede agregar: 403 y la base ni se toca" time="0.035904" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="agregar una bebida a un pedido pendiente: 200" time="0.027948" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="agregar una pizza a un pedido pendiente: 200" time="0.022031" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="agregar una bebida a un pedido en_preparacion: 200" time="0.020186" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="agregar una pizza a un pedido en_preparacion: 200" time="0.021338" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="agregar una bebida a un pedido listo: 200" time="0.019457" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="agregar una pizza a un pedido listo: 409 AGREGADO_NO_PERMITIDO" time="0.021394" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="agregar una bebida a un pedido entregado: 409 AGREGADO_NO_PERMITIDO" time="0.020610" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="agregar una pizza a un pedido entregado: 409 AGREGADO_NO_PERMITIDO" time="0.021897" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="agregar una bebida a un pedido cancelado: 409 AGREGADO_NO_PERMITIDO" time="0.015143" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="agregar una pizza a un pedido cancelado: 409 AGREGADO_NO_PERMITIDO" time="0.015165" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="la pizza a un pedido listo dice que va en otro pedido, y que las bebidas si se pueden" time="0.016139" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="agregar: bloqueo del pedido, carta, lineas y total, en ese orden y en una transaccion" time="0.015464" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="agregar: cada linea guarda cuando y quien; el extra, colgado de su pizza; el total suma lo agregado" time="0.016024" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="agregar: todo viaja como parametro, nada pegado al SQL" time="0.014410" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="el total no coincide: 409 PRECIO_CAMBIADO con lo que suma lo agregado, y no se guarda nada" time="0.015207" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="un producto agotado: 409 PRODUCTO_NO_DISPONIBLE con cual es" time="0.014188" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="un pedido que no existe: 404 y ROLLBACK" time="0.019734" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="agregar sin lineas: 400 VENTA_INVALIDA sin tocar la base" time="0.009642" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="agregar sin el total: 400 VENTA_INVALIDA sin tocar la base" time="0.011737" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="agregar una cantidad de 1000: 400 VENTA_INVALIDA sin tocar la base" time="0.012830" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="un numero de pedido invalido: 400 ID_INVALIDO sin tocar la base" time="0.014469" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="la base falla a mitad: ROLLBACK, 500 y el total no se toca" time="0.015944" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="lo agregado se avisa una vez, despues del COMMIT, con el pedido completo" time="0.014135" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="un agregado rechazado no avisa nada" time="0.011531" classname="test" file="backend\test\agregar.test.js"/>
-	<testcase name="el contrato y el servidor tienen las mismas rutas" time="0.016135" classname="test" file="backend\test\contrato.test.js"/>
-	<testcase name="solo la ruta de salud es publica, en el contrato y en el servidor" time="0.311051" classname="test" file="backend\test\contrato.test.js"/>
-	<testcase name="la cola sin token: 401; con un token sin rol: 403" time="0.256675" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="la cola sin filtro trae los activos, en orden y con el celular para recepcion" time="0.027633" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="cocina pide su cola y no recibe el celular del cliente (D-31)" time="0.019199" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="una cola vacia responde una lista vacia sin leer lineas" time="0.017955" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="la cola con un estado que no existe: 400 FILTRO_INVALIDO sin tocar la base" time="0.017805" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="la cola con un estado vacio en la lista: 400 FILTRO_INVALIDO sin tocar la base" time="0.019295" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="la cola con el estado repetido como parametro: 400 FILTRO_INVALIDO sin tocar la base" time="0.018727" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="la cola con otro parametro: 400 FILTRO_INVALIDO sin tocar la base" time="0.024451" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="la cola con un intento de inyeccion: 400 FILTRO_INVALIDO sin tocar la base" time="0.018458" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="un pedido con su historial, incluido el motivo de la cancelacion" time="0.028070" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="un pedido que no existe: 404" time="0.019187" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="el numero de pedido «abc»: 400 ID_INVALIDO sin tocar la base" time="0.014465" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="el numero de pedido «0»: 400 ID_INVALIDO sin tocar la base" time="0.014610" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="el numero de pedido «-1»: 400 ID_INVALIDO sin tocar la base" time="0.014725" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="el numero de pedido «1.5»: 400 ID_INVALIDO sin tocar la base" time="0.013771" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="el numero de pedido «99999999999»: 400 ID_INVALIDO sin tocar la base" time="0.014542" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="el numero de pedido «1e3»: 400 ID_INVALIDO sin tocar la base" time="0.016972" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: recepcion lleva un pedido pendiente a en_preparacion: 403" time="0.048020" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: cocina lleva un pedido pendiente a en_preparacion: 200" time="0.017984" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: recepcion lleva un pedido pendiente a listo: 403" time="0.023088" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: cocina lleva un pedido pendiente a listo: 409" time="0.015285" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: recepcion lleva un pedido pendiente a entregado: 409" time="0.016904" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: cocina lleva un pedido pendiente a entregado: 403" time="0.015076" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: recepcion lleva un pedido en_preparacion a en_preparacion: 403" time="0.015286" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: cocina lleva un pedido en_preparacion a en_preparacion: 409" time="0.015683" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: recepcion lleva un pedido en_preparacion a listo: 403" time="0.015227" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: cocina lleva un pedido en_preparacion a listo: 200" time="0.015602" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: recepcion lleva un pedido en_preparacion a entregado: 409" time="0.013504" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: cocina lleva un pedido en_preparacion a entregado: 403" time="0.013505" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: recepcion lleva un pedido listo a en_preparacion: 403" time="0.011277" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: cocina lleva un pedido listo a en_preparacion: 409" time="0.010908" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: recepcion lleva un pedido listo a listo: 403" time="0.014592" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: cocina lleva un pedido listo a listo: 409" time="0.014104" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: recepcion lleva un pedido listo a entregado: 200" time="0.011572" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: cocina lleva un pedido listo a entregado: 403" time="0.013590" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: recepcion lleva un pedido entregado a en_preparacion: 403" time="0.011081" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: cocina lleva un pedido entregado a en_preparacion: 409" time="0.012558" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: recepcion lleva un pedido entregado a listo: 403" time="0.012478" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: cocina lleva un pedido entregado a listo: 409" time="0.012591" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: recepcion lleva un pedido entregado a entregado: 409" time="0.014890" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: cocina lleva un pedido entregado a entregado: 403" time="0.018840" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: recepcion lleva un pedido cancelado a en_preparacion: 403" time="0.012714" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: cocina lleva un pedido cancelado a en_preparacion: 409" time="0.009885" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: recepcion lleva un pedido cancelado a listo: 403" time="0.012297" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: cocina lleva un pedido cancelado a listo: 409" time="0.010855" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: recepcion lleva un pedido cancelado a entregado: 409" time="0.010012" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="matriz: cocina lleva un pedido cancelado a entregado: 403" time="0.013720" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="cancelar un pedido pendiente: 200 con el motivo en el historial" time="0.011107" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="cocina no puede cancelar un pedido pendiente: 403" time="0.013887" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="cancelar un pedido en_preparacion: 409" time="0.013280" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="cocina no puede cancelar un pedido en_preparacion: 403" time="0.009604" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="cancelar un pedido listo: 409" time="0.012393" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="cocina no puede cancelar un pedido listo: 403" time="0.009964" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="cancelar un pedido entregado: 409" time="0.010541" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="cocina no puede cancelar un pedido entregado: 403" time="0.010792" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="cancelar un pedido cancelado: 409" time="0.010583" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="cocina no puede cancelar un pedido cancelado: 403" time="0.009300" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="cancelar sin motivo: 400 MOTIVO_INVALIDO sin tocar la base" time="0.010213" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="cancelar con el motivo en blanco: 400 MOTIVO_INVALIDO sin tocar la base" time="0.009743" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="cancelar con un motivo de 121 caracteres: 400 MOTIVO_INVALIDO sin tocar la base" time="0.017139" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="cancelar con el motivo como numero: 400 MOTIVO_INVALIDO sin tocar la base" time="0.008646" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="cancelar un pedido que no existe: 404 y ROLLBACK" time="0.010362" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="PATCH con cancelado: la cancelacion lleva motivo y tiene su ruta: 400 sin tocar la base" time="0.009131" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="PATCH con pendiente: no se vuelve atras: 400 sin tocar la base" time="0.009671" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="PATCH con un estado inventado: 400 sin tocar la base" time="0.009625" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="PATCH con un nombre heredado de los objetos: 400 sin tocar la base" time="0.009167" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="PATCH con sin cuerpo: 400 sin tocar la base" time="0.012445" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="PATCH de un pedido que no existe: 404" time="0.013344" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="un cambio de estado avisa despues del COMMIT: cual pedido, desde donde y hacia donde" time="0.011550" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="una cancelacion avisa igual que un cambio de estado" time="0.010365" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="un cambio rechazado no avisa nada" time="0.019314" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="un cambio de estado: bloqueo, cambio e historial dentro de una transaccion" time="0.009810" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="marcar listo con la version que se vio: 200" time="0.010397" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="marcar listo con una version vieja: 409 PEDIDO_CAMBIADO con la actual, y el pedido no cambia" time="0.010729" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="entregar con una version vieja: 409 PEDIDO_CAMBIADO" time="0.008768" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="la version se cuenta despues de tomar la fila, en una consulta aparte" time="0.009452" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="sin version, el cambio no la compara: la cuenta ni se hace" time="0.008579" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="si la transicion no vale, responde eso antes que la version" time="0.008818" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="una version &amp;quot;1&amp;quot;: 400 VERSION_INVALIDA sin tocar la base" time="0.014615" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="una version 0: 400 VERSION_INVALIDA sin tocar la base" time="0.008864" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="una version -1: 400 VERSION_INVALIDA sin tocar la base" time="0.008936" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="una version 1.5: 400 VERSION_INVALIDA sin tocar la base" time="0.008759" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="una version true: 400 VERSION_INVALIDA sin tocar la base" time="0.012861" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="una version 100001: 400 VERSION_INVALIDA sin tocar la base" time="0.009885" classname="test" file="backend\test\estados.test.js"/>
-	<testcase name="crear pedido sin token: 401 y no se pide ni una conexion" time="0.233931" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="cocina no puede crear pedidos: 403 y la base ni se toca" time="0.063212" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="un token sin los roles del sistema: 403" time="0.025461" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="una venta mal armada: 400 VENTA_INVALIDA sin tocar la base" time="0.021565" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="un cuerpo que no es JSON: 400 JSON_INVALIDO" time="0.018653" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="crear pedido: 201 con el pedido guardado y el precio del servidor" time="0.026368" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="crear pedido: una sola transaccion, en orden, y la conexion se devuelve" time="0.017049" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="el numero del dia: bloqueo, maximo mas uno y el pedido, en ese orden y dentro de la transaccion (D-35)" time="0.018849" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="crear pedido: todo viaja como parametro, nada pegado al SQL" time="0.020117" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="crear pedido: el extra se guarda colgado de la linea de su pizza, con su cantidad" time="0.017782" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="con celular, el cliente se busca por su numero; sin celular, es uno nuevo" time="0.027865" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="solo bebidas a nombre de un cliente: 400, las bebidas solas son una venta directa (D-38)" time="0.013022" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="venta directa: 201, entregada, sin cliente, sin para llevar y sin numero del dia (D-38)" time="0.013206" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="venta directa con una pizza: 400, sin tocar la base mas alla de leer la carta" time="0.013864" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="venta directa con el nombre del cliente: 400 sin tocar la base" time="0.011206" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="el total no coincide: 409 PRECIO_CAMBIADO con el total correcto, y no se guarda nada" time="0.012980" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="un producto agotado: 409 PRODUCTO_NO_DISPONIBLE con su nombre, y no se guarda nada" time="0.012675" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="un producto que no existe: 400, y no se guarda nada" time="0.015764" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="la base falla a mitad de la transaccion: ROLLBACK, 500 sin detalles, y nada a medias" time="0.010811" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="si tambien falla el ROLLBACK, la conexion se descarta en vez de volver al pool" time="0.010731" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="el aviso del pedido nuevo sale una vez, despues del COMMIT, con el pedido completo" time="0.012111" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="con una venta mal armada no sale ningun aviso: nadie se entera de un pedido que no existe" time="0.010661" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="con un precio que cambio no sale ningun aviso: nadie se entera de un pedido que no existe" time="0.010565" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="con un fallo a mitad de la transaccion no sale ningun aviso: nadie se entera de un pedido que no existe" time="0.011616" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="si el canal falla al avisar, el pedido igual queda guardado y respondido" time="0.013135" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="la base no responde al conectar: 503 BASE_NO_DISPONIBLE" time="0.010142" classname="test" file="backend\test\pedidos.test.js"/>
-	<testcase name="precio: venta directa de 2 gaseosas = Bs 36" time="0.017115" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="precio: 1 Peperoni = Bs 50" time="0.001182" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="precio: 1 mitad Salame, mitad Peperoni = Bs 47.5" time="0.000701" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="precio: 1 mitad Carnívora, mitad Cuatro quesos = Bs 57.5" time="0.000586" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="precio: 2 mitad Salame, mitad Peperoni = Bs 95" time="0.000440" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="precio: 1 Hawaiana con extra queso = Bs 58" time="0.000584" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="precio: 3 Choclo, cada una con extra choclo = Bs 150" time="0.000427" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="precio: la mitad A con B cuesta lo mismo que B con A" time="0.000691" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="precio: la mitad exacta redondea la media mitad de centavo hacia arriba" time="0.000471" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="precio: cada linea guarda su precio unitario y su subtotal; los extras, la cantidad de su pizza" time="0.004941" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="salud: 200 con la base respondiendo" time="0.194926" classname="test" file="backend\test\acceso.test.js"/>
+	<testcase name="salud: 503 con la base caida, sin filtrar el detalle del error" time="0.014755" classname="test" file="backend\test\acceso.test.js"/>
+	<testcase name="sin token: 401 TOKEN_AUSENTE" time="0.035170" classname="test" file="backend\test\acceso.test.js"/>
+	<testcase name="token con la firma manipulada: 401 TOKEN_INVALIDO" time="0.141972" classname="test" file="backend\test\acceso.test.js"/>
+	<testcase name="token firmado con una clave ajena al realm: 401" time="0.024544" classname="test" file="backend\test\acceso.test.js"/>
+	<testcase name="token expirado: 401 TOKEN_EXPIRADO" time="0.015105" classname="test" file="backend\test\acceso.test.js"/>
+	<testcase name="token de otra audiencia: 401" time="0.028407" classname="test" file="backend\test\acceso.test.js"/>
+	<testcase name="token de otro emisor (el riesgo D-09): 401" time="0.018904" classname="test" file="backend\test\acceso.test.js"/>
+	<testcase name="token con algoritmo &amp;quot;none&amp;quot;: 401" time="0.015364" classname="test" file="backend\test\acceso.test.js"/>
+	<testcase name="token valido de recepcion en una ruta de cocina: 403 ROL_SIN_PERMISO" time="0.019360" classname="test" file="backend\test\acceso.test.js"/>
+	<testcase name="token valido sin ninguno de los dos roles del sistema: 403" time="0.018790" classname="test" file="backend\test\acceso.test.js"/>
+	<testcase name="token valido de cocina en su ruta: pasa" time="0.014298" classname="test" file="backend\test\acceso.test.js"/>
+	<testcase name="sesion: el servidor sabe quien llama y solo informa los roles del sistema" time="0.011122" classname="test" file="backend\test\acceso.test.js"/>
+	<testcase name="ruta inexistente: 404 con el formato unico de error" time="0.005738" classname="test" file="backend\test\acceso.test.js"/>
+	<testcase name="JSON mal formado: 400, no 500" time="0.046413" classname="test" file="backend\test\acceso.test.js"/>
+	<testcase name="las respuestas no anuncian el servidor" time="0.004637" classname="test" file="backend\test\acceso.test.js"/>
+	<testcase name="agregar sin token: 401; con un token sin rol: 403; y la base ni se toca" time="0.387879" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="cocina no puede agregar: 403 y la base ni se toca" time="0.050729" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="agregar una bebida a un pedido pendiente: 200" time="0.041602" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="agregar una pizza a un pedido pendiente: 200" time="0.057518" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="agregar una bebida a un pedido en_preparacion: 200" time="0.031376" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="agregar una pizza a un pedido en_preparacion: 200" time="0.025382" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="agregar una bebida a un pedido listo: 200" time="0.028664" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="agregar una pizza a un pedido listo: 409 AGREGADO_NO_PERMITIDO" time="0.023402" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="agregar una bebida a un pedido entregado: 409 AGREGADO_NO_PERMITIDO" time="0.022183" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="agregar una pizza a un pedido entregado: 409 AGREGADO_NO_PERMITIDO" time="0.022722" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="agregar una bebida a un pedido cancelado: 409 AGREGADO_NO_PERMITIDO" time="0.015915" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="agregar una pizza a un pedido cancelado: 409 AGREGADO_NO_PERMITIDO" time="0.015179" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="la pizza a un pedido listo dice que va en otro pedido, y que las bebidas si se pueden" time="0.015988" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="agregar: bloqueo del pedido, carta, lineas y total, en ese orden y en una transaccion" time="0.017449" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="agregar: cada linea guarda cuando y quien; el extra, colgado de su pizza; el total suma lo agregado" time="0.018330" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="agregar: todo viaja como parametro, nada pegado al SQL" time="0.015733" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="el total no coincide: 409 PRECIO_CAMBIADO con lo que suma lo agregado, y no se guarda nada" time="0.014488" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="un producto agotado: 409 PRODUCTO_NO_DISPONIBLE con cual es" time="0.013754" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="un pedido que no existe: 404 y ROLLBACK" time="0.018195" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="agregar sin lineas: 400 VENTA_INVALIDA sin tocar la base" time="0.012405" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="agregar sin el total: 400 VENTA_INVALIDA sin tocar la base" time="0.012300" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="agregar una cantidad de 1000: 400 VENTA_INVALIDA sin tocar la base" time="0.011707" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="un numero de pedido invalido: 400 ID_INVALIDO sin tocar la base" time="0.013404" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="la base falla a mitad: ROLLBACK, 500 y el total no se toca" time="0.017295" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="lo agregado se avisa una vez, despues del COMMIT, con el pedido completo" time="0.013868" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="un agregado rechazado no avisa nada" time="0.015104" classname="test" file="backend\test\agregar.test.js"/>
+	<testcase name="el contrato y el servidor tienen las mismas rutas" time="0.018198" classname="test" file="backend\test\contrato.test.js"/>
+	<testcase name="solo la ruta de salud es publica, en el contrato y en el servidor" time="0.422077" classname="test" file="backend\test\contrato.test.js"/>
+	<testcase name="la cola sin token: 401; con un token sin rol: 403" time="0.388762" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="la cola sin filtro trae los activos, en orden y con el celular para recepcion" time="0.029115" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="cocina pide su cola y no recibe el celular del cliente (D-31)" time="0.027890" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="una cola vacia responde una lista vacia sin leer lineas" time="0.021480" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="la cola con un estado que no existe: 400 FILTRO_INVALIDO sin tocar la base" time="0.017447" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="la cola con un estado vacio en la lista: 400 FILTRO_INVALIDO sin tocar la base" time="0.019156" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="la cola con el estado repetido como parametro: 400 FILTRO_INVALIDO sin tocar la base" time="0.020413" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="la cola con otro parametro: 400 FILTRO_INVALIDO sin tocar la base" time="0.019694" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="la cola con un intento de inyeccion: 400 FILTRO_INVALIDO sin tocar la base" time="0.020925" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="un pedido con su historial, incluido el motivo de la cancelacion" time="0.021116" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="un pedido que no existe: 404" time="0.016613" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="el numero de pedido «abc»: 400 ID_INVALIDO sin tocar la base" time="0.013146" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="el numero de pedido «0»: 400 ID_INVALIDO sin tocar la base" time="0.013695" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="el numero de pedido «-1»: 400 ID_INVALIDO sin tocar la base" time="0.011593" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="el numero de pedido «1.5»: 400 ID_INVALIDO sin tocar la base" time="0.011913" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="el numero de pedido «99999999999»: 400 ID_INVALIDO sin tocar la base" time="0.013591" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="el numero de pedido «1e3»: 400 ID_INVALIDO sin tocar la base" time="0.013726" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: recepcion lleva un pedido pendiente a en_preparacion: 403" time="0.047730" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: cocina lleva un pedido pendiente a en_preparacion: 200" time="0.017965" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: recepcion lleva un pedido pendiente a listo: 403" time="0.020816" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: cocina lleva un pedido pendiente a listo: 409" time="0.013745" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: recepcion lleva un pedido pendiente a entregado: 409" time="0.012657" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: cocina lleva un pedido pendiente a entregado: 403" time="0.014886" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: recepcion lleva un pedido en_preparacion a en_preparacion: 403" time="0.015243" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: cocina lleva un pedido en_preparacion a en_preparacion: 409" time="0.012939" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: recepcion lleva un pedido en_preparacion a listo: 403" time="0.013022" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: cocina lleva un pedido en_preparacion a listo: 200" time="0.013768" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: recepcion lleva un pedido en_preparacion a entregado: 409" time="0.013492" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: cocina lleva un pedido en_preparacion a entregado: 403" time="0.018836" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: recepcion lleva un pedido listo a en_preparacion: 403" time="0.022393" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: cocina lleva un pedido listo a en_preparacion: 409" time="0.010629" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: recepcion lleva un pedido listo a listo: 403" time="0.009882" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: cocina lleva un pedido listo a listo: 409" time="0.010492" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: recepcion lleva un pedido listo a entregado: 200" time="0.010301" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: cocina lleva un pedido listo a entregado: 403" time="0.010180" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: recepcion lleva un pedido entregado a en_preparacion: 403" time="0.010237" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: cocina lleva un pedido entregado a en_preparacion: 409" time="0.010482" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: recepcion lleva un pedido entregado a listo: 403" time="0.010071" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: cocina lleva un pedido entregado a listo: 409" time="0.010187" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: recepcion lleva un pedido entregado a entregado: 409" time="0.014535" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: cocina lleva un pedido entregado a entregado: 403" time="0.011558" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: recepcion lleva un pedido cancelado a en_preparacion: 403" time="0.010486" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: cocina lleva un pedido cancelado a en_preparacion: 409" time="0.009633" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: recepcion lleva un pedido cancelado a listo: 403" time="0.013013" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: cocina lleva un pedido cancelado a listo: 409" time="0.010325" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: recepcion lleva un pedido cancelado a entregado: 409" time="0.010378" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="matriz: cocina lleva un pedido cancelado a entregado: 403" time="0.010505" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="cancelar un pedido pendiente: 200 con el motivo en el historial" time="0.010527" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="cocina no puede cancelar un pedido pendiente: 403" time="0.009946" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="cancelar un pedido en_preparacion: 409" time="0.013072" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="cocina no puede cancelar un pedido en_preparacion: 403" time="0.009807" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="cancelar un pedido listo: 409" time="0.010725" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="cocina no puede cancelar un pedido listo: 403" time="0.009260" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="cancelar un pedido entregado: 409" time="0.019380" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="cocina no puede cancelar un pedido entregado: 403" time="0.008524" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="cancelar un pedido cancelado: 409" time="0.008646" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="cocina no puede cancelar un pedido cancelado: 403" time="0.008841" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="cancelar sin motivo: 400 MOTIVO_INVALIDO sin tocar la base" time="0.008721" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="cancelar con el motivo en blanco: 400 MOTIVO_INVALIDO sin tocar la base" time="0.008103" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="cancelar con un motivo de 121 caracteres: 400 MOTIVO_INVALIDO sin tocar la base" time="0.008537" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="cancelar con el motivo como numero: 400 MOTIVO_INVALIDO sin tocar la base" time="0.008353" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="cancelar un pedido que no existe: 404 y ROLLBACK" time="0.009823" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="PATCH con cancelado: la cancelacion lleva motivo y tiene su ruta: 400 sin tocar la base" time="0.009164" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="PATCH con pendiente: no se vuelve atras: 400 sin tocar la base" time="0.009079" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="PATCH con un estado inventado: 400 sin tocar la base" time="0.009370" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="PATCH con un nombre heredado de los objetos: 400 sin tocar la base" time="0.009427" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="PATCH con sin cuerpo: 400 sin tocar la base" time="0.008932" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="PATCH de un pedido que no existe: 404" time="0.009960" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="un cambio de estado avisa despues del COMMIT: cual pedido, desde donde y hacia donde" time="0.009340" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="una cancelacion avisa igual que un cambio de estado" time="0.011836" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="un cambio rechazado no avisa nada" time="0.019754" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="un cambio de estado: bloqueo, cambio e historial dentro de una transaccion" time="0.016889" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="marcar listo con la version que se vio: 200" time="0.010247" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="marcar listo con una version vieja: 409 PEDIDO_CAMBIADO con la actual, y el pedido no cambia" time="0.008973" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="entregar con una version vieja: 409 PEDIDO_CAMBIADO" time="0.008552" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="la version se cuenta despues de tomar la fila, en una consulta aparte" time="0.009794" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="sin version, el cambio no la compara: la cuenta ni se hace" time="0.008620" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="si la transicion no vale, responde eso antes que la version" time="0.008896" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="una version &amp;quot;1&amp;quot;: 400 VERSION_INVALIDA sin tocar la base" time="0.010201" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="una version 0: 400 VERSION_INVALIDA sin tocar la base" time="0.010320" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="una version -1: 400 VERSION_INVALIDA sin tocar la base" time="0.009827" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="una version 1.5: 400 VERSION_INVALIDA sin tocar la base" time="0.008415" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="una version true: 400 VERSION_INVALIDA sin tocar la base" time="0.008594" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="una version 100001: 400 VERSION_INVALIDA sin tocar la base" time="0.008453" classname="test" file="backend\test\estados.test.js"/>
+	<testcase name="crear pedido sin token: 401 y no se pide ni una conexion" time="0.319711" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="cocina no puede crear pedidos: 403 y la base ni se toca" time="0.098203" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="un token sin los roles del sistema: 403" time="0.035939" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="una venta mal armada: 400 VENTA_INVALIDA sin tocar la base" time="0.024470" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="un cuerpo que no es JSON: 400 JSON_INVALIDO" time="0.024043" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="crear pedido: 201 con el pedido guardado y el precio del servidor" time="0.035727" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="crear pedido: una sola transaccion, en orden, y la conexion se devuelve" time="0.020731" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="el numero del dia: bloqueo, maximo mas uno y el pedido, en ese orden y dentro de la transaccion (D-35)" time="0.024513" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="crear pedido: todo viaja como parametro, nada pegado al SQL" time="0.025342" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="crear pedido: el extra se guarda colgado de la linea de su pizza, con su cantidad" time="0.024950" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="con celular, el cliente se busca por su numero; sin celular, es uno nuevo" time="0.036716" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="solo bebidas a nombre de un cliente: 400, las bebidas solas son una venta directa (D-38)" time="0.014652" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="venta directa: 201, entregada, sin cliente, sin para llevar y sin numero del dia (D-38)" time="0.016147" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="venta directa con una pizza: 400, sin tocar la base mas alla de leer la carta" time="0.015359" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="venta directa con el nombre del cliente: 400 sin tocar la base" time="0.013506" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="el total no coincide: 409 PRECIO_CAMBIADO con el total correcto, y no se guarda nada" time="0.012435" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="un producto agotado: 409 PRODUCTO_NO_DISPONIBLE con su nombre, y no se guarda nada" time="0.014669" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="un producto que no existe: 400, y no se guarda nada" time="0.020158" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="la base falla a mitad de la transaccion: ROLLBACK, 500 sin detalles, y nada a medias" time="0.014652" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="si tambien falla el ROLLBACK, la conexion se descarta en vez de volver al pool" time="0.015726" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="el aviso del pedido nuevo sale una vez, despues del COMMIT, con el pedido completo" time="0.015956" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="con una venta mal armada no sale ningun aviso: nadie se entera de un pedido que no existe" time="0.014588" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="con un precio que cambio no sale ningun aviso: nadie se entera de un pedido que no existe" time="0.016222" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="con un fallo a mitad de la transaccion no sale ningun aviso: nadie se entera de un pedido que no existe" time="0.015288" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="si el canal falla al avisar, el pedido igual queda guardado y respondido" time="0.014821" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="la base no responde al conectar: 503 BASE_NO_DISPONIBLE" time="0.014299" classname="test" file="backend\test\pedidos.test.js"/>
+	<testcase name="precio: venta directa de 2 gaseosas = Bs 36" time="0.009733" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="precio: 1 Peperoni = Bs 50" time="0.000895" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="precio: 1 mitad Salame, mitad Peperoni = Bs 47.5" time="0.000602" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="precio: 1 mitad Carnívora, mitad Cuatro quesos = Bs 57.5" time="0.000473" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="precio: 2 mitad Salame, mitad Peperoni = Bs 95" time="0.000421" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="precio: 1 Hawaiana con extra queso = Bs 58" time="0.000529" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="precio: 3 Choclo, cada una con extra choclo = Bs 150" time="0.000407" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="precio: la mitad A con B cuesta lo mismo que B con A" time="0.000626" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="precio: la mitad exacta redondea la media mitad de centavo hacia arriba" time="0.000397" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="precio: cada linea guarda su precio unitario y su subtotal; los extras, la cantidad de su pizza" time="0.002925" classname="test" file="backend\test\precio.test.js"/>
 	<testcase name="estado inicial: un pedido, con pizzas y bebidas, nace pendiente" time="0.000384" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="estado inicial: la venta directa de bebidas nace entregada (D-38)" time="0.000367" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="un pedido a nombre de un cliente lleva al menos una pizza: solo bebidas se rechaza (D-38)" time="0.002050" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="una venta directa con una pizza se rechaza: las pizzas van en un pedido (D-38)" time="0.000576" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="lo que se agrega a un pedido: su precio y si trae pizzas (D-37)" time="0.000481" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="los ids de producto que menciona la venta, sin repetir" time="0.000551" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza: la otra mitad no es una pizza" time="0.000434" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza: un extra vendido solo, sin pizza" time="0.000239" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza: una bebida con extras" time="0.000225" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza: una bebida con segunda mitad" time="0.000230" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza: algo que no es un extra puesto como extra" time="0.000209" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza: un producto que no existe" time="0.000214" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza: una pizza agotada" time="0.000380" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza: una mitad agotada" time="0.000261" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza: una pizza solo entera como segunda mitad (D-39)" time="0.000271" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza: Carnívora con Criolla española: la Criolla se vende solo entera (D-39)" time="0.000303" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza: una pizza solo entera como primera mitad (D-39)" time="0.000197" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="una pizza solo entera se vende entera, a su precio (D-39)" time="0.000245" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: sin cuerpo" time="0.000405" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: una lista en vez de una venta" time="0.000222" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: sin lineas" time="0.000213" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: lineas que no son lista" time="0.000208" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: mas de 100 lineas" time="0.000200" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: sin decir si es para llevar" time="0.000166" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: para llevar como texto" time="0.000162" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: sin cliente" time="0.000212" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: nombre vacio" time="0.000283" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: nombre de 121 caracteres" time="0.000252" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: celular de 7 digitos" time="0.000359" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: celular que empieza con 4, un fijo" time="0.000245" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: celular que empieza con 8" time="0.000246" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: celular con espacios" time="0.000180" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: celular con prefijo de pais" time="0.000183" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: celular como numero" time="0.000232" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: observacion de 241 caracteres" time="0.000166" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: cantidad 0" time="0.000317" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: cantidad negativa" time="0.000184" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: cantidad decimal" time="0.000156" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: cantidad 1000" time="0.000163" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: cantidad como texto" time="0.000160" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: producto como texto" time="0.000250" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: mitades del mismo sabor" time="0.000223" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: un extra repetido" time="0.000282" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: extras que no son ids" time="0.000234" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: sin el total mostrado" time="0.000211" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: total negativo" time="0.000188" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: total con tres decimales" time="0.000211" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: venta directa con cliente" time="0.000218" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: venta directa para llevar" time="0.000194" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: venta directa para comer aqui" time="0.000167" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: venta directa con observacion" time="0.000182" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: venta directa sin lineas" time="0.000202" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: venta directa sin el total" time="0.000214" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza la forma: ventaDirecta como texto" time="0.000309" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza lo agregado: sin cuerpo" time="0.000380" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza lo agregado: sin lineas" time="0.000255" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza lo agregado: cantidad 0" time="0.000224" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="rechaza lo agregado: sin el total" time="0.000214" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="normaliza: la venta directa queda sin cliente, sin para llevar y sin observacion" time="0.000637" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="normaliza: celular y observacion vacios quedan como nulos; el nombre sin espacios" time="0.000357" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="los celulares que empiezan con 5, 6 o 7 entran (el 5, desde D-56)" time="0.000396" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="normaliza: el total mostrado pasa a centavos exactos" time="0.000330" classname="test" file="backend\test\precio.test.js"/>
-	<testcase name="productos sin token: 401 y la base ni se consulta" time="0.180043" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="productos con un token sin los roles del sistema: 403" time="0.048584" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="productos: recepcion y cocina pueden leer la carta" time="0.019508" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="productos: la carta completa, con precios numericos, agotados incluidos y las pizzas solo enteras marcadas (D-39)" time="0.010773" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="productos: sin filtros, los dos parametros llegan como NULL" time="0.007988" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="productos: una carta vacia es una lista vacia, no un error" time="0.018368" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="filtro categoria: llega como parametro, nunca dentro del texto SQL" time="0.017592" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="filtro disponible: el texto se convierte en booleano" time="0.014338" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="filtro categoria=extra: los extras se piden como cualquier categoria" time="0.005323" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="la respuesta no trae gama ni precio de media: solo pizzas enteras (D-27)" time="0.005740" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="los dos filtros juntos" time="0.006499" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="la consulta es siempre la misma, con o sin filtros" time="0.008052" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="filtro invalido (una categoria que no existe): 400 FILTRO_INVALIDO" time="0.005406" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="filtro invalido (una categoria con mayusculas): 400 FILTRO_INVALIDO" time="0.005001" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="filtro invalido (un intento de inyeccion): 400 FILTRO_INVALIDO" time="0.005083" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="filtro invalido (la categoria repetida): 400 FILTRO_INVALIDO" time="0.004228" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="filtro invalido (la categoria vacia): 400 FILTRO_INVALIDO" time="0.005202" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="filtro invalido (disponible con otro valor): 400 FILTRO_INVALIDO" time="0.005203" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="filtro invalido (disponible como numero): 400 FILTRO_INVALIDO" time="0.004991" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="filtro invalido (un filtro desconocido): 400 FILTRO_INVALIDO" time="0.003842" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="filtro invalido (un filtro con corchetes): 400 FILTRO_INVALIDO" time="0.005312" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="un filtro invalido sin token sigue siendo 401: primero se sabe quien llama" time="0.005175" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="base caida: 503 BASE_NO_DISPONIBLE, sin filtrar el detalle" time="0.015445" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="base sin conexiones libres (espera agotada del pool): 503" time="0.019127" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="base reiniciandose (57P03): 503" time="0.014006" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="un error de SQL es un fallo nuestro: 500, sin el texto del error" time="0.015329" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="disponibilidad sin token: 401 y la base ni se consulta" time="0.049646" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="disponibilidad con un token sin los roles del sistema: 403" time="0.015887" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="cocina marca una pizza agotada: 200 con el producto, y avisa quien la marco" time="0.014673" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="recepcion marca una bebida agotada: 200, y avisa que la marco recepcion (D-76)" time="0.015079" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="recepcion no repone una pizza: la maneja cocina (D-76): 403 ROL_SIN_PERMISO, no cambia nada y no avisa" time="0.021569" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="cocina no agota una bebida: la maneja recepcion (D-76): 403 ROL_SIN_PERMISO, no cambia nada y no avisa" time="0.023129" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="reponer un agotado: 200, disponible otra vez, y avisa" time="0.016027" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="marcar lo que ya estaba igual: 200 y no avisa (dos toques a la vez no repiten el aviso)" time="0.017920" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="un producto que no existe: 404 PRODUCTO_NO_ENCONTRADO, y no avisa" time="0.013025" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="numero de producto invalido (abc): 400 ID_INVALIDO, sin tocar la base" time="0.011842" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="numero de producto invalido (0): 400 ID_INVALIDO, sin tocar la base" time="0.013938" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="numero de producto invalido (-3): 400 ID_INVALIDO, sin tocar la base" time="0.013430" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="numero de producto invalido (7.5): 400 ID_INVALIDO, sin tocar la base" time="0.011848" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="numero de producto invalido (99999999999): 400 ID_INVALIDO, sin tocar la base" time="0.010559" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="numero de producto invalido (2147483648): 400 ID_INVALIDO, sin tocar la base" time="0.015818" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="cuerpo invalido (vacio): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.009706" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="cuerpo invalido (como texto): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.009715" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="cuerpo invalido (nulo): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.009650" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="cuerpo invalido (como numero): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.009550" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="cuerpo invalido (con otro campo): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.009649" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="cuerpo invalido (solo otro campo): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.009786" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="cuerpo invalido (una lista): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.013921" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="cuerpo que no es JSON: 400, sin tocar la base" time="0.014221" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="un booleano suelto como cuerpo: 400 JSON_INVALIDO, lo rechaza el lector de JSON" time="0.011870" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="categoria entera sin token: 401 y la base ni se consulta" time="0.014417" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="categoria entera con un token sin los roles del sistema: 403" time="0.011903" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="cocina agota todas las pizzas: una consulta, los que cambiaron y un solo aviso" time="0.011220" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="recepcion agota todas las bebidas: 200 y un aviso que dice que fue recepcion (D-76)" time="0.011013" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="categoria entera: recepcion no agota las pizzas (D-76): 403 ROL_SIN_PERMISO sin tocar la base" time="0.010630" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="categoria entera: recepcion no repone los extras (D-76): 403 ROL_SIN_PERMISO sin tocar la base" time="0.009018" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="categoria entera: cocina no agota las bebidas (D-76): 403 ROL_SIN_PERMISO sin tocar la base" time="0.009108" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="reponer todas: 200 y avisa con las que vuelven" time="0.009063" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="si no cambia nada, 200 sin aviso (dos toques seguidos no repiten el aviso)" time="0.013150" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="categoria entera, cuerpo invalido (vacio): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.009736" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="categoria entera, cuerpo invalido (sin categoria): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.009376" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="categoria entera, cuerpo invalido (sin disponible): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.009555" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="categoria entera, cuerpo invalido (una categoria que no existe): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.010704" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="categoria entera, cuerpo invalido (disponible como texto): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.013007" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="categoria entera, cuerpo invalido (con otro campo): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.010255" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="categoria entera, cuerpo invalido (una lista): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.009862" classname="test" file="backend\test\productos.test.js"/>
-	<testcase name="las cabeceras de seguridad van en la ruta de salud, en un 401 y en un 404" time="0.131996" classname="test" file="backend\test\seguridad.test.js"/>
-	<testcase name="pasado el limite, 429 en el formato unico, con Retry-After y las cabeceras de seguridad" time="0.053020" classname="test" file="backend\test\seguridad.test.js"/>
-	<testcase name="el limite cuenta por la IP del cliente que manda Caddy: otra IP sigue entrando" time="0.044632" classname="test" file="backend\test\seguridad.test.js"/>
-	<testcase name="el limite corta antes de validar el token: una avalancha sin token recibe 429" time="0.031544" classname="test" file="backend\test\seguridad.test.js"/>
-	<testcase name="el limite por defecto es 600 por minuto, y un valor invalido no deja arrancar" time="0.006559" classname="test" file="backend\test\seguridad.test.js"/>
-	<testcase name="un nombre con caracteres de control se rechaza como venta invalida" time="0.007462" classname="test" file="backend\test\seguridad.test.js"/>
-	<testcase name="los nombres con acentos, enie, emojis y espacios a los lados siguen entrando" time="0.001772" classname="test" file="backend\test\seguridad.test.js"/>
-	<testcase name="la observacion admite saltos de linea, pero no el resto de los caracteres de control" time="0.004579" classname="test" file="backend\test\seguridad.test.js"/>
-	<testcase name="por la API: el nulo en el nombre o en la observacion responde 400, sin tocar la base" time="0.141081" classname="test" file="backend\test\seguridad.test.js"/>
-	<testcase name="por la API: el motivo de una cancelacion con caracteres de control responde 400" time="0.046229" classname="test" file="backend\test\seguridad.test.js"/>
-	<testcase name="un cuerpo de mas de 100 KB responde 413 en el formato unico, sin token y sin tocar la base" time="0.024161" classname="test" file="backend\test\seguridad.test.js"/>
-	<testcase name="un cuerpo con un juego de caracteres o una compresion desconocidos responde 415" time="0.022218" classname="test" file="backend\test\seguridad.test.js"/>
-	<testcase name="el canal acepta el saludo con un token real y corta un mensaje mas grande que su limite" time="0.074348" classname="test" file="backend\test\seguridad.test.js"/>
-	<testcase name="/socket.io/ lo responde Socket.IO, no Express, y el servidor sigue en pie" time="0.179296" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="Express sigue respondiendo lo demas con su formato de error" time="0.016787" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="el canal rechaza una conexion sin token: TOKEN_AUSENTE" time="0.050553" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="el canal rechaza una conexion con un token inventado: TOKEN_INVALIDO" time="0.025299" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="el canal rechaza una conexion con un token firmado por una clave ajena al realm: TOKEN_INVALIDO" time="0.042866" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="el canal rechaza una conexion con un token de otra aplicacion: TOKEN_INVALIDO" time="0.013637" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="el canal rechaza una conexion con un token vencido: TOKEN_EXPIRADO" time="0.016867" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="el canal rechaza una conexion con un token valido pero sin los roles del sistema: ROL_SIN_PERMISO" time="0.013466" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="recepcion y cocina entran con su token" time="0.025334" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="un pedido nuevo le llega a cocina sin el celular, y a recepcion completo" time="0.028320" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="una venta directa de bebidas no se avisa a nadie: nace entregada (D-38)" time="0.518621" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="lo agregado a un pedido en cocina les llega a los dos, a cocina sin el celular (D-37)" time="0.027594" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="lo agregado a un pedido listo le llega a recepcion y no a cocina, que ya no lo tiene" time="0.523711" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="un cambio de estado les llega a los dos roles, con desde, hacia y cuando" time="0.012531" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="un producto agotado les llega a los dos roles, con quien lo marco y cuando (RF-13, D-67)" time="0.013339" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="una categoria entera agotada les llega a los dos roles en un solo aviso (D-70)" time="0.013319" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="la API tiene un aviso por cada uno del canal, los mismos de SIN_AVISOS" time="0.000264" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="pedidoNuevo, avisado como lo avisa la API, le llega a cocina como pedido:nuevo" time="0.007333" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="pedidoActualizado, avisado como lo avisa la API, le llega a cocina como pedido:actualizado" time="0.008353" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="estadoCambiado, avisado como lo avisa la API, le llega a cocina como pedido:estado" time="0.010500" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="disponibilidadCambiada, avisado como lo avisa la API, le llega a cocina como producto:disponibilidad" time="0.007904" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="categoriaCambiada, avisado como lo avisa la API, le llega a cocina con sus ids" time="0.008333" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="el aviso llega en mucho menos de 2 segundos" time="0.008632" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="el saludo trae el latido corto: un ping cada 4 s y 3 s de espera, 7 s para notar un corte (D-44)" time="0.005282" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="una conexion se corta cuando vence su token, y la corta el servidor (D-47)" time="1.941761" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="una conexion con un token de 60 minutos no se corta antes de tiempo" time="2.513654" classname="test" file="backend\test\tiempo-real.test.js"/>
-	<testcase name="el corte se programa a la hora en que vence el token, y se cancela si la conexion se cierra antes" time="0.033590" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="estado inicial: la venta directa de bebidas nace entregada (D-38)" time="0.000398" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="un pedido a nombre de un cliente lleva al menos una pizza: solo bebidas se rechaza (D-38)" time="0.001916" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="una venta directa con una pizza se rechaza: las pizzas van en un pedido (D-38)" time="0.000531" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="lo que se agrega a un pedido: su precio y si trae pizzas (D-37)" time="0.000425" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="los ids de producto que menciona la venta, sin repetir" time="0.000614" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza: la otra mitad no es una pizza" time="0.000596" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza: un extra vendido solo, sin pizza" time="0.000261" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza: una bebida con extras" time="0.000223" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza: una bebida con segunda mitad" time="0.000205" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza: algo que no es un extra puesto como extra" time="0.000216" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza: un producto que no existe" time="0.000229" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza: una pizza agotada" time="0.000388" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza: una mitad agotada" time="0.000285" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza: una pizza solo entera como segunda mitad (D-39)" time="0.000281" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza: Carnívora con Criolla española: la Criolla se vende solo entera (D-39)" time="0.000243" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza: una pizza solo entera como primera mitad (D-39)" time="0.000225" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="una pizza solo entera se vende entera, a su precio (D-39)" time="0.000270" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: sin cuerpo" time="0.002852" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: una lista en vez de una venta" time="0.000506" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: sin lineas" time="0.000299" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: lineas que no son lista" time="0.000854" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: mas de 100 lineas" time="0.001417" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: sin decir si es para llevar" time="0.000250" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: para llevar como texto" time="0.000175" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: sin cliente" time="0.000200" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: nombre vacio" time="0.000400" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: nombre de 121 caracteres" time="0.000237" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: celular de 7 digitos" time="0.000261" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: celular que empieza con 4, un fijo" time="0.000242" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: celular que empieza con 8" time="0.000228" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: celular con espacios" time="0.000215" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: celular con prefijo de pais" time="0.000235" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: celular como numero" time="0.000197" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: observacion de 241 caracteres" time="0.000182" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: cantidad 0" time="0.000201" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: cantidad negativa" time="0.000176" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: cantidad decimal" time="0.000168" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: cantidad 1000" time="0.000175" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: cantidad como texto" time="0.000178" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: producto como texto" time="0.000217" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: mitades del mismo sabor" time="0.000231" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: un extra repetido" time="0.000184" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: extras que no son ids" time="0.000261" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: sin el total mostrado" time="0.000253" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: total negativo" time="0.000202" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: total con tres decimales" time="0.000180" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: venta directa con cliente" time="0.000242" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: venta directa para llevar" time="0.000203" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: venta directa para comer aqui" time="0.000161" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: venta directa con observacion" time="0.000178" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: venta directa sin lineas" time="0.000211" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: venta directa sin el total" time="0.000216" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza la forma: ventaDirecta como texto" time="0.000307" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza lo agregado: sin cuerpo" time="0.000358" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza lo agregado: sin lineas" time="0.000264" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza lo agregado: cantidad 0" time="0.000209" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="rechaza lo agregado: sin el total" time="0.000198" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="normaliza: la venta directa queda sin cliente, sin para llevar y sin observacion" time="0.000786" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="normaliza: celular y observacion vacios quedan como nulos; el nombre sin espacios" time="0.000409" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="los celulares que empiezan con 5, 6 o 7 entran (el 5, desde D-56)" time="0.000464" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="normaliza: el total mostrado pasa a centavos exactos" time="0.000369" classname="test" file="backend\test\precio.test.js"/>
+	<testcase name="productos sin token: 401 y la base ni se consulta" time="0.233806" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="productos con un token sin los roles del sistema: 403" time="0.087488" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="productos: recepcion y cocina pueden leer la carta" time="0.018081" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="productos: la carta completa, con precios numericos, agotados incluidos y las pizzas solo enteras marcadas (D-39)" time="0.011751" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="productos: sin filtros, los dos parametros llegan como NULL" time="0.008338" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="productos: una carta vacia es una lista vacia, no un error" time="0.037176" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="filtro categoria: llega como parametro, nunca dentro del texto SQL" time="0.020840" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="filtro disponible: el texto se convierte en booleano" time="0.016011" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="filtro categoria=extra: los extras se piden como cualquier categoria" time="0.008172" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="la respuesta no trae gama ni precio de media: solo pizzas enteras (D-27)" time="0.009703" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="los dos filtros juntos" time="0.008596" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="la consulta es siempre la misma, con o sin filtros" time="0.009984" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="filtro invalido (una categoria que no existe): 400 FILTRO_INVALIDO" time="0.007649" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="filtro invalido (una categoria con mayusculas): 400 FILTRO_INVALIDO" time="0.005429" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="filtro invalido (un intento de inyeccion): 400 FILTRO_INVALIDO" time="0.006571" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="filtro invalido (la categoria repetida): 400 FILTRO_INVALIDO" time="0.006535" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="filtro invalido (la categoria vacia): 400 FILTRO_INVALIDO" time="0.006432" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="filtro invalido (disponible con otro valor): 400 FILTRO_INVALIDO" time="0.007001" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="filtro invalido (disponible como numero): 400 FILTRO_INVALIDO" time="0.006524" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="filtro invalido (un filtro desconocido): 400 FILTRO_INVALIDO" time="0.006507" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="filtro invalido (un filtro con corchetes): 400 FILTRO_INVALIDO" time="0.006429" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="un filtro invalido sin token sigue siendo 401: primero se sabe quien llama" time="0.006148" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="base caida: 503 BASE_NO_DISPONIBLE, sin filtrar el detalle" time="0.016871" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="base sin conexiones libres (espera agotada del pool): 503" time="0.021127" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="base reiniciandose (57P03): 503" time="0.018503" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="un error de SQL es un fallo nuestro: 500, sin el texto del error" time="0.018223" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="disponibilidad sin token: 401 y la base ni se consulta" time="0.048529" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="disponibilidad con un token sin los roles del sistema: 403" time="0.018330" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="cocina marca una pizza agotada: 200 con el producto, y avisa quien la marco" time="0.016572" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="recepcion marca una bebida agotada: 200, y avisa que la marco recepcion (D-76)" time="0.012238" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="recepcion no repone una pizza: la maneja cocina (D-76): 403 ROL_SIN_PERMISO, no cambia nada y no avisa" time="0.022526" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="cocina no agota una bebida: la maneja recepcion (D-76): 403 ROL_SIN_PERMISO, no cambia nada y no avisa" time="0.027189" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="reponer un agotado: 200, disponible otra vez, y avisa" time="0.016531" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="marcar lo que ya estaba igual: 200 y no avisa (dos toques a la vez no repiten el aviso)" time="0.021261" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="un producto que no existe: 404 PRODUCTO_NO_ENCONTRADO, y no avisa" time="0.015659" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="numero de producto invalido (abc): 400 ID_INVALIDO, sin tocar la base" time="0.016058" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="numero de producto invalido (0): 400 ID_INVALIDO, sin tocar la base" time="0.011863" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="numero de producto invalido (-3): 400 ID_INVALIDO, sin tocar la base" time="0.012113" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="numero de producto invalido (7.5): 400 ID_INVALIDO, sin tocar la base" time="0.011958" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="numero de producto invalido (99999999999): 400 ID_INVALIDO, sin tocar la base" time="0.012970" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="numero de producto invalido (2147483648): 400 ID_INVALIDO, sin tocar la base" time="0.018570" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="cuerpo invalido (vacio): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.011455" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="cuerpo invalido (como texto): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.014742" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="cuerpo invalido (nulo): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.011945" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="cuerpo invalido (como numero): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.011152" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="cuerpo invalido (con otro campo): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.010244" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="cuerpo invalido (solo otro campo): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.011644" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="cuerpo invalido (una lista): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.010102" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="cuerpo que no es JSON: 400, sin tocar la base" time="0.010766" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="un booleano suelto como cuerpo: 400 JSON_INVALIDO, lo rechaza el lector de JSON" time="0.010050" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="categoria entera sin token: 401 y la base ni se consulta" time="0.015781" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="categoria entera con un token sin los roles del sistema: 403" time="0.012166" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="cocina agota todas las pizzas: una consulta, los que cambiaron y un solo aviso" time="0.016549" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="recepcion agota todas las bebidas: 200 y un aviso que dice que fue recepcion (D-76)" time="0.011062" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="categoria entera: recepcion no agota las pizzas (D-76): 403 ROL_SIN_PERMISO sin tocar la base" time="0.010516" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="categoria entera: recepcion no repone los extras (D-76): 403 ROL_SIN_PERMISO sin tocar la base" time="0.009208" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="categoria entera: cocina no agota las bebidas (D-76): 403 ROL_SIN_PERMISO sin tocar la base" time="0.013288" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="reponer todas: 200 y avisa con las que vuelven" time="0.010672" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="si no cambia nada, 200 sin aviso (dos toques seguidos no repiten el aviso)" time="0.014046" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="categoria entera, cuerpo invalido (vacio): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.010055" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="categoria entera, cuerpo invalido (sin categoria): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.010238" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="categoria entera, cuerpo invalido (sin disponible): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.009949" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="categoria entera, cuerpo invalido (una categoria que no existe): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.009930" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="categoria entera, cuerpo invalido (disponible como texto): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.012415" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="categoria entera, cuerpo invalido (con otro campo): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.011282" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="categoria entera, cuerpo invalido (una lista): 400 DISPONIBILIDAD_INVALIDA, sin tocar la base" time="0.012913" classname="test" file="backend\test\productos.test.js"/>
+	<testcase name="las cabeceras de seguridad van en la ruta de salud, en un 401 y en un 404" time="0.165146" classname="test" file="backend\test\seguridad.test.js"/>
+	<testcase name="pasado el limite, 429 en el formato unico, con Retry-After y las cabeceras de seguridad" time="0.080826" classname="test" file="backend\test\seguridad.test.js"/>
+	<testcase name="el limite cuenta por la IP del cliente que manda Caddy: otra IP sigue entrando" time="0.076829" classname="test" file="backend\test\seguridad.test.js"/>
+	<testcase name="el limite corta antes de validar el token: una avalancha sin token recibe 429" time="0.027404" classname="test" file="backend\test\seguridad.test.js"/>
+	<testcase name="el limite por defecto es 600 por minuto, y un valor invalido no deja arrancar" time="0.003708" classname="test" file="backend\test\seguridad.test.js"/>
+	<testcase name="un nombre con caracteres de control se rechaza como venta invalida" time="0.001861" classname="test" file="backend\test\seguridad.test.js"/>
+	<testcase name="los nombres con acentos, enie, emojis y espacios a los lados siguen entrando" time="0.001539" classname="test" file="backend\test\seguridad.test.js"/>
+	<testcase name="la observacion admite saltos de linea, pero no el resto de los caracteres de control" time="0.001063" classname="test" file="backend\test\seguridad.test.js"/>
+	<testcase name="por la API: el nulo en el nombre o en la observacion responde 400, sin tocar la base" time="0.115362" classname="test" file="backend\test\seguridad.test.js"/>
+	<testcase name="por la API: el motivo de una cancelacion con caracteres de control responde 400" time="0.046203" classname="test" file="backend\test\seguridad.test.js"/>
+	<testcase name="un cuerpo de mas de 100 KB responde 413 en el formato unico, sin token y sin tocar la base" time="0.028531" classname="test" file="backend\test\seguridad.test.js"/>
+	<testcase name="un cuerpo con un juego de caracteres o una compresion desconocidos responde 415" time="0.023401" classname="test" file="backend\test\seguridad.test.js"/>
+	<testcase name="el canal acepta el saludo con un token real y corta un mensaje mas grande que su limite" time="0.074017" classname="test" file="backend\test\seguridad.test.js"/>
+	<testcase name="/socket.io/ lo responde Socket.IO, no Express, y el servidor sigue en pie" time="0.249563" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="Express sigue respondiendo lo demas con su formato de error" time="0.009233" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="el canal rechaza una conexion sin token: TOKEN_AUSENTE" time="0.064327" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="el canal rechaza una conexion con un token inventado: TOKEN_INVALIDO" time="0.022520" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="el canal rechaza una conexion con un token firmado por una clave ajena al realm: TOKEN_INVALIDO" time="0.048971" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="el canal rechaza una conexion con un token de otra aplicacion: TOKEN_INVALIDO" time="0.015676" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="el canal rechaza una conexion con un token vencido: TOKEN_EXPIRADO" time="0.014009" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="el canal rechaza una conexion con un token valido pero sin los roles del sistema: ROL_SIN_PERMISO" time="0.013806" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="recepcion y cocina entran con su token" time="0.026329" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="un pedido nuevo le llega a cocina sin el celular, y a recepcion completo" time="0.034428" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="una venta directa de bebidas no se avisa a nadie: nace entregada (D-38)" time="0.531732" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="lo agregado a un pedido en cocina les llega a los dos, a cocina sin el celular (D-37)" time="0.017624" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="lo agregado a un pedido listo le llega a recepcion y no a cocina, que ya no lo tiene" time="0.528730" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="un cambio de estado les llega a los dos roles, con desde, hacia y cuando" time="0.013940" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="un producto agotado les llega a los dos roles, con quien lo marco y cuando (RF-13, D-67)" time="0.013870" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="una categoria entera agotada les llega a los dos roles en un solo aviso (D-70)" time="0.014001" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="la API tiene un aviso por cada uno del canal, los mismos de SIN_AVISOS" time="0.000358" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="pedidoNuevo, avisado como lo avisa la API, le llega a cocina como pedido:nuevo" time="0.007747" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="pedidoActualizado, avisado como lo avisa la API, le llega a cocina como pedido:actualizado" time="0.008696" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="estadoCambiado, avisado como lo avisa la API, le llega a cocina como pedido:estado" time="0.011545" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="disponibilidadCambiada, avisado como lo avisa la API, le llega a cocina como producto:disponibilidad" time="0.008426" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="categoriaCambiada, avisado como lo avisa la API, le llega a cocina con sus ids" time="0.008852" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="el aviso llega en mucho menos de 2 segundos" time="0.009059" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="el saludo trae el latido corto: un ping cada 4 s y 3 s de espera, 7 s para notar un corte (D-44)" time="0.005575" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="una conexion se corta cuando vence su token, y la corta el servidor (D-47)" time="1.783908" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="una conexion con un token de 60 minutos no se corta antes de tiempo" time="2.511268" classname="test" file="backend\test\tiempo-real.test.js"/>
+	<testcase name="el corte se programa a la hora en que vence el token, y se cancela si la conexion se cierra antes" time="0.034085" classname="test" file="backend\test\tiempo-real.test.js"/>
 	<!-- tests 332 -->
 	<!-- suites 0 -->
 	<!-- pass 332 -->
@@ -339,5 +339,5 @@
 	<!-- cancelled 0 -->
 	<!-- skipped 0 -->
 	<!-- todo 0 -->
-	<!-- duration_ms 8138.3922 -->
+	<!-- duration_ms 7822.9061 -->
 </testsuites>
