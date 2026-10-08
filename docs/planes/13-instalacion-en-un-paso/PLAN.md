@@ -5,7 +5,8 @@
 
 - **Tarjeta:** 13 — Instalación local en un solo paso
 - **Incremento:** documento y entrega final (E4)
-- **Estado:** 🔨 **En curso** — aprobado el 2026-10-04, sin cambios
+- **Estado:** 🔨 **En curso** — aprobado el 2026-10-04; la prueba de instalación se hizo el
+  2026-10-08 y falta el cierre
 - **Entrada al tablero:** 2026-10-04 (enunciado del E4)
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
 
@@ -13,7 +14,7 @@
 
 ## 1. Objetivo
 
-Que una persona que no es el autor, en una computadora con Windows 10 y **sin ninguna
+Que una persona que no es el autor, en una computadora con Windows y **sin ninguna
 herramienta de desarrollo**, instale el sistema completo siguiendo el manual de instalación
 y que funcione: las dos cuentas de prueba entran, una venta llega a cocina en vivo, cocina
 la marca lista y recepción la entrega.
@@ -32,10 +33,10 @@ la marca lista y recepción la entrega.
 5. **El trabajo diario del autor y producción no cambian.**
 
 **Por qué:** la lista previa del enunciado del E4 exige *"Otra persona siguió el manual de
-instalación — y el sistema levantó"*. La persona es **la encargada de recepción**, en la PC
-del local. Hoy, levantarlo en local pide cinco herramientas (Docker, Flutter, Git Bash, Python
-y Node) y cuatro pasos a mano, uno de ellos con `kcadm` dentro de un contenedor. Así ella no
-lo puede hacer.
+instalación — y el sistema levantó"*. La persona es **el encargado de recepción**, en la
+computadora del local (revisión del 8-oct). Hoy, levantarlo en local pide cinco herramientas
+(Docker, Flutter, Git Bash, Python y Node) y cuatro pasos a mano, uno de ellos con `kcadm`
+dentro de un contenedor. Así él no lo puede hacer.
 
 ---
 
@@ -55,7 +56,8 @@ lo puede hacer.
   la instalación de prueba, en un paso, y el entorno de desarrollo, como hoy.
 - **El manual de instalación y despliegue** (Anexo B del documento), escrito para alguien
   que no programa. Va paso a paso, con capturas y con los mensajes de error frecuentes.
-- **La prueba de la encargada**, con su evidencia: cuánto tardó, dónde dudó y qué se corrigió.
+- **La prueba del encargado de recepción**, con su evidencia: cuánto tardó, dónde dudó y qué
+  se corrigió.
 
 **No incluye:**
 
@@ -178,17 +180,21 @@ Cada fase se prueba y se sube por separado.
 Requisitos de Docker Desktop para Windows 10, consultados en su documentación el
 **2026-10-04**:
 
-- [ ] Windows 10 de 64 bits, versión **22H2 (compilación 19045)**: `winver`.
-- [ ] **8 GB de RAM**: *Configuración → Sistema → Acerca de*.
-- [ ] **Virtualización habilitada**: *Administrador de tareas → Rendimiento → CPU →
+- [x] Windows 10 de 64 bits, versión **22H2 (compilación 19045)**: `winver`.
+- [x] **8 GB de RAM**: *Configuración → Sistema → Acerca de*.
+- [x] **Virtualización habilitada**: *Administrador de tareas → Rendimiento → CPU →
       Virtualización: Habilitado*. Si dice *Deshabilitado*, se activa en la BIOS.
-- [ ] Unos **20 GB libres** en el disco y conexión a Internet.
-- [ ] Una cuenta de administrador a mano. Docker Desktop se instala sin ella, pero activar WSL 2
+- [x] Unos **20 GB libres** en el disco y conexión a Internet.
+- [x] Una cuenta de administrador a mano. Docker Desktop se instala sin ella, pero activar WSL 2
       la pide una vez, y después hay que reiniciar.
 
 Docker solo da soporte en las versiones de Windows que Microsoft todavía mantiene.
 Windows 10 22H2 lo está hasta el 13-oct-2026, con las actualizaciones extendidas. **Si la PC
 no cumple, se decide con el autor otra computadora para la prueba antes del miércoles.**
+
+**Revisión del 8-oct:** la prueba se hizo en la **computadora nueva del local**, que ya
+cumplía todo: Windows 11 Home 25H2 (compilación 26200.8457), 8 GB de RAM, la virtualización
+habilitada, 30 GB libres y 280 Mbps. La PC con Windows 10 ya no se usó.
 
 ### Fase A — La app en Docker
 - [x] `frontend/Dockerfile` en dos etapas y `frontend/.dockerignore` (sin `build/`,
@@ -216,28 +222,33 @@ no cumple, se decide con el autor otra computadora para la prueba antes del mié
 - [x] **En Windows, en la máquina del autor**, con `powershell.exe` 5.1:
   - el `.env` generado, los mensajes de Docker cerrado y de puerto ocupado, y el aviso de
     instalación anterior;
-  - ~~la instalación completa desde cero~~: pasa a la fase E, la de la encargada. En esta
+  - ~~la instalación completa desde cero~~: pasa a la fase E, la del encargado de recepción. En esta
     máquina obligaba a recrear la base de desarrollo, y cada parte ya se probó por separado
     (revisión del 4-oct).
 - [x] Repetir la instalación no pisa el `.env` ni borra datos.
 
 ### Fase D — La integración continua y el manual
-- [ ] `.github/workflows/instalacion.yml`, en verde en GitHub después del push.
-- [ ] El Anexo B redactado para alguien que no programa: pasos numerados, capturas con datos
+- [x] `.github/workflows/instalacion.yml`, en verde en GitHub después del push.
+- [x] El Anexo B redactado para alguien que no programa: pasos numerados, capturas con datos
       ficticios, cómo detener y volver a abrir el sistema, y los mensajes de error frecuentes.
-- [ ] El autor revisa el Anexo B antes de dárselo a la encargada.
+      Las capturas son las fotos de la prueba de la fase E.
+- [x] El autor revisa el Anexo B antes de dárselo al encargado de recepción (lo llevó impreso
+      a la prueba).
 
-### Fase E — La prueba de la encargada y el cierre
-- [ ] **La encargada de recepción**, en la PC del local, sigue el Anexo B **sin ayuda**
-      (mirar está permitido; dictar los pasos, no):
+### Fase E — La prueba del encargado de recepción y el cierre
+- [x] **El encargado de recepción**, en la computadora del local, sigue el Anexo B **sin
+      ayuda** (mirar está permitido; dictar los pasos, no):
   - instala Docker Desktop;
   - baja el ZIP;
   - corre `instalar.cmd`;
   - entra con las dos cuentas, hace una venta con datos ficticios, cocina la marca lista y
     recepción la entrega.
-- [ ] Se anotan las horas de inicio y fin de cada paso, y cada lugar donde dudó o se trabó.
-      Fotos de la pantalla sin la contraseña.
-- [ ] Lo que falló se corrige en el manual o en los scripts, en el mismo día.
+
+  Lo hizo, con **tres intervenciones** del autor: ver la fila E de la sección 9.
+- [x] Se anotan las horas de inicio y fin ~~de cada paso~~, y cada lugar donde dudó o se trabó.
+      Fotos de la pantalla sin la contraseña. Se anotaron solo el inicio y el fin de toda la
+      prueba, no los de cada paso.
+- [x] Lo que falló se corrige en el manual o en los scripts, en el mismo día.
 - [ ] Evidencia en la sección 9 y cierre.
 
 ---
@@ -276,7 +287,7 @@ no cumple, se decide con el autor otra computadora para la prueba antes del mié
 | Repetir | Correr el instalador otra vez | El mismo `.env`, los mismos datos |
 | Integración continua | El flujo nuevo después del push | En verde, desde un clon limpio |
 | Sin secretos | Revisión del repositorio y de las imágenes | Ningún `.env` ni contraseña; el `.env` se genera en cada PC |
-| **Otra persona** | La encargada, con el Anexo B, en la PC del local | **El sistema levanta y el flujo completo funciona** |
+| **Otra persona** | El encargado de recepción, con el Anexo B, en la computadora del local | **El sistema levanta y el flujo completo funciona** |
 
 ---
 
@@ -291,8 +302,11 @@ no cumple, se decide con el autor otra computadora para la prueba antes del mié
 - El entorno de desarrollo del autor (`flutter run`) y producción siguen igual.
 - Ningún secreto en el repositorio ni en las imágenes.
 - La instalación pasa en la integración continua desde un clon limpio.
-- **La encargada de recepción siguió el manual en la PC del local, con Windows 10, y el
-  sistema levantó.**
+- La instalación local publica sus tres puertos (8090, 8082 y 3001) solo en `127.0.0.1`
+  (revisión del 8-oct).
+- **El encargado de recepción siguió el manual en la computadora del local y el sistema
+  levantó.** El criterio decía *"con Windows 10"*; la computadora nueva del local tiene
+  Windows 11 (revisión del 8-oct).
 
 ---
 
@@ -314,12 +328,12 @@ no cumple, se decide con el autor otra computadora para la prueba antes del mié
 
 | Fase | Estado | Fecha | Evidencia de la prueba |
 |---|---|---|---|
-| 0 — La PC del local | ⏳ | | |
+| 0 — La PC del local | ✅ Verificada | 2026-10-08 | El 4-oct, la PC de entonces: **Windows 10 22H2** y **8 GB de RAM**, con la **virtualización deshabilitada**. El 8-oct la prueba se hizo en la **computadora nueva del local**, que ya cumplía todo, con foto de cada dato: ASUS ZenBook, **Windows 11 Home 25H2** (compilación 26200.8457), Ryzen 5 4500U, **8 GB** (7,42 utilizables), **virtualización habilitada** en el Administrador de tareas, 30 GB libres y **280 Mbps** en fast.com |
 | A — La app en Docker | ✅ Verificada | 2026-10-04 | **La imagen:** `frontend/Dockerfile` en dos etapas. El SDK de Flutter 3.44.8 se clona sin historia desde su etiqueta y se verifica contra el commit publicado (`058e0af…`); la compilación falla si no coincide. La etapa final es `caddy:2-alpine` con la app en `/srv`. **Primera compilación, sin nada en caché, en la máquina del autor:** 747 s (12,5 min), repartidos así: paquetes de Debian 145 s, clonar Flutter 100 s, SDK de Dart (222 MB) y artefactos de la web 393 s, paquetes de la app 28 s, compilación de la app 68 s. Antes se había probado el paquete completo de Flutter: pesa **1,55 GB**, y la conexión medida da cerca de 1 MB/s (20 MB en 21 s), así que se descartó (revisión del 4-oct). **Tamaños:** la imagen de la app pesa 149 MB. La compilación de Flutter llega a **1,24 GB de memoria como máximo**, medida con `docker stats` cada segundo. Ya en marcha, el sistema completo usa unos 860 MB: Keycloak 697 MB, la API 87 MB, la base 53 MB y la app 19 MB. **El puerto:** la app se publica en `127.0.0.1:8090`. En la máquina del autor, el notificador de Wondershare ocupa `0.0.0.0:8090` (E-009), y aun así la app arranca y responde: el enlace específico a `127.0.0.1` tiene prioridad. **En marcha, sobre el entorno de desarrollo** (`--profile completo up -d`): la app sana; `/api/v1/salud` responde 200 `{"estado":"ok","baseDeDatos":"ok"}` a través del 8090; la app trae las cabeceras `X-Content-Type-Options`, `X-Frame-Options: DENY`, `Referrer-Policy` y `Cache-Control: no-cache`. **Las sondas a través del 8090:** `probar_acceso_pkce.py` termina en TODO CORRECTO con las dos cuentas; `probar_errores.py` con `API_URL=http://localhost:8090/api/v1` da 16 de 16 (401 sin token y con la firma alterada, 403 de cocina al vender, cancelar y agregar, los 400, 413 y 415, y el acceso con la contraseña equivocada). `medir_aviso.py`, también a través del 8090, por WebSocket y con 5 mediciones: pedido nuevo a cocina, mediana de 22 ms; cambio de estado a recepción, 20 ms; lo agregado a cocina, 19 ms. Los 5 pedidos de la medición quedaron cerrados, y el reporte versionado de producción se restauró sin cambios. **En el navegador:** `http://localhost:8090` sirve la app compilada en la imagen. *Iniciar sesión* lleva a Keycloak con `redirect_uri=http://localhost:8090/`; con `recepcion.demo` vuelve a la app, entra como Recepción y carga la carta. Un primer intento falló porque el pegado no llega al navegador integrado, y Keycloak lo contó como contraseña equivocada. *Cerrar sesión* pasa por Keycloak y devuelve la app a `localhost:8090`. Con `cocina.demo` entra como Cocina, ve la cola con los dos pedidos de prueba de la base de desarrollo y el indicador **En vivo** en verde. La venta, la marca de listo y la entrega desde la interfaz quedan para la prueba de la encargada; por el canal ya las recorrió `medir_aviso.py` |
 | B — Keycloak en el arranque | ✅ Verificada | 2026-10-04 | **El script separado:** `docker/keycloak/endurecer.sh` (la parte de adentro), y `scripts/endurecer-keycloak.sh` se la pasa a `docker exec` por la entrada estándar. **Contra el Keycloak de desarrollo da la misma salida, byte por byte, que el script de antes** (`diff` sin diferencias). **El servicio `keycloak-config`:** las variables se leen dentro del contenedor (`$$`), así que `docker compose config` no muestra ninguna contraseña. Sobre el realm de desarrollo aplicó los pasos 1 a 4, asignó las dos contraseñas de prueba (paso 5) y salió con código 0. La app arrancó recién después, por `service_completed_successfully`. **Corrido otra vez, el mismo resultado y código 0.** **Sobre una base de Keycloak recién creada**, en la prueba desde cero de la fase C: los pasos 1 a 5 y código 0. El rol por defecto, que Keycloak llena con cuatro roles de fábrica al crear el realm, queda vacío (`[ ]`), y las dos cuentas entran con la contraseña del `.env` nuevo |
 | C — El instalador | ✅ Verificada | 2026-10-04 | **En Windows, con `powershell.exe` 5.1.26100 (el mismo motor de Windows 10), en la máquina del autor:** (1) **datos anteriores sin su `.env`**, en una copia de la carpeta sin `.env`: lo detecta antes de levantar nada, explica que las contraseñas ya no coinciden, propone `instalar.cmd desde-cero`, sale con código 1 y **no crea el `.env`**; (2) **Docker que no responde** (`DOCKER_HOST` apuntado a un caño inexistente): *"Docker Desktop no esta abierto, o todavia esta arrancando…"*, código 1; (3) **una opción desconocida**: la nombra y lista las válidas, código 1; (4) **la instalación completa sobre la instalación existente**, con el `.env` y los datos de desarrollo: los seis pasos, la salud 200 y la app, el aviso final con la dirección y las cuentas, y el navegador abierto en `http://localhost:8090`. Código 0, **73 s**. El 8090 ocupado en `0.0.0.0` por el notificador de Wondershare ya no corta la instalación (revisión del 4-oct); (5) **`instalar.cmd`** con la ruta `E:\Max Pizzapp v2\codigo` (con espacios): pasa la opción al script, muestra *"Presione una tecla para continuar"* y devuelve el código de salida. (6) **generar el `.env`**, con el mismo código del instalador y PowerShell 5.1, a partir de un `.env.example` con saltos de Windows (el peor caso): sin marca de codificación ni retornos de carro, las 75 líneas intactas, ningún `cambia_`, `POSTGRES_USER=maxpizzapp` y tres contraseñas de 24 letras y números, distintas en cada corrida. **Mensajes:** de usted, como el manual. **En Linux, desde cero, dentro de un Docker limpio** (`docker:dind`), sin el `.env`, los volúmenes ni las imágenes construidas de esta máquina (solo se le precargaron las imágenes base): `CI=true bash scripts/instalar.sh` creó el `.env`, bajó y compiló todo y terminó con código 0 en **905 s (15 min)**. Dentro de ese mismo Docker: `probar_acceso_pkce.py` dio TODO CORRECTO y `probar_errores.py` a través del 8090 dio 16 de 16. **Repetirlo** dejó el `.env` byte por byte igual (*"Ya hay un .env: se usa el que esta"*) y volvió a terminar en código 0. Salió un ruido: el primer `curl` de la espera imprimía *"Connection reset by peer"* antes de que la app estuviera lista. Ahora es silencioso. **La instalación completa en Windows desde cero** es la de la encargada (fase E): en la máquina del autor obligaba a recrear la base de desarrollo, y cada parte ya se probó por separado |
-| D — Integración continua y manual | ⏳ | | |
-| E — La prueba de la encargada | ⏳ | | |
+| D — Integración continua y manual | ✅ Verificada | 2026-10-08 | **El flujo** `.github/workflows/instalacion.yml`, sin avisos de `actionlint` 1.7.12 (con `shellcheck`). Subido en `b18695e`. **Primera corrida en GitHub, en verde** (run `37232481276`, Ubuntu 24.04, en una máquina limpia): instalación en un paso con `instalar.sh` **156 s**, el acceso PKCE con las dos cuentas, la matriz de 401, 403 y 400 a través del 8090, la segunda instalación con el `.env` sin cambios (22 s) y la bajada. En total, **186 s**. El paso *"Si algo fallo"* no corrió. Las cuatro corridas de *Pruebas* de los commits `ea8071d`, `86ed727`, `6c6b869` y `b18695e`, en verde. **El manual:** el Anexo B, redactado de usted, con la Parte 1 para quien instala en su computadora (B.1 a B.7) y la Parte 2 para el servidor y el APK (B.8 a B.12), con los tiempos medidos. **El 8-oct:** el autor lo llevó impreso a la prueba; las capturas son las fotos de esa prueba, y el manual se corrigió con lo que enseñó (fila E) |
+| E — La prueba del encargado de recepción | ✅ Verificada | 2026-10-08 | **Quién y dónde:** el encargado de recepción, que usa la computadora para lo básico (encenderla, navegar) y no programa, en la computadora del local (fila 0), con el Anexo B impreso. Navegador: Google Chrome 154.0.8037.98. **Tiempo:** de 13:00 a 14:30, **1 h 30 min** en total, con Docker Desktop y el problema de WSL incluidos. Las horas de cada paso no se anotaron. La compilación del paso [4/6] marcaba 385 s cuando le faltaban 2 de sus 29 pasos (foto), y el SDK de Dart (222 MB) bajó a 1,9 MB/s. **Lo que hizo solo:** comprobar la computadora (B.1), bajar y extraer el ZIP (B.3), `instalar.cmd` del [1/6] al [6/6] (B.4), la venta y detener y volver a abrir el sistema (B.6). **El resultado: el sistema levantó y el flujo completo funcionó.** El pedido 1 (datos ficticios, Para llevar, una Carnívora, una Clásica y una Soda personal: Bs 108) llegó a cocina como *recién llegado*; cocina lo empezó y lo marcó listo; recepción recibió el aviso *"Pedido 1 … está listo"* y lo entregó, y las dos colas quedaron vacías. `/api/v1/salud` respondió `{"estado":"ok","baseDeDatos":"ok"}`, y en Docker Desktop el proyecto `maxpizzapp` quedó en marcha. **Tres intervenciones del autor:** (1) **WSL.** Docker Desktop **4.94.0** ya no muestra *Use WSL 2 instead of Hyper-V*: propone *Per-user installation (Recommended)*, sin permisos de administrador, y así no activa la Plataforma de máquina virtual de Windows. Al abrirlo dijo *"Virtual Machine Platform not enabled"*. El autor corrió en una terminal de administrador `Enable-WindowsOptionalFeature -Online -FeatureName VirtualMachinePlatform` y `wsl --install` (que además bajó Ubuntu, que no hace falta), y reinició. (2) **La ventana de cocina:** le indicó abrirla en una ventana privada, aunque la ventana del instalador ya lo decía. (3) **La contraseña de prueba:** lo ayudó a entrar con ella. **Un aviso que el manual no tenía:** el Firewall de Windows preguntó si las redes podían acceder a *Docker Desktop Backend*, y se eligió *Permitir*. Keycloak (8082, con su consola de administración) y la API (3001) se publicaban en todas las direcciones. **Su opinión, anotada por el autor:** el manual está completo, pero tendría que ser más interactivo o con fotos, y más específico. **Lo corregido el mismo día:** (a) **el Anexo B:** preparar Windows antes de Docker Desktop (`wsl --install --no-distribution` y reiniciar); las pantallas de Docker 4.94 (*Per-user*, *Close*); qué elegir en el aviso del Firewall (*Cancelar*); la ventana privada en Chrome y en Edge, y por qué una normal no sirve; dónde está la contraseña, cómo copiarla y cómo volver a verla; una foto de la prueba en cada paso; y cuatro filas nuevas en los problemas frecuentes. (b) **El código (commit `13-4`):** Keycloak y la API se publican solo en `127.0.0.1`, como la app; `instalar.ps1` deja pasar, en los tres puertos, a otro programa que escuche en `0.0.0.0` (E-009); el README, con el paso de WSL. **Probado en la máquina del autor:** `instalar.ps1` con PowerShell 5.1 sobre la instalación existente, código 0 en 264 s. Antes, 8082 y 3001 escuchaban en `::`, es decir, en todas las direcciones; ahora, solo en `127.0.0.1`. Desde la IP de la red (`192.168.1.7`) los dos rechazan la conexión. `probar_acceso_pkce.py` dio TODO CORRECTO con las dos cuentas, y la página de acceso, abierta por `localhost:8082` en un navegador, cargó sus 9 recursos con 200. **Sin probar:** el manual corregido en una computadora nueva, y Windows 10, que sigue en los requisitos porque Docker lo admite: la computadora del local y la del autor tienen Windows 11. **Evidencia:** 46 fotos, fuera del repositorio, sin la contraseña |
 
 ---
 
@@ -332,7 +346,10 @@ no cumple, se decide con el autor otra computadora para la prueba antes del mié
 | 2026-10-04 | Fase A: el SDK de Flutter se baja como el código de su etiqueta, sin historia, verificado por el commit exacto (`058e0af…`), en vez del paquete de 1,55 GB verificado por SHA-256. La app se publica solo en `127.0.0.1:8090` | Medido en la máquina del autor: el paquete pesa 1,55 GB y la conexión da cerca de 1 MB/s. El commit es una verificación tan fuerte como la suma, y así se bajan solo el SDK de Dart y lo de la web. La instalación local es para esa PC, no para otros equipos de la red |
 | 2026-10-04 | Fases A y B en **un solo commit** (`13-1`); el instalador queda en `13-2`, la integración continua en `13-3` y el cierre en `13-E` | El servicio `web` depende de `keycloak-config` dentro del mismo `docker-compose.yml`: separarlos dejaba un commit con un compose que no arranca |
 | 2026-10-04 | Fase C: en Windows, un programa que escucha el 8090 en `0.0.0.0` no corta la instalación; los mensajes del instalador, **de usted** | El notificador de Wondershare de la PC del autor ocupa `0.0.0.0:8090`, y la app igual arranca y responde, porque la dirección exacta `127.0.0.1` tiene prioridad. Lo que sí estorba es otro programa en `127.0.0.1` o en IPv6, y eso se sigue revisando. El manual trata de usted, y la encargada tiene que leer lo mismo en los dos |
-| 2026-10-04 | Fase C: la instalación completa de Windows desde cero pasa a la fase E (la encargada, en Windows 10) | En la máquina del autor, el proyecto y los nombres de los contenedores son los mismos que en desarrollo, y probarla obligaba a borrar la base de desarrollo. Cada parte se probó por separado con PowerShell 5.1 (generar el `.env`, los mensajes, la instalación completa sobre la existente y `instalar.cmd`), y la instalación desde cero se probó en Linux, en un Docker limpio |
+| 2026-10-04 | Fase C: la instalación completa de Windows desde cero pasa a la fase E (en ese momento, la encargada de recepción, en Windows 10) | En la máquina del autor, el proyecto y los nombres de los contenedores son los mismos que en desarrollo, y probarla obligaba a borrar la base de desarrollo. Cada parte se probó por separado con PowerShell 5.1 (generar el `.env`, los mensajes, la instalación completa sobre la existente y `instalar.cmd`), y la instalación desde cero se probó en Linux, en un Docker limpio |
+| 2026-10-08 | Fase E: la prueba la hace **el encargado de recepción**, en la **computadora nueva del local, con Windows 11 Home 25H2**. Se ajustan el objetivo, la fase 0, la tabla de pruebas y el criterio | Antes de la prueba, el negocio cambió de dependiente y de computadora. Windows 10 sigue en los requisitos, porque Docker Desktop lo admite, pero queda sin una prueba real: la máquina del autor también tiene Windows 11 |
+| 2026-10-08 | Fase E: Keycloak (8082) y la API (3001) se publican solo en `127.0.0.1`, como la app, y el instalador deja pasar en los tres puertos a otro programa en `0.0.0.0`. Va en su propio commit, `13-4`, antes del cierre (D-79) | En la prueba, el Firewall de Windows preguntó si dejaba pasar a *Docker Desktop Backend*, y con *Permitir* la consola de Keycloak y la API quedaban al alcance de otros equipos del local. La instalación local es para esa computadora. Producción no cambia: tiene su propio archivo y no publica esos puertos. Aprobado por el autor el 8-oct |
+| 2026-10-08 | Fase E: el Anexo B prepara Windows **antes** de Docker Desktop, con `wsl --install --no-distribution` y un reinicio (D-80) | Docker Desktop 4.94 propone instalarse por usuario, sin administrador, y así no activa la Plataforma de máquina virtual que WSL 2 necesita. La fase 0 ya lo preveía (*activar WSL 2 pide la cuenta de administrador una vez*), pero el manual lo dejaba en manos del instalador de Docker |
 
 ---
 

@@ -148,16 +148,16 @@ Paso 3 'Puertos'
 # Un puerto que ya ocupa Docker es de esta misma instalacion, levantada antes:
 # no es un problema. Uno que ocupa otro programa, si.
 #
-# Excepcion en el 8090: la app se publica solo en 127.0.0.1, y en Windows esa
+# Excepcion: los tres puertos se publican solo en 127.0.0.1, y en Windows esa
 # direccion exacta tiene prioridad sobre un programa que escucha en 0.0.0.0
-# (todas las direcciones IPv4). Pasa en la PC del autor (E-009). Lo que si
-# estorba es otro programa en 127.0.0.1 o en IPv6, que el navegador prueba
-# primero al abrir "localhost".
+# (todas las direcciones IPv4). Pasa en la PC del autor con el 8090 (E-009).
+# Lo que si estorba es otro programa en 127.0.0.1 o en IPv6, que el navegador
+# prueba primero al abrir "localhost".
 $deDocker = @('com.docker.backend', 'wslrelay', 'vpnkit', 'com.docker.proxy', 'docker-proxy')
 foreach ($puerto in @(8090, [int]$puertoKeycloak, [int]$puertoApi)) {
     $escuchas = @(Get-NetTCPConnection -LocalPort $puerto -State Listen -ErrorAction SilentlyContinue)
     foreach ($escucha in $escuchas) {
-        if ($puerto -eq 8090 -and $escucha.LocalAddress -eq '0.0.0.0') { continue }
+        if ($escucha.LocalAddress -eq '0.0.0.0') { continue }
         $proceso = Get-Process -Id $escucha.OwningProcess -ErrorAction SilentlyContinue
         $programa = if ($proceso) { $proceso.ProcessName } else { 'desconocido' }
         if ($deDocker -notcontains $programa) {

@@ -38,6 +38,9 @@ name: maxpizzapp
 # Cuando un servicio de aqui necesite publicarse, usar 5433 (base), 3001 (API)
 # y 8082 (identidad). El 8080 NO se usa: en Windows cae en un rango reservado
 # por winnat y no se puede publicar (error E-001 de la base de conocimiento).
+# Todos se publican SOLO en 127.0.0.1: el sistema se usa en la propia PC, y
+# publicarlo en todas las direcciones lo ofrecia a la red del local (en la PC
+# del local, el Firewall de Windows pregunto si dejarlo pasar).
 # En produccion no se publica ninguno: entra todo por el proxy en 80/443.
 
 # Ajustes comunes que heredaran los servicios con << : *servicio-comun.
@@ -76,7 +79,7 @@ services:
     # para inspeccionar la base con una herramienta externa
     # (POSTGRES_PORT se define en .env).
     # ports:
-    #   - "${POSTGRES_PORT}:5432"
+    #   - "127.0.0.1:${POSTGRES_PORT}:5432"
 
     # Comprobacion de salud: lo que dependa de la base esperara
     # a que este realmente lista para aceptar conexiones, no
@@ -143,7 +146,9 @@ services:
       # .env). El 8080 esta reservado por winnat en Windows y el
       # 8081 lo ocupa el sistema anterior en la maquina de
       # desarrollo. En produccion no se publica: entra por Caddy.
-      - "${KEYCLOAK_PORT}:8080"
+      # Solo en 127.0.0.1: la consola de administracion no se ofrece
+      # a otros equipos de la red.
+      - "127.0.0.1:${KEYCLOAK_PORT}:8080"
 
     volumes:
       # El realm versionado, en solo lectura: el contenedor lo
@@ -183,8 +188,9 @@ services:
         condition: service_healthy
     ports:
       # API en http://localhost:3001 (el 3000 lo ocupa el sistema
-      # anterior en la maquina de desarrollo).
-      - "${API_PORT}:3000"
+      # anterior en la maquina de desarrollo). Solo en 127.0.0.1, como
+      # la app y Keycloak.
+      - "127.0.0.1:${API_PORT}:3000"
     # La imagen de Node trae node, pero no curl: se consulta la ruta
     # de salud con fetch desde el propio proceso.
     healthcheck:

@@ -390,6 +390,11 @@ origen.
 
 - En Windows, **Docker Desktop**: Windows 10 22H2 (compilación 19045) o Windows 11, con 8 GB
   de RAM y la virtualización habilitada, según los requisitos de Docker.
+- En Windows, **antes de instalar Docker Desktop**, una sola vez y en una terminal de
+  administrador: `wsl --install --no-distribution`, y reiniciar. Docker Desktop 4.94 propone
+  instalarse por usuario, sin permisos de administrador, y así no activa la *Plataforma de
+  máquina virtual* de Windows que necesita WSL 2 (pasó en la prueba de instalación del
+  8-oct).
 - En Linux o macOS, Docker con el plugin de Compose.
 
 **Para desarrollar:**
@@ -429,8 +434,8 @@ El instalador hace todo lo demás:
 - espera a que la API y la app respondan.
 
 Al terminar, muestra la dirección, **`http://localhost:8090`**, las dos cuentas
-(`recepcion.demo` y `cocina.demo`) y su contraseña, y abre el navegador. La app se publica
-solo para esa computadora (`127.0.0.1`).
+(`recepcion.demo` y `cocina.demo`) y su contraseña, y abre el navegador. Todo se publica
+solo para esa computadora (`127.0.0.1`): la app, el acceso y la API.
 
 - **La primera vez tarda**, porque baja y prepara todo. Las siguientes, segundos.
 - **Repetirlo no borra nada:** sirve también para volver a levantar el sistema después de
@@ -476,7 +481,8 @@ Todo se ejecuta desde la raíz del repositorio.
    ```
 
 En desarrollo los puertos del host son 5433 (base), 3001 (API) y 8082 (identidad), para
-no chocar con otros servicios de la máquina.
+no chocar con otros servicios de la máquina. Se publican solo en `127.0.0.1`: los usa la
+propia PC, no otros equipos de la red.
 
 ### La app Flutter en desarrollo
 
