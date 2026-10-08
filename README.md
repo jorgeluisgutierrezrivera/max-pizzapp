@@ -5,6 +5,7 @@
 > Autor: Jorge Luis Gutierrez Rivera · Tutor: M.Sc. Ing. Isaac Lange Aguilar
 
 [![Pruebas](https://github.com/jorgeluisgutierrezrivera/max-pizzapp/actions/workflows/pruebas.yml/badge.svg?branch=main)](https://github.com/jorgeluisgutierrezrivera/max-pizzapp/actions/workflows/pruebas.yml)
+[![Instalacion](https://github.com/jorgeluisgutierrezrivera/max-pizzapp/actions/workflows/instalacion.yml/badge.svg?branch=main)](https://github.com/jorgeluisgutierrezrivera/max-pizzapp/actions/workflows/instalacion.yml)
 
 ## Descripción
 
@@ -21,7 +22,8 @@ recepción recibe el aviso y lo entrega.
 Un flujo acotado y **desplegable**, priorizando profundidad sobre cantidad de módulos:
 
 - **Recepción** crea el pedido a partir de la carta y lo envía a cocina.
-- **Cocina** (tablet/PC) ve los pedidos entrantes en vivo y cambia su estado.
+- **Cocina**, con la app de Android o en la web, ve los pedidos entrantes en vivo y cambia su
+  estado.
 - Cuando el pedido está **listo**, recepción recibe el aviso y lo entrega.
 - Si el canal en vivo se cae, las dos pantallas lo dicen con una banda en menos de 10 s y
   ofrecen **Recargar**, que vuelve a leer el estado desde la API. Mientras tanto se sigue
@@ -31,8 +33,8 @@ Un flujo acotado y **desplegable**, priorizando profundidad sobre cantidad de m�
 
 | Rol | Qué hace |
 |---|---|
-| **Recepción** | Crea pedidos y ventas directas de bebidas, ve estados en vivo, agrega productos a un pedido ya enviado, cancela mientras el pedido está pendiente, entrega, marca un producto agotado o disponible |
-| **Cocina** | Ve pedidos entrantes en vivo, avanza el estado, marca "listo", marca un producto agotado o disponible |
+| **Recepción** | Crea pedidos y ventas directas de bebidas, ve estados en vivo, agrega productos a un pedido ya enviado, cancela mientras el pedido está pendiente, entrega, marca una bebida agotada o disponible |
+| **Cocina** | Ve pedidos entrantes en vivo, avanza el estado, marca "listo", marca una pizza o un extra agotado o disponible |
 
 A un pedido ya enviado se le agrega según su estado:
 
@@ -100,7 +102,7 @@ Librerías del backend, fijadas sin rangos en `backend/package.json` y con
 | pg | 8.23.0 | Acceso a PostgreSQL con consultas parametrizadas |
 | jsonwebtoken | 9.0.3 | Verificación de la firma y de los datos del token |
 | jwks-rsa | 4.1.0 | Lectura y caché de las claves públicas de Keycloak |
-| socket.io | 4.8.3 | El canal en vivo: avisos de pedido nuevo, de lo agregado y de cambio de estado |
+| socket.io | 4.8.3 | El canal en vivo: avisos de pedido nuevo, de lo agregado, de cambio de estado y de un producto o una categoría agotados |
 | helmet | 8.3.0 | Las cabeceras de seguridad de cada respuesta de la API |
 | express-rate-limit | 8.7.0 | El límite de peticiones por IP, con 429 |
 | socket.io-client | 4.8.3 | Solo desarrollo: las pruebas del canal y la medición del aviso |
@@ -113,7 +115,7 @@ Paquetes de la app Flutter, fijados sin rangos en `frontend/pubspec.yaml` y con
 | http | 1.6.0 | Peticiones a la API y canje del token |
 | crypto | 3.0.7 | SHA-256 del desafío PKCE |
 | web | 1.1.1 | Acceso al navegador: redirección, dirección actual y `sessionStorage` |
-| socket_io_client | 3.1.6 | El canal en vivo en la app: pedidos nuevos, lo agregado y los cambios de estado |
+| socket_io_client | 3.1.6 | El canal en vivo en la app: pedidos nuevos, lo agregado, los cambios de estado y lo agotado |
 | flutter_appauth | 12.1.0 | Solo en el APK de cocina: abre Keycloak en el navegador del teléfono y trae el código con PKCE |
 | audioplayers | 6.8.1 | Solo en el APK de cocina: el timbre de dos notas por el canal de alarma del teléfono |
 | wakelock_plus | 1.8.1 | Solo en el APK de cocina: la pantalla no se apaga mientras la cola está abierta |
@@ -173,14 +175,16 @@ Keycloak y la API reales. Antes de la primera vez: `cd backend && npm ci` y
 `cd frontend && flutter pub get`.
 
 ```bash
-cd backend && npm test            # 288 pruebas: acceso, carta, precio, pedidos, lo agregado, canal en vivo (con su latido y el corte al vencer el token), seguridad (cabeceras, límite de peticiones, caracteres de control, cuerpos rechazados) y el contrato OpenAPI, sin base ni Keycloak reales
-cd frontend && flutter test       # 289 pruebas de la app: la venta, los pedidos, la cocina, el acceso en la web y en el APK, la sesión, el canal en vivo (cortes, rechazos y el aviso de canal caído), el aviso de sonido apagado, el timbre y la pantalla encendida del APK, el contraste de colores, la venta en tres pasos, los cuatro estados de cada vista y los anchos de 1366 y 768 px sin desplazamiento horizontal
+cd backend && npm test            # 332 pruebas: acceso, carta, precio, pedidos, lo agregado, la disponibilidad (cada rol lo suyo, 403 con lo ajeno), canal en vivo (con su latido y el corte al vencer el token), seguridad (cabeceras, límite de peticiones, caracteres de control, cuerpos rechazados) y el contrato OpenAPI, sin base ni Keycloak reales
+cd frontend && flutter test       # 338 pruebas de la app: la venta, los pedidos, la cocina, el panel Carta y lo agotado, el acceso en la web y en el APK, la sesión, el canal en vivo (cortes, rechazos y el aviso de canal caído), el aviso de sonido apagado, el timbre y la pantalla encendida del APK, el contraste de colores, la venta en tres pasos, los cuatro estados de cada vista y los anchos de 1366 y 768 px sin desplazamiento horizontal
+python pruebas/correr_sondas.py                  # las seis sondas siguientes, cada una con su reporte en docs/pruebas/reportes/
 python pruebas/identidad/probar_acceso_pkce.py   # inicio de sesión real con PKCE
 python pruebas/api/probar_salud_y_token.py       # la API con tokens reales del realm
 python pruebas/api/probar_carta.py               # la carta con token real y la base real
 python pruebas/api/probar_pedidos.py             # pedidos: precios, número del día, venta directa, agregar, tres carreras y limpieza, en la base real
+python pruebas/api/probar_disponibilidad.py      # agotar y reponer: cada rol lo suyo, el 403 con lo ajeno, no se vende un agotado y los pedidos enviados no cambian (RF-13)
 python pruebas/api/probar_errores.py             # la matriz de 401, 403, 400, 413 y 415, y la contraseña equivocada
-python pruebas/tiempo-real/medir_aviso.py       # cuánto tarda el aviso en vivo, en 30 repeticiones: la venta y lo agregado en cocina, el cambio de estado en recepción (RNF-01)
+python pruebas/tiempo-real/medir_aviso.py       # cuánto tarda el aviso en vivo, en 30 repeticiones: la venta y lo agregado en cocina, el cambio de estado y lo agotado en recepción (RNF-01)
 python pruebas/carga/medir_carga.py             # la carga del listado con k6, en Docker: 50 pedidos activos y 5 usuarios, el percentil 95 (RNF-01)
 python pruebas/tiempo-real/medir_caida.py       # cuánto tarda una pantalla en notar que la red se colgó (RNF-05: menos de 10 s)
 ```
@@ -222,8 +226,13 @@ max-pizzapp/
 | Identidad (Keycloak) | https://auth.maxpizzapp.tech |
 | Salud de la API | https://maxpizzapp.tech/api/v1/salud |
 | APK de cocina (Android) | https://github.com/jorgeluisgutierrezrivera/max-pizzapp/releases/latest/download/max-pizzapp-cocina.apk |
+| Monitoreo (página de estado pública) | https://stats.uptimerobot.com/AvecPe8ITs |
 
 Para entrar, las cuentas de prueba del apartado *Credenciales de prueba*.
+
+**El monitoreo** es UptimeRobot: consulta la salud de la API cada 5 minutos desde el
+23-sep-2026, y su página de estado muestra la disponibilidad de los últimos días. Mide el
+RNF-05 (al menos 99 % de respuestas 200).
 
 ### Contrato de la API
 
@@ -689,7 +698,7 @@ ls -lh /opt/respaldos
 Y después, las migraciones:
 
 ```bash
-for f in 02_porciones_y_carta 04_solo_enteras_y_extras 05_carta 06_pedido_cliente_y_cancelacion 07_numero_agregados_y_venta_directa 08_pizzas_solo_enteras; do
+for f in 02_porciones_y_carta 04_solo_enteras_y_extras 05_carta 06_pedido_cliente_y_cancelacion 07_numero_agregados_y_venta_directa 08_pizzas_solo_enteras 09_celular_con_5; do
   docker exec -i maxpizzapp-bd sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
     < docker/postgres/init/$f.sql || break
 done
@@ -697,8 +706,9 @@ done
 
 El orden importa: la `04` ajusta lo que agregó la `02`, la carta (`05`) usa lo que agrega
 la `04`, la `06` suma lo que necesitan los pedidos, la `07` el número del día, lo que se
-agrega a un pedido y la venta directa de bebidas, y la `08` marca las pizzas que se venden
-solo enteras. Y van **antes** del `up -d --build`:
+agrega a un pedido y la venta directa de bebidas, la `08` marca las pizzas que se venden
+solo enteras, y la `09` admite los celulares que empiezan con 5 (D-56). Y van **antes** del
+`up -d --build`:
 la API nueva ya consulta las columnas que ellas agregan. No hay `03`: era una carta
 ficticia que la real reemplazó. Volver a cargar la carta actualiza los productos por su
 nombre sin duplicarlos, y no vuelve disponible uno que la base tenga marcado como agotado.
