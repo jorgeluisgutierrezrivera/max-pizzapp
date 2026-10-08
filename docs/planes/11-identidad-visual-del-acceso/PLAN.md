@@ -5,7 +5,8 @@
 
 - **Tarjeta:** 11 — Identidad visual del acceso
 - **Incremento:** semana del E4 (cierre). Es un extra: ningún requisito la exige
-- **Estado:** 🔨 **En curso** — aprobado el 2026-10-07, noche, sin cambios
+- **Estado:** ✅ **Hecho** — cerrada el 2026-10-08, en producción y probada por el autor en la
+  PC y en el APK 0.4.0. Aprobado el 2026-10-07, noche, sin cambios
 - **Entrada al tablero:** 2026-09-22, como la 11 del índice, para *después del E2*. Se jala el
   7-oct mientras la 13 espera la prueba de instalación del jueves 8 (D-23)
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
@@ -121,24 +122,24 @@ Cada fase se prueba y se sube por separado.
       Aprobado por el autor el 7-oct: *"me gusta"*.
 
 ### Fase B — La subida
-- [ ] ~~Recién después de la prueba de instalación del jueves 8~~. **Se adelantó al 7-oct, a la
+- [x] ~~Recién después de la prueba de instalación del jueves 8~~. **Se adelantó al 7-oct, a la
       noche** (ver *Revisiones*): el manual de instalación no muestra la página de acceso, y la
       integración continua prueba la instalación desde cero antes de la prueba.
-- [ ] El commit de la fase A, con *Pruebas* e *Instalacion* en verde. **Si *Instalacion* sale en
+- [x] El commit de la fase A, con *Pruebas* e *Instalacion* en verde. **Si *Instalacion* sale en
       rojo, se revierte esa misma noche**, con un commit nuevo, antes de la prueba.
 
 ### Fase C — En producción (el 7-oct a la noche, si el local no usa el sistema; si no, el jueves 8 antes de las 18:00)
-- [ ] El autor trae el código, recrea solo Keycloak (alrededor de 1 minuto sin poder iniciar
+- [x] El autor trae el código, recrea solo Keycloak (alrededor de 1 minuto sin poder iniciar
       sesión; las pantallas abiertas siguen funcionando) y corre el script de configuración.
-- [ ] Desde afuera, la página de acceso pública muestra el tema.
-- [ ] La sonda de acceso contra producción, en verde.
-- [ ] En el teléfono, el APK 0.4.0 abre el acceso con el tema nuevo, sin reinstalarse.
+- [x] Desde afuera, la página de acceso pública muestra el tema.
+- [x] La sonda de acceso contra producción, en verde.
+- [x] En el teléfono, el APK 0.4.0 abre el acceso con el tema nuevo, sin reinstalarse.
 
 ### Fase D — La evidencia y el cierre
-- [ ] Capturas del acceso en la PC y en el APK, con la cuenta de prueba y la contraseña en
+- [x] Capturas del acceso en la PC y en el APK, con la cuenta de prueba y la contraseña en
       puntos.
-- [ ] La Figura A.1 del Anexo A, con el acceso nuevo.
-- [ ] Evidencia en la sección 9 y cierre.
+- [x] La Figura A.1 del Anexo A, con el acceso nuevo.
+- [x] Evidencia en la sección 9 y cierre.
 
 ---
 
@@ -197,9 +198,9 @@ automáticas.
 | Fase | Estado | Fecha | Evidencia de la prueba |
 |---|---|---|---|
 | A — El tema, en local | ✅ Verificada y aprobada por el autor | 2026-10-07 | **El tema:** `theme.properties` (`parent=keycloak.v2`, la hoja propia después de la oficial y `darkMode=false`, porque la app es de tema claro), `css/maxpizzapp.css` y tres imágenes: el logo (256 px), la foto de la portada (1000 px, 188 KB) y el ícono de la pestaña. Sigue la composición de la pantalla de acceso de la app: **la foto de la pizza a la izquierda, con *Max's Pizzas* encima, y a la derecha el logo, *Max Pizzapp* con *Pizzapp* en rojo, la frase de la app y la tarjeta**, en fondo crema; en el teléfono, solo el acceso. **Lo que encontraron las pruebas:** (1) el nombre salía en blanco: el tema oficial lo pinta con una variable y `!important`, pensado para su fondo oscuro, y se redefinió esa variable solo en la cabecera, sin `!important`; (2) *Pizzería* salía con un carácter roto: en el escape `\00ED` la *a* siguiente se leía como parte del número, y se separó con un espacio; (3) la línea de los campos seguía azul, porque PatternFly la trae en su propia variable; (4) **el tema oficial fija la columna en 34rem (544 px) y en un teléfono la tarjeta se salía por la derecha**: ahora ocupa el ancho disponible, con 16 px a cada lado. **El nombre con *Pizzapp* en rojo** viene del realm (`displayNameHtml`); el filtro de HTML de Keycloak conserva el `span` con su clase. **Las mediciones**, con Chrome manejado por su protocolo de depuración y el teléfono emulado: a **1366 × 768, 768 × 1024 y 360 × 780, el documento mide lo mismo que la pantalla**, sin desplazamiento horizontal; con una contraseña equivocada (un usuario inventado), el mensaje *"Usuario o contraseña incorrectos"* sale con el tema, en la PC y en el teléfono; **ninguna petición a otro origen** en ninguna de las cinco cargas. **Contraste (WCAG):** el botón, 5,44 a 1; el nombre, 16,01; *Pizzapp* en rojo (30 px, negrita), 5,05; la frase y el pie, 6,63; los enlaces y la línea de foco, 5,44: todos sobre el mínimo. **El acceso no cambió:** `probar_acceso_pkce.py`, TODO CORRECTO, con las dos cuentas (token con su rol y 60 min). **Una base nueva trae el tema sola:** un Keycloak 26.7 descartable, con base vacía y solo el realm del repositorio importado, sin correr el script, sirve la página con `maxpizzapp.css` y *Pizzapp* marcado. El script de configuración, corrido sobre el realm de desarrollo, aplica el paso 5 (`loginTheme` y `displayNameHtml`). Capturas: `documento/evidencias/2026-10-07-tema-acceso-local-*.png` |
-| B — La subida | ⏳ | | |
-| C — En producción | ⏳ | | |
-| D — La evidencia y el cierre | ⏳ | | |
+| B — La subida | ✅ Verificada | 2026-10-07 | `aaf8ec2` el plan y **`b66fd15` el tema** (22:36). *Pruebas* e *Instalacion* en verde para `b66fd15`: la instalación desde cero, en una máquina limpia de GitHub, levanta el sistema con el tema montado y el realm que lo activa |
+| C — En producción | ✅ Verificada | 2026-10-07 y 08 | **7-oct, desde las 22:38; ese día el local vendía a mano.** El autor trajo el código y recreó solo Keycloak (`up -d keycloak`): la base, la API y Caddy siguieron arriba sin recrearse. El primer intento del script de configuración falló porque Keycloak todavía arrancaba (*health: starting*), con el mismo mensaje que da una cuenta equivocada; con Keycloak listo, el autor lo corrió con su cuenta permanente (`KC_USUARIO`, la contraseña pedida sin mostrarse), y el paso 5 dejó `loginTheme: maxpizzapp` y el nombre con *Pizzapp* marcado. La única cuenta de administración es la permanente. **Desde afuera:** la página pública de acceso carga `maxpizzapp.css` y el nombre marcado; la hoja (7150 B), el logo, la foto y el ícono responden 200; a 1366 × 768 y a 360 × 780 (teléfono emulado), el documento mide lo mismo que la pantalla, y todas las peticiones van al propio `auth.maxpizzapp.tech`. Capturas: `documento/evidencias/2026-10-07-tema-acceso-prod-1366.png` y `-360.png`. **La sonda de acceso contra producción**, corrida por el autor desde su computadora a las 23:40, con el tema ya activo: las dos cuentas entran por PKCE, con su rol, la API en la audiencia y 60 minutos; *TODO CORRECTO*. **El APK 0.4.0**, el 8-oct a la 01:58, en el teléfono del autor (Honor 50, Android 13) y sin reinstalarse: al entrar, abre el acceso de Keycloak en el navegador del teléfono con el tema nuevo, el logo, el nombre con *Pizzapp* en rojo y la tarjeta al ancho de la pantalla. No hizo falta una versión nueva: el tema lo sirve Keycloak |
+| D — La evidencia y el cierre | ✅ Verificada | 2026-10-08 | **Las capturas del autor, contra producción y con datos de prueba:** en la PC, con Chrome, el acceso vacío con el foco en la contraseña y el acceso con `recepcion.demo` y la contraseña en puntos, recortadas a la página (sin la barra del navegador); en el APK, el acceso vacío y con `cocina.demo` y la contraseña en puntos. Archivos: `documento/evidencias/2026-10-08-tema-acceso-pc-01-recepcion-demo.png`, `-pc-02-vacio.png`, `-apk-01-vacio.png` y `-apk-02-cocina-demo.png`. **La de la PC con la cuenta pasa a ser la Figura A.1 del Anexo A** (el manual de usuario), en lugar de la pantalla de bienvenida de la app, que solo tiene el botón *Iniciar sesión*: la nueva muestra dónde se escribe la cuenta |
 
 ---
 
@@ -216,4 +217,30 @@ automáticas.
 
 ## 11. Cierre
 
-*(Se completa al cerrar la tarjeta: commits de cada fase y estado final.)*
+- **Commits de la tarjeta:**
+  - `aaf8ec2` el plan (11-P);
+  - `b66fd15` el tema, probado en local (fase A) y subido con la integración continua en
+    verde (fase B);
+  - la fase C no lleva commit: es traer el código al servidor, recrear Keycloak y correr el
+    script de configuración;
+  - el cierre (11-E) lleva las filas C y D y este apartado, y el índice de planes.
+- **Criterios de aceptación (sección 7):** los seis cumplidos.
+  - **El logo, los colores y el título, en la PC y en el teléfono, sin desplazamiento
+    horizontal:** medido a 1366 × 768, 768 × 1024 y 360 × 780 en local (fase A) y a 1366 × 768
+    y 360 × 780 en producción (fase C); las capturas del autor, en Chrome y en el APK (fase D).
+  - **Contraste de 4,5 a 1 o más:** el más bajo, 5,05 (*Pizzapp* en rojo).
+  - **El acceso funciona igual:** la sonda de acceso en verde, en local y en producción; el
+    error de contraseña, con el tema (fase A).
+  - **Nada de otro dominio:** ninguna petición a otro origen, en local y en producción.
+  - **Una instalación nueva trae el tema sola:** *Instalacion* en verde para `b66fd15`, y un
+    Keycloak descartable con solo el realm del repositorio lo sirve sin correr el script.
+  - **Se puede volver atrás con un comando:** `kcadm.sh update realms/maxpizzapp -s
+    loginTheme=keycloak.v2`, en `docker/keycloak/README.md`. Es la misma operación con la que
+    el paso 5 del script activó el tema, en local y en producción, con el valor del tema
+    oficial. La vuelta atrás no se ejecutó en producción, para no cambiar el acceso.
+- **Requisitos:** RF-01, sin cambios en su comportamiento (la sonda lo prueba); RNF-03 y
+  RNF-04, la misma identidad y los mismos anchos que el resto de la app; el requisito
+  institucional #4, la interfaz adaptable, también en la página de acceso. Decisiones: D-77 y
+  D-78.
+- **No cambiaron** la base de datos, la API, la app, el APK, el contrato ni las pruebas
+  automáticas.
