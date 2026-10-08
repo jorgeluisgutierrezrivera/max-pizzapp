@@ -13,7 +13,7 @@ const { crearServidor } = require('../src/servidor');
 const { limitePorMinuto } = require('../src/config');
 const { leerVenta, VentaInvalida } = require('../src/precio');
 const { TAMANO_MAXIMO_DE_MENSAJE } = require('../src/tiempo-real');
-const { firmar, deRecepcion, deCocina, levantarEmisor, levantarApp } = require('./soporte/emisor');
+const { firmar, deRecepcion, deCocina, escuchar, levantarEmisor, levantarApp } = require('./soporte/emisor');
 
 let emisor;
 test.before(async () => { emisor = await levantarEmisor(); });
@@ -248,7 +248,7 @@ test('un cuerpo con un juego de caracteres o una compresion desconocidos respond
 test('el canal acepta el saludo con un token real y corta un mensaje mas grande que su limite', async (t) => {
   const pool = { query: async () => ({ rows: [] }) };
   const { servidor, canal } = crearServidor({ pool, autenticar: emisor.autenticar });
-  await new Promise((listo) => servidor.listen(0, '127.0.0.1', listo));
+  await escuchar(servidor);
   t.after(() => new Promise((listo) => canal.cerrar(listo)));
 
   const socket = conectar(`http://127.0.0.1:${servidor.address().port}`, {

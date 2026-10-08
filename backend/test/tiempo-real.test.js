@@ -14,7 +14,7 @@ const assert = require('node:assert/strict');
 const { io: conectar } = require('socket.io-client');
 const { crearServidor } = require('../src/servidor');
 const { SIN_AVISOS, crearCanal } = require('../src/tiempo-real');
-const { firmar, ajena, deRecepcion, deCocina, sinRol, levantarEmisor } = require('./soporte/emisor');
+const { firmar, ajena, deRecepcion, deCocina, sinRol, escuchar, levantarEmisor } = require('./soporte/emisor');
 
 let emisor;
 let servidor;
@@ -27,7 +27,7 @@ test.before(async () => {
   emisor = await levantarEmisor();
   const pool = { query: async () => ({ rows: [] }) };
   ({ servidor, canal, avisos } = crearServidor({ pool, autenticar: emisor.autenticar }));
-  await new Promise((listo) => servidor.listen(0, '127.0.0.1', listo));
+  await escuchar(servidor);
   url = `http://127.0.0.1:${servidor.address().port}`;
 });
 
@@ -264,7 +264,7 @@ test('el corte se programa a la hora en que vence el token, y se cancela si la c
   };
   const otroServidor = http.createServer();
   const otroCanal = crearCanal(otroServidor, { usuarioDelToken: emisor.autenticar.usuarioDelToken, reloj });
-  await new Promise((listo) => otroServidor.listen(0, '127.0.0.1', listo));
+  await escuchar(otroServidor);
   const socket = conectar(`http://127.0.0.1:${otroServidor.address().port}`, {
     auth: { token: firmar(deCocina) }, transports: ['websocket'], reconnection: false,
   });

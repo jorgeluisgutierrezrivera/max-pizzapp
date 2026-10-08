@@ -25,8 +25,24 @@ const deRecepcion = { name: 'Recepcion de prueba', preferred_username: 'recepcio
 const deCocina = { name: 'Cocina de prueba', preferred_username: 'cocina.demo', realm_access: { roles: ['cocina'] } };
 const sinRol = { name: 'Nadie', realm_access: { roles: ['default-roles-maxpizzapp'] } };
 
-function escuchar(servidor) {
-  return new Promise((resolver) => servidor.listen(0, '127.0.0.1', () => resolver(servidor)));
+// Los puertos a los que fetch se niega a conectar ("bad ports" de la norma Fetch), de 1024
+// para arriba: ningun sistema da uno menor con listen(0). Son los 19 que rechaza Node 24.15,
+// medidos uno por uno del 1024 al 65535. Donde el sistema reparte los puertos desde el 1024
+// (E-016), listen(0) puede dar uno de estos y la prueba fallaria con "fetch failed: bad port"
+// sin que la API tenga nada que ver.
+const PUERTOS_QUE_FETCH_RECHAZA = new Set([
+  1719, 1720, 1723, 2049, 3659, 4045, 4190, 5060, 5061, 6000,
+  6566, 6665, 6666, 6667, 6668, 6669, 6679, 6697, 10080,
+]);
+
+// Pone el servidor a escuchar en un puerto libre de 127.0.0.1. Si el que da el sistema es uno
+// de esos, lo suelta y pide otro.
+async function escuchar(servidor) {
+  for (;;) {
+    await new Promise((listo) => servidor.listen(0, '127.0.0.1', listo));
+    if (!PUERTOS_QUE_FETCH_RECHAZA.has(servidor.address().port)) return servidor;
+    await new Promise((listo) => servidor.close(listo));
+  }
 }
 
 // Publica el JWKS y devuelve el autenticador real de la API apuntando a el.
@@ -57,5 +73,5 @@ async function pedir(url, token) {
 
 module.exports = {
   EMISOR, AUDIENCIA, firmar, ajena, deRecepcion, deCocina, sinRol,
-  levantarEmisor, levantarApp, pedir,
+  escuchar, levantarEmisor, levantarApp, pedir,
 };
