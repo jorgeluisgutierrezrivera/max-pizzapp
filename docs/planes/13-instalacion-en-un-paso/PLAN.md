@@ -5,8 +5,8 @@
 
 - **Tarjeta:** 13 — Instalación local en un solo paso
 - **Incremento:** documento y entrega final (E4)
-- **Estado:** 🔨 **En curso** — aprobado el 2026-10-04; la prueba de instalación se hizo el
-  2026-10-08 y falta el cierre
+- **Estado:** ✅ **Hecho** — aprobado el 2026-10-04; la prueba de instalación se hizo el
+  2026-10-08 y la tarjeta se cerró ese mismo día
 - **Entrada al tablero:** 2026-10-04 (enunciado del E4)
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
 
@@ -249,7 +249,7 @@ habilitada, 30 GB libres y 280 Mbps. La PC con Windows 10 ya no se usó.
       Fotos de la pantalla sin la contraseña. Se anotaron solo el inicio y el fin de toda la
       prueba, no los de cada paso.
 - [x] Lo que falló se corrige en el manual o en los scripts, en el mismo día.
-- [ ] Evidencia en la sección 9 y cierre.
+- [x] Evidencia en la sección 9 y cierre.
 
 ---
 
@@ -355,4 +355,42 @@ habilitada, 30 GB libres y 280 Mbps. La PC con Windows 10 ya no se usó.
 
 ## 11. Cierre
 
-*(Se completa al cerrar la tarjeta: commits de cada fase y estado final.)*
+- **Commits de la tarjeta:**
+  - `ea8071d` el plan (13-P, 4-oct);
+  - `86ed727` la app en Docker y Keycloak en el arranque (fases A y B, un solo commit: ver la
+    revisión del 4-oct);
+  - `6c6b869` el instalador, con el README (fase C);
+  - `b18695e` la integración continua (fase D);
+  - `e635749` lo que la prueba de instalación mandó corregir: los puertos solo en
+    `127.0.0.1`, el control de puertos del instalador, el paso de WSL en el README y la
+    evidencia de las fases 0, D y E (13-4, 8-oct);
+  - el cierre (13-E) lleva este apartado y el índice de planes.
+- **Criterios de aceptación (sección 7):** los ocho cumplidos.
+  - **En un paso, desde el ZIP, en una PC que solo tiene Docker Desktop:** la prueba del
+    encargado de recepción (fila E), con la salud en 200 y la app en `http://localhost:8090`.
+  - **Las dos cuentas, la venta en vivo, lista y entregada, y el 403 del otro rol:** el flujo,
+    en la prueba de la fila E; el 403 cruzado, en la integración continua y en las sondas de la
+    fase A, a través del 8090.
+  - **Repetir no pisa el `.env`; una instalación sin su `.env` se explica:** fase C, en
+    Windows y en Linux, y la segunda instalación de la integración continua.
+  - **El desarrollo y producción siguen igual:** `flutter run` no cambió; con los puertos en
+    `127.0.0.1`, la sonda de acceso del entorno de desarrollo sigue en verde, y el teléfono en
+    desarrollo usa `adb reverse`, que llega a `localhost`. Producción usa su propio archivo y
+    no se tocó.
+  - **Sin secretos:** el `.env` se genera en cada PC; las fotos de la prueba no muestran la
+    contraseña.
+  - **La integración continua, desde un clon limpio:** *Instalacion* en verde desde
+    `b18695e`, y también para `e635749`, con los puertos nuevos (run `37858086453`): la
+    instalación en 175 s, el acceso PKCE con las dos cuentas, los 401, 403 y 400 a través del
+    8090 y la segunda instalación con el `.env` sin cambios; 3 min 30 s en total. *Pruebas*,
+    también en verde.
+  - **Los tres puertos solo en `127.0.0.1`:** medido en la máquina del autor (fila E).
+  - **Otra persona siguió el manual y el sistema levantó:** el encargado de recepción, el
+    8-oct, en la computadora del local, con tres intervenciones del autor que se corrigieron el
+    mismo día en el manual y en el código.
+- **Requisitos:** los de la sección 8. Del E4, *"otra persona siguió el manual de instalación
+  — y el sistema levantó"* y el Anexo B; los institucionales #6 (el README con la ejecución
+  local, en un paso) y #7 (credenciales fuera del repositorio). Decisiones: D-62 a D-65, D-79 y
+  D-80; el error de la prueba, E-017.
+- **Queda sin probar:** el manual corregido en una computadora nueva, y Windows 10 (fila E).
+- **No cambiaron** la API, la base de datos, el realm, la app ni el despliegue de producción.
