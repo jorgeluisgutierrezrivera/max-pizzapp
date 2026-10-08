@@ -67,11 +67,19 @@ $K update realms/master $C \
   -s minimumQuickLoginWaitSeconds=60 -s quickLoginCheckMilliSeconds=1000 \
   -s "passwordPolicy=$POLITICA"
 
+echo "5. La pagina de acceso con la identidad del local (D-77)"
+# El tema esta en docker/keycloak/tema/ y se monta en el contenedor. El
+# nombre del realm marca "Pizzapp" para que salga en rojo, como en la app.
+# Volver al tema oficial: -s loginTheme=keycloak.v2
+$K update "realms/$R" $C \
+  -s loginTheme=maxpizzapp \
+  -s 'displayNameHtml=Max <span class="mp-rojo">Pizzapp</span>'
+
 # Solo en la instalacion local: las contrasenas de las cuentas de prueba,
 # desde KEYCLOAK_DEMO_PASSWORD (DP). En produccion se asignan aparte
 # (docker/keycloak/README.md), y este bloque no corre porque DP no llega.
 if [ -n "${DP:-}" ]; then
-  echo "5. Las contrasenas de las cuentas de prueba"
+  echo "6. Las contrasenas de las cuentas de prueba"
   for u in recepcion.demo cocina.demo; do
     $K set-password $C -r "$R" --username "$u" --new-password "$DP"
     echo "   $u: lista"
@@ -85,7 +93,7 @@ $K get "clients/$CID" $C -r "$R" --fields redirectUris,webOrigins
 # --fields no muestra los atributos (un mapa anidado): se leen del cliente entero.
 $K get "clients/$CID" $C -r "$R" | grep -E '"(post\.logout\.redirect\.uris|pkce\.code\.challenge\.method)"'
 echo "-- realm $R:"
-$K get "realms/$R" $C --fields passwordPolicy,eventsEnabled,eventsExpiration,bruteForceProtected,failureFactor
+$K get "realms/$R" $C --fields passwordPolicy,eventsEnabled,eventsExpiration,bruteForceProtected,failureFactor,loginTheme,displayNameHtml
 echo "-- rol por defecto (vacio = []):"
 $K get "roles/default-roles-$R/composites" $C -r "$R" --fields name
 echo "-- realm master:"

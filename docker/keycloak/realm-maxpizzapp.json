@@ -1,6 +1,8 @@
 {
   "realm": "maxpizzapp",
   "displayName": "Max Pizzapp",
+  "displayNameHtml": "Max <span class=\"mp-rojo\">Pizzapp</span>",
+  "loginTheme": "maxpizzapp",
   "internationalizationEnabled": true,
   "supportedLocales": ["es"],
   "defaultLocale": "es",

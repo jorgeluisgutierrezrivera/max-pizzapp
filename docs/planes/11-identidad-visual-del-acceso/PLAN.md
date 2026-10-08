@@ -5,7 +5,7 @@
 
 - **Tarjeta:** 11 — Identidad visual del acceso
 - **Incremento:** semana del E4 (cierre). Es un extra: ningún requisito la exige
-- **Estado:** 📝 **Propuesto** — 2026-10-07, noche
+- **Estado:** 🔨 **En curso** — aprobado el 2026-10-07, noche, sin cambios
 - **Entrada al tablero:** 2026-09-22, como la 11 del índice, para *después del E2*. Se jala el
   7-oct mientras la 13 espera la prueba de instalación del jueves 8 (D-23)
 - **Autor:** Jorge Luis Gutierrez Rivera — UAJMS
@@ -104,11 +104,11 @@ queda como trabajo futuro, sin costo. Nada de ella toca lo que ya funciona.
 Cada fase se prueba y se sube por separado.
 
 ### Fase A — El tema, en local
-- [ ] `docker/keycloak/tema/maxpizzapp/login/`: `theme.properties`, la hoja de estilos y el logo.
-- [ ] El montaje en el contenedor de Keycloak, en `docker-compose.yml` y en
+- [x] `docker/keycloak/tema/maxpizzapp/login/`: `theme.properties`, la hoja de estilos y el logo.
+- [x] El montaje en el contenedor de Keycloak, en `docker-compose.yml` y en
       `docker-compose.prod.yml`.
-- [ ] `loginTheme` en `realm-maxpizzapp.json` y en `endurecer.sh`.
-- [ ] Las pruebas, en local:
+- [x] `loginTheme` en `realm-maxpizzapp.json` y en `endurecer.sh`.
+- [x] Las pruebas, en local:
   - la página de acceso a **1366 × 768** y a **360 × 780** (el teléfono), sin desplazamiento
     horizontal (RNF-04);
   - **el error de contraseña** también con el tema;
@@ -117,14 +117,17 @@ Cada fase se prueba y se sube por separado.
   - **ninguna petición a otro dominio**, mirado en las herramientas del navegador;
   - la sonda de acceso (`probar_acceso_pkce.py`), en verde: el flujo no cambió;
   - **una instalación desde cero** (`instalar.cmd`) trae el tema sin pasos extra.
-- [ ] **Capturas para el autor, antes de subir nada.** Si no le gusta, se ajusta o se descarta.
+- [x] **Capturas para el autor, antes de subir nada.** Si no le gusta, se ajusta o se descarta.
+      Aprobado por el autor el 7-oct: *"me gusta"*.
 
 ### Fase B — La subida
-- [ ] **Recién después de la prueba de instalación del jueves 8.** La prueba descarga el ZIP de
-      GitHub: lo que se suba antes entraría en ella.
-- [ ] El commit de la fase A, con *Pruebas* e *Instalacion* en verde.
+- [ ] ~~Recién después de la prueba de instalación del jueves 8~~. **Se adelantó al 7-oct, a la
+      noche** (ver *Revisiones*): el manual de instalación no muestra la página de acceso, y la
+      integración continua prueba la instalación desde cero antes de la prueba.
+- [ ] El commit de la fase A, con *Pruebas* e *Instalacion* en verde. **Si *Instalacion* sale en
+      rojo, se revierte esa misma noche**, con un commit nuevo, antes de la prueba.
 
-### Fase C — En producción, el jueves 8 antes de las 18:00
+### Fase C — En producción (el 7-oct a la noche, si el local no usa el sistema; si no, el jueves 8 antes de las 18:00)
 - [ ] El autor trae el código, recrea solo Keycloak (alrededor de 1 minuto sin poder iniciar
       sesión; las pantallas abiertas siguen funcionando) y corre el script de configuración.
 - [ ] Desde afuera, la página de acceso pública muestra el tema.
@@ -193,7 +196,7 @@ automáticas.
 
 | Fase | Estado | Fecha | Evidencia de la prueba |
 |---|---|---|---|
-| A — El tema, en local | ⏳ | | |
+| A — El tema, en local | ✅ Verificada y aprobada por el autor | 2026-10-07 | **El tema:** `theme.properties` (`parent=keycloak.v2`, la hoja propia después de la oficial y `darkMode=false`, porque la app es de tema claro), `css/maxpizzapp.css` y tres imágenes: el logo (256 px), la foto de la portada (1000 px, 188 KB) y el ícono de la pestaña. Sigue la composición de la pantalla de acceso de la app: **la foto de la pizza a la izquierda, con *Max's Pizzas* encima, y a la derecha el logo, *Max Pizzapp* con *Pizzapp* en rojo, la frase de la app y la tarjeta**, en fondo crema; en el teléfono, solo el acceso. **Lo que encontraron las pruebas:** (1) el nombre salía en blanco: el tema oficial lo pinta con una variable y `!important`, pensado para su fondo oscuro, y se redefinió esa variable solo en la cabecera, sin `!important`; (2) *Pizzería* salía con un carácter roto: en el escape `\00ED` la *a* siguiente se leía como parte del número, y se separó con un espacio; (3) la línea de los campos seguía azul, porque PatternFly la trae en su propia variable; (4) **el tema oficial fija la columna en 34rem (544 px) y en un teléfono la tarjeta se salía por la derecha**: ahora ocupa el ancho disponible, con 16 px a cada lado. **El nombre con *Pizzapp* en rojo** viene del realm (`displayNameHtml`); el filtro de HTML de Keycloak conserva el `span` con su clase. **Las mediciones**, con Chrome manejado por su protocolo de depuración y el teléfono emulado: a **1366 × 768, 768 × 1024 y 360 × 780, el documento mide lo mismo que la pantalla**, sin desplazamiento horizontal; con una contraseña equivocada (un usuario inventado), el mensaje *"Usuario o contraseña incorrectos"* sale con el tema, en la PC y en el teléfono; **ninguna petición a otro origen** en ninguna de las cinco cargas. **Contraste (WCAG):** el botón, 5,44 a 1; el nombre, 16,01; *Pizzapp* en rojo (30 px, negrita), 5,05; la frase y el pie, 6,63; los enlaces y la línea de foco, 5,44: todos sobre el mínimo. **El acceso no cambió:** `probar_acceso_pkce.py`, TODO CORRECTO, con las dos cuentas (token con su rol y 60 min). **Una base nueva trae el tema sola:** un Keycloak 26.7 descartable, con base vacía y solo el realm del repositorio importado, sin correr el script, sirve la página con `maxpizzapp.css` y *Pizzapp* marcado. El script de configuración, corrido sobre el realm de desarrollo, aplica el paso 5 (`loginTheme` y `displayNameHtml`). Capturas: `documento/evidencias/2026-10-07-tema-acceso-local-*.png` |
 | B — La subida | ⏳ | | |
 | C — En producción | ⏳ | | |
 | D — La evidencia y el cierre | ⏳ | | |
@@ -205,6 +208,9 @@ automáticas.
 | Fecha | Cambio | Motivo |
 |---|---|---|
 | 2026-10-07 | Versión inicial propuesta | El autor pidió personalizar el acceso, que es genérico, como un extra mientras el agente documental trabaja en la v11. Límite: el viernes 9 al mediodía |
+| 2026-10-07 | **Aprobado** por el autor, sin cambios | Decisiones D-77 y D-78 registradas en la bitácora |
+| 2026-10-07 | El aspecto, **aprobado por el autor** con las capturas de la fase A | — |
+| 2026-10-07 | **La subida y producción se adelantan a la noche del 7-oct**, en lugar de esperar a la prueba de instalación del jueves 8 | El manual de instalación (Anexo B) no muestra la página de acceso: solo dice con qué cuenta entrar, así que ningún paso de la prueba cambia. La integración continua prueba la instalación desde cero al subir; si saliera en rojo, se revierte esa noche. Ese día el local vendía a mano y no usaba el sistema. Así el jueves queda libre para la prueba y el documento, y la prueba de instalación también cubre el tema |
 
 ---
 

@@ -149,6 +149,9 @@ services:
       # El realm versionado, en solo lectura: el contenedor lo
       # importa, nunca lo modifica.
       - ./keycloak:/opt/keycloak/data/import:ro
+      # El tema de la pagina de acceso (tarjeta 11, D-77). Lo activa
+      # el script de configuracion (loginTheme del realm).
+      - ./keycloak/tema/maxpizzapp:/opt/keycloak/themes/maxpizzapp:ro
 
     # La imagen no trae curl ni wget: se consulta el endpoint de
     # salud abriendo el socket desde el propio shell.

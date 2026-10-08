@@ -134,6 +134,10 @@ services:
 
     volumes:
       - ./keycloak:/opt/keycloak/data/import:ro
+      # El tema de la pagina de acceso (tarjeta 11, D-77). En modo
+      # produccion Keycloak guarda el tema en cache: un cambio en el
+      # tema llega al recrear el contenedor.
+      - ./keycloak/tema/maxpizzapp:/opt/keycloak/themes/maxpizzapp:ro
 
     # La imagen no trae curl ni wget: se consulta el endpoint de
     # salud abriendo el socket desde el propio shell.

@@ -336,6 +336,11 @@ Las pruebas miden el contraste de cada combinación de colores con la fórmula d
 que un cambio de color que deje un texto ilegible no pasa. El logo vive en
 `frontend/assets/marca/`, y los íconos de `frontend/web/` se generaron a partir de él.
 
+**La página de inicio de sesión**, que es de Keycloak, lleva la misma identidad: el logo, los
+colores, la foto de la portada y *Max Pizzapp* con *Pizzapp* en rojo, en la web y en el APK. Es
+un tema que hereda del oficial y solo cambia los estilos; no toca cómo funciona el acceso
+(`docker/keycloak/tema/`, ver `docker/keycloak/README.md`).
+
 El **software** se llama Max Pizzapp; el **local**, Max's Pizzas.
 
 ## Variables de entorno

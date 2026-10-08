@@ -30,6 +30,8 @@
 #      rol, y la API le responde 403 en todo (D-54).
 #   4. El realm master, el de la consola de administracion: la misma
 #      proteccion de fuerza bruta y la misma politica de contrasenas.
+#   5. La pagina de acceso con el tema del local (docker/keycloak/tema/,
+#      D-77): el logo, los colores y "Pizzapp" en rojo en el titulo.
 #   Al final muestra como quedo cada cosa.
 #
 # LA CUENTA DE ADMINISTRACION

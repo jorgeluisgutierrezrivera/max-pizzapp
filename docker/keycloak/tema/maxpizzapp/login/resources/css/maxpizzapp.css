@@ -1,0 +1,223 @@
+/* ==========================================================
+   La pagina de acceso con la identidad de Max Pizzapp (tarjeta 11).
+
+   Se carga despues de la hoja del tema oficial (keycloak.v2) y solo
+   cambia la apariencia: los colores, la tipografia, el logo y la foto.
+   Los colores son los de la app (frontend/lib/tema.dart), y la
+   composicion sigue a la pantalla de acceso de la app: la foto de la
+   pizza a la izquierda y el acceso a la derecha, en fondo crema. En el
+   telefono queda solo el acceso.
+
+   Los textos de los pseudoelementos van con escapes (\00F3 = o con
+   tilde) para no depender de la codificacion con que se sirva el CSS.
+   ========================================================== */
+
+:root {
+    --mp-negro: #141414;          /* el fondo del logo */
+    --mp-rojo-ladrillo: #C0392B;  /* la barra, los botones y los iconos */
+    --mp-rojo-hover: #A93226;
+    --mp-rojo-activo: #8E2B20;
+    --mp-crema: #FBF6EE;          /* el fondo de la app */
+    --mp-borde: #E8DCC8;
+    --mp-texto: #1B1B1B;
+    --mp-texto-secundario: #5E574C;
+    --mp-fuente: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+    /* PatternFly 5: el color principal, los enlaces, el foco y la fuente. */
+    --pf-v5-global--primary-color--100: var(--mp-rojo-ladrillo);
+    --pf-v5-global--primary-color--200: var(--mp-rojo-hover);
+    --pf-v5-global--active-color--100: var(--mp-rojo-ladrillo);
+    --pf-v5-global--link--Color: var(--mp-rojo-ladrillo);
+    --pf-v5-global--link--Color--hover: var(--mp-rojo-activo);
+    --pf-v5-global--Color--100: var(--mp-texto);
+    --pf-v5-global--Color--200: var(--mp-texto-secundario);
+    --pf-v5-global--FontFamily--text: var(--mp-fuente);
+    --pf-v5-global--FontFamily--heading: var(--mp-fuente);
+
+    /* La franja de arriba de la tarjeta, que en el tema oficial es azul. */
+    --keycloak-card-top-color: var(--mp-rojo-ladrillo);
+}
+
+/* El fondo crema, en lugar del fondo oscuro del tema oficial. */
+body#keycloak-bg {
+    background: var(--mp-crema);
+    font-family: var(--mp-fuente);
+    color: var(--mp-texto);
+}
+
+/* ---------- La cabecera: el logo, el nombre y la frase ---------- */
+
+#kc-header {
+    text-align: center;
+}
+
+#kc-header-wrapper {
+    /* El tema oficial pinta el nombre de blanco con esta variable (y
+       !important), pensado para su fondo oscuro. Sobre la crema, el texto
+       de la app. */
+    --pf-v5-global--Color--light-100: var(--mp-texto);
+    text-transform: none;
+    letter-spacing: 0;
+    font-family: var(--mp-fuente);
+    font-size: 30px;
+    font-weight: 800;
+    line-height: 1.2;
+    /* El tema oficial deja 48 px debajo del nombre: la frase va pegada a
+       el, y el espacio, antes de la tarjeta. */
+    margin-bottom: 0;
+}
+
+#kc-header-wrapper::before {
+    content: "";
+    display: block;
+    width: 96px;
+    height: 96px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: var(--mp-negro) url("../img/logo-mp.png") center / cover no-repeat;
+    box-shadow: 0 0 0 4px #fff, 0 6px 18px rgba(20, 20, 20, 0.18);
+}
+
+/* "Pizzapp" en rojo, como en la app: el realm marca esa palabra. */
+#kc-header-wrapper .mp-rojo {
+    color: var(--mp-rojo-ladrillo);
+}
+
+#kc-header::after {
+    content: "Pedidos entre recepci\00F3n y cocina, en tiempo real.";
+    display: block;
+    margin: 6px 0 28px;
+    font-size: 15px;
+    color: var(--mp-texto-secundario);
+}
+
+/* ---------- La tarjeta del formulario ---------- */
+
+.pf-v5-c-login__main {
+    background: #fff;
+    border: 1px solid var(--mp-borde);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(20, 20, 20, 0.08);
+}
+
+#kc-page-title {
+    font-weight: 800;
+    color: var(--mp-texto);
+}
+
+/* La linea de los campos al pasar o al escribir: PatternFly la trae en
+   azul fijo, en su propia variable. */
+.pf-v5-c-form-control {
+    --pf-v5-c-form-control--hover--after--BorderBottomColor: var(--mp-rojo-ladrillo);
+    --pf-v5-c-form-control--focus--after--BorderBottomColor: var(--mp-rojo-ladrillo);
+}
+
+/* El boton principal: el rojo ladrillo y la forma de pildora de la app. */
+.pf-v5-c-button.pf-m-primary {
+    --pf-v5-c-button--m-primary--BackgroundColor: var(--mp-rojo-ladrillo);
+    --pf-v5-c-button--m-primary--hover--BackgroundColor: var(--mp-rojo-hover);
+    --pf-v5-c-button--m-primary--focus--BackgroundColor: var(--mp-rojo-hover);
+    --pf-v5-c-button--m-primary--active--BackgroundColor: var(--mp-rojo-activo);
+    --pf-v5-c-button--BorderRadius: 999px;
+    border-radius: 999px;
+    min-height: 48px;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+/* Debajo de la tarjeta, la misma nota que en la app. */
+.pf-v5-c-login__container::after {
+    content: "Acceso para el personal de Max's Pizzas \00B7  Villa F\00E1tima, Tarija";
+    display: block;
+    margin-top: 16px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--mp-texto-secundario);
+}
+
+/* ---------- En pantallas anchas, la foto a la izquierda ---------- */
+
+@media (min-width: 1000px) {
+    /* La foto, con el nombre del local abajo, como en la app. */
+    body#keycloak-bg::before {
+        content: "Max's Pizzas";
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 46vw;
+        box-sizing: border-box;
+        display: flex;
+        align-items: flex-end;
+        padding: 0 48px 96px;
+        color: #fff;
+        font-size: 44px;
+        font-weight: 800;
+        line-height: 1.1;
+        background:
+            linear-gradient(to top, rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0) 45%),
+            url("../img/portada.jpg") center / cover no-repeat;
+    }
+
+    /* La frase de debajo. El espacio despues de \00ED termina el escape:
+       sin el, la "a" que sigue se leeria como parte del numero. */
+    body#keycloak-bg::after {
+        content: "Pizzer\00ED a de Tarija. Pizzas enteras, de un sabor o mitad y mitad.";
+        position: fixed;
+        left: 48px;
+        bottom: 56px;
+        width: calc(46vw - 96px);
+        color: #fff;
+        font-size: 17px;
+        line-height: 1.5;
+    }
+
+    /* El acceso, centrado en la parte derecha. */
+    .pf-v5-c-login {
+        padding-left: 46vw;
+    }
+
+    .pf-v5-c-login__container {
+        grid-template-columns: min(34rem, calc(54vw - 64px));
+    }
+}
+
+/* ---------- En pantallas angostas ---------- */
+
+/* El tema oficial fija la columna en 34rem (544 px), que no entra en un
+   telefono: la tarjeta se salia por la derecha. Aqui ocupa lo que haya,
+   con 16 px a cada lado, hasta esos 34rem. */
+@media (max-width: 999px) {
+    .pf-v5-c-login__container {
+        grid-template-columns: minmax(0, 34rem);
+        box-sizing: border-box;
+        width: 100%;
+        padding-inline: 16px;
+    }
+}
+
+@media (max-width: 599px) {
+    #kc-header-wrapper {
+        font-size: 26px;
+    }
+
+    #kc-header-wrapper::before {
+        width: 80px;
+        height: 80px;
+    }
+
+    .pf-v5-c-login__main {
+        border-radius: 12px;
+    }
+
+    /* Menos margen dentro de la tarjeta y el titulo en una linea. */
+    .pf-v5-c-login__main-header,
+    .pf-v5-c-login__main-body {
+        padding-inline: 24px;
+    }
+
+    #kc-page-title {
+        font-size: 24px;
+    }
+}

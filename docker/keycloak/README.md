@@ -26,6 +26,32 @@ sesión de clics imposible de repetir igual.
 | Eventos de acceso | Entradas, fallos y salidas, guardados 7 días | Para ver un intento de fuerza bruta (D-54) |
 | Registro de usuarios | Deshabilitado | No es un sistema con autoservicio: las cuentas las crea el negocio |
 | Rol por defecto | **Vacío**, lo deja así el script (abajo) | Una cuenta nueva nace sin ningún rol: la API le responde 403 en todo (D-54) |
+| Página de acceso | Tema `maxpizzapp` (`loginTheme`) y el nombre con *Pizzapp* marcado (`displayNameHtml`) | La identidad del local en el inicio de sesión, en la web y en el APK (D-77; ver abajo) |
+
+## El tema de la página de acceso: `tema/maxpizzapp/`
+
+La página de inicio de sesión lleva el logo, los colores y la foto de la app, como su pantalla
+de acceso (tarjeta 11). Es un tema de Keycloak que **hereda del oficial** (`keycloak.v2`) y
+solo suma una hoja de estilos y tres imágenes (D-77):
+
+```
+tema/maxpizzapp/login/
+├─ theme.properties          parent=keycloak.v2, la hoja propia y el modo claro fijo
+└─ resources/
+   ├─ css/maxpizzapp.css     los colores de frontend/lib/tema.dart, el logo y la foto
+   └─ img/                   logo-mp.png, portada.jpg y favicon.ico
+```
+
+- **Se monta** en el contenedor, de solo lectura, en `/opt/keycloak/themes/maxpizzapp`
+  (`docker-compose.yml` y `docker-compose.prod.yml`). No hace falta una imagen propia.
+- **Se activa** con `loginTheme: maxpizzapp` en el realm: viene en este archivo para una base
+  nueva, y lo aplica el paso 5 del script de abajo en una que ya existe.
+- **Nada sale de otro sitio** (D-78): la fuente es la del sistema y las imágenes, del propio
+  Keycloak.
+- **En producción, Keycloak guarda el tema en caché:** un cambio en el tema llega al recrear el
+  contenedor (`up -d keycloak`).
+- **Para volver al tema oficial**, sin tocar archivos, desde el contenedor de Keycloak:
+  `kcadm.sh update realms/maxpizzapp -s loginTheme=keycloak.v2`.
 
 ## El script de seguridad: `scripts/endurecer-keycloak.sh`
 
