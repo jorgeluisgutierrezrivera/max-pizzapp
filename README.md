@@ -297,7 +297,8 @@ La carta vive en `docker/postgres/init/05_carta.sql` y se cambia sin tocar el es
 
 - **Las 15 pizzas son las del local**, con sus ingredientes y fotos, tomadas de su catálogo.
   Sus **precios los confirmó la dueña** el 25-sep.
-- **Las bebidas y los extras son ficticios** hasta tener los reales.
+- **Las seis bebidas son las del local**, con sus precios reales, desde el 7-oct (D-72).
+- **Los extras son ficticios** hasta tener los reales: el catálogo del local no los muestra.
 
 El local vende **solo pizzas enteras**, de un sabor o de dos mitades. Una pizza de dos
 mitades cuesta (precio A + precio B) / 2, al centavo. Dos estaciones, Tres estaciones y
