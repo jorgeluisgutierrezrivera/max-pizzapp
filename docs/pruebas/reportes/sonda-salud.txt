@@ -1,5 +1,5 @@
 Max Pizzapp - reporte de la sonda salud
-Fecha:    2026-10-07T21:23:52+00:00 (duro 11.7 s)
+Fecha:    2026-10-09T00:12:48+00:00 (duro 8.5 s)
 API:      https://maxpizzapp.tech/api/v1
 Keycloak: https://auth.maxpizzapp.tech
 Comando:  python pruebas/api/probar_salud_y_token.py   (todas: python pruebas/correr_sondas.py)

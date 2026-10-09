@@ -439,7 +439,18 @@ producción.
   con 946 intentos fallidos en el registro.
 - **Queda abierto, con destino:**
   - **las 13 actualizaciones del sistema** que anuncia el servidor al entrar por SSH:
-    aplicarlas antes de la defensa, en un momento sin pedidos, con un respaldo antes;
+    aplicarlas antes de la defensa, en un momento sin pedidos, con un respaldo antes.
+    **Hecho el 2026-10-08**, de 20:04 a 20:07 (hora de Bolivia), con el local cerrado por
+    mantenimiento. Para entonces eran 15: el kernel (6.8.0-142 → 146, seguridad), Docker
+    29.8.1 → 29.9.0, Compose 5.5.1 → 5.6.0, containerd 2.3.5 → 2.4.1, `libpng` y `libxml2`
+    (seguridad), AppArmor, `libaudit`, `dmidecode` y el agente de Monarx. El orden fue:
+    respaldo de la base (70 KB), `apt upgrade` sin errores de `dpkg` y reinicio por el kernel.
+    Después: los cuatro contenedores en marcha y los tres con chequeo, sanos; la salud, la web
+    y Keycloak con 200 desde afuera; **las seis sondas contra producción, TODO CORRECTO**
+    (errores 25 de 25, la venta mixta de Bs 193), y ningún pedido abierto. El corte fue de unos
+    3 minutos, menos que el intervalo de 5 del monitor, que siguió en 100 %. No se hizo
+    `do-release-upgrade` a Ubuntu 26.04: es otra versión, no un parche. Las actualizaciones de
+    seguridad diarias siguen a cargo de `unattended-upgrades`;
   - **los íconos de la barra de estado del APK** sobre fondo claro (de la tarjeta 12): semana
     del E4;
   - **las fuentes desde `fonts.gstatic.com`**: empaquetarlas en la app quitaría el último

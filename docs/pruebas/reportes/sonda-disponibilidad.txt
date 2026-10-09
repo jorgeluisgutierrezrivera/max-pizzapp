@@ -1,5 +1,5 @@
 Max Pizzapp - reporte de la sonda disponibilidad
-Fecha:    2026-10-07T21:26:06+00:00 (duro 22.5 s)
+Fecha:    2026-10-09T00:14:46+00:00 (duro 22.0 s)
 API:      https://maxpizzapp.tech/api/v1
 Keycloak: https://auth.maxpizzapp.tech
 Comando:  python pruebas/api/probar_disponibilidad.py   (todas: python pruebas/correr_sondas.py)
@@ -47,6 +47,6 @@ Producto de la prueba: Soda 2 L (id 17), disponible al empezar.
   OK    y la bebida sigue disponible, con su precio              (True, 20)
 Los extras, como estaban: si.
 
-Al terminar: Soda 2 L quedo disponible, como estaba; el pedido de prueba 553, cancelado.
+Al terminar: Soda 2 L quedo disponible, como estaba; el pedido de prueba 621, cancelado.
 
 TODO CORRECTO

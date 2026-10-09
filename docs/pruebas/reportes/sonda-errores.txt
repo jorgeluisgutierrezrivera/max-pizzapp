@@ -1,5 +1,5 @@
 Max Pizzapp - reporte de la sonda errores
-Fecha:    2026-10-07T21:25:46+00:00 (duro 19.7 s)
+Fecha:    2026-10-09T00:14:29+00:00 (duro 17.6 s)
 API:      https://maxpizzapp.tech/api/v1
 Keycloak: https://auth.maxpizzapp.tech
 Comando:  python pruebas/api/probar_errores.py   (todas: python pruebas/correr_sondas.py)
