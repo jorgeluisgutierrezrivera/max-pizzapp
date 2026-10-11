@@ -215,7 +215,11 @@ max-pizzapp/
 ├── .github/      La integración continua: las dos suites y la instalación desde cero en cada push (GitHub Actions)
 ├── instalar.cmd  La instalación local en un paso, en Windows (doble clic)
 └── docs/         Documentación técnica: BRIEF de desarrollo, planes de trabajo, el
-                  contrato de la API (docs/api/openapi.yaml) y el perfil del proyecto
+                  contrato de la API (docs/api/openapi.yaml) y los documentos
+                  entregados, en .pdf y .docx: el perfil del proyecto
+                  (Gutierrez_E1_Completo_v2), los avances del E2 y el E3
+                  (Gutierrez_Jorge_E2, Gutierrez_Jorge_E3) y el documento final
+                  (Gutierrez_Jorge_E4)
 ```
 
 ## Dirección pública
